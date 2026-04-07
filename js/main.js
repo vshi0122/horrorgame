@@ -51,6 +51,13 @@ sceneEl.addEventListener("click", (event) => {
         setScene("chapter2Entry");
       }
     }
+    if (action === "start-chapter3") {
+      if (typeof hasChapter3Access === "function" && !hasChapter3Access()) {
+        showMessage("第三章尚未解锁。请先触发任一第二章结局（吞枪除外）。");
+      } else {
+        setScene("chapter3Entry");
+      }
+    }
     if (action === "open-endings") {
       setMenuTab("endings");
       render();

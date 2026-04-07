@@ -3,11 +3,31 @@
   { id: "failedEscapeEnding", order: 2, name: "What Waits Outside", teaser: "You reached the exit, but you did not truly leave." },
   { id: "normalEnding", order: 3, name: "Leave the Apartment", teaser: "You made it out alive, but something is still missing." },
   { id: "goodEndingQuestion", order: 4, name: "Awake?", teaser: "You seem to have reached a deeper answer." },
-  { id: "fleeEnding", order: 5, name: "Flight", teaser: "You chose not to enter the building at all." }
+  { id: "fleeEnding", order: 5, name: "Flight", teaser: "You chose not to enter the building at all." },
+  { id: "chapter2UneasyReunionEnding", order: 6, name: "Uneasy Reunion", teaser: "She returns, but the calm feels rehearsed." },
+  { id: "chapter2WaitWifeEnding", order: 7, name: "Waiting Room", teaser: "You sit in the ruined home and wait for her anyway." },
+  { id: "chapter2BloodCradleEnding", order: 8, name: "Blood Cradle", teaser: "No medicine, a Devil draw, and the blood comes flooding back." },
+  { id: "chapter2MonsterReturnEnding", order: 9, name: "Old Shadow", teaser: "With medicine and the Devil card, the creature returns." },
+  { id: "chapter2GunEnding", order: 10, name: "Swallow the Gun", teaser: "You find the hidden handgun and choose your own ending." }
 ];
 
-const TOTAL_ENDINGS = 5;
-const TOTAL_DOCUMENTS = 6;
+const TOTAL_ENDINGS = 10;
+const TOTAL_DOCUMENTS = 25;
+const CHAPTER2_UNLOCK_ENDING_ID = "goodEndingQuestion";
+const CHAPTER3_UNLOCK_ENDING_IDS = [
+  "chapter2UneasyReunionEnding",
+  "chapter2WaitWifeEnding",
+  "chapter2BloodCradleEnding",
+  "chapter2MonsterReturnEnding"
+];
+
+function hasChapter2Access() {
+  return hasUnlockedEnding(CHAPTER2_UNLOCK_ENDING_ID);
+}
+
+function hasChapter3Access() {
+  return CHAPTER3_UNLOCK_ENDING_IDS.some((endingId) => hasUnlockedEnding(endingId));
+}
 
 const sceneArt = {
   mainMenu: `
@@ -214,15 +234,31 @@ function buildEndingOverlay(config) {
 }
 
 function buildMainMenuHome() {
+  const chapter2Unlocked = hasChapter2Access();
+  const chapter3Unlocked = hasChapter3Access();
+  const chapter2Action = chapter2Unlocked
+    ? '<button class="menu-action" type="button" data-action="start-chapter2">Chapter 2: Echo Tenant</button>'
+    : '<button class="menu-action" type="button" disabled title="Unlock the ending Awake? first">Chapter 2: Echo Tenant (Locked)</button>';
+  const chapter3Action = chapter3Unlocked
+    ? '<button class="menu-action" type="button" data-action="start-chapter3">Chapter 3: Finale</button>'
+    : '<button class="menu-action" type="button" disabled title="Unlock any Chapter 2 ending except Swallow the Gun">Chapter 3: Finale (Locked)</button>';
+
   return `
     <section class="scene-overlay menu-overlay" aria-label="Main menu">
       <div class="menu-home">
         <p class="menu-kicker">A Point &amp; Click Horror Game</p>
-        <h2 class="menu-title">Day of Arrival</h2>
-        <p class="menu-tagline">Wake in the dead of night. The apartment building waits ahead.<br>Step into that night again, or review what you have already brought back out.</p>
+        <h2 class="menu-title">${chapter3Unlocked ? "Day of Arrival: Finale" : (chapter2Unlocked ? "Day of Arrival: Echo" : "Day of Arrival")}</h2>
+        <p class="menu-tagline">${chapter3Unlocked
+          ? "You crossed the Chapter 2 branches. The final chapter is now open."
+          : (chapter2Unlocked
+            ? "You have reached the deeper layer. Enter Chapter 2 and face what you rewrote."
+            : "Wake in the dead of night. The apartment building waits ahead.<br>Step into that night again, or review what you have already brought back out.")}
+        </p>
         <div class="menu-divider"></div>
         <nav class="menu-actions">
           <button class="menu-action menu-primary" type="button" data-action="start-game">Wake Again</button>
+          ${chapter2Action}
+          ${chapter3Action}
           <button class="menu-action" type="button" data-action="open-endings">Ending Archive</button>
           <button class="menu-action" type="button" data-action="open-documents">Text Archive</button>
         </nav>
@@ -353,15 +389,23 @@ function normalizeResidentialPassword(value) {
 const scenes = {
   mainMenu: {
     title: "Main Menu",
-    hint: "The darkness has not completely faded. Wake again, or review what you have already brought out.",
+    hint() {
+      if (hasChapter3Access()) return "Chapter 3 is now available.";
+      if (hasChapter2Access()) return "Chapter 2 is now available.";
+      return "The darkness has not completely faded. Wake again, or review what you have already brought out.";
+    },
     objective() {
       if (state.menuTab === "endings") return `Browse unlocked endings ${getUnlockedEndingCount()}/${MENU_ENDING_CATALOG.length}.`;
       if (state.menuTab === "documents") return `Browse archived texts ${getUnlockedDocumentCount()}/${TOTAL_DOCUMENTS}.`;
+      if (hasChapter3Access()) return "Enter Chapter 3, or review your archives.";
+      if (hasChapter2Access()) return "Enter Chapter 2, or review your archives.";
       return "Choose to wake again, or open an archive.";
     },
     message() {
       if (state.menuTab === "endings") return "Some doors have already opened for you. Others have not.";
       if (state.menuTab === "documents") return "The pages do not speak on their own, but you can arrange them back into clues.";
+      if (hasChapter3Access()) return "All branches are converging. One final door remains.";
+      if (hasChapter2Access()) return "You have crossed one layer already. The echo is waiting.";
       return "Every awakening is only another entrance.";
     },
     hotspots() {
@@ -606,3 +650,363 @@ const scenes = {
     hotspots() { return [{ id: "restart", label: "Wake Up Again", x: 38, y: 68, w: 24, h: 14, action() { resetGame(); } }]; }
   }
 };
+
+sceneArt.chapter2Entry = sceneArt.dinnerTableScene;
+sceneArt.chapter2ParkingLot = sceneArt.chapter2ParkingLot || sceneArt.carInterior;
+sceneArt.chapter2DriveHome = sceneArt.chapter2DriveHome || sceneArt.carInterior;
+sceneArt.chapter2CarAtApartment = sceneArt.carInterior;
+sceneArt.chapter2Entrance = sceneArt.entrance;
+sceneArt.chapter2Hallway = sceneArt.hallway;
+sceneArt.chapter2FireExitStairwell = sceneArt.escapeStairwell;
+sceneArt.chapter2StairwellNormal = sceneArt.stairwellNormal;
+sceneArt.chapter2SecondFloorHall = sceneArt.secondFloorHallNormal;
+sceneArt.chapter2SecondFloorResidential = sceneArt.thirdFloorResidentialNormal;
+sceneArt.chapter2UpperStairwell = sceneArt.upperStairwellNormal;
+sceneArt.chapter2ThirdFloorHall = sceneArt.thirdFloorHallNormal;
+sceneArt.chapter2ThirdFloorResidential = sceneArt.thirdFloorResidentialNormal;
+sceneArt.chapter2HomeDusty = sceneArt.dinnerTableScene;
+sceneArt.chapter2Bedroom = sceneArt.thirdFloorResidentialNormal;
+sceneArt.chapter2EchoJudgment = sceneArt.dinnerTableScene;
+sceneArt.chapter2PropertyDutyRoom = sceneArt.dinnerTableScene;
+sceneArt.chapter3Entry = sceneArt.mainMenu;
+
+scenes.chapter2Entry = {
+  title: "Chapter 2 - Ward",
+  hint: "You wake in the psychiatrist's ward.",
+  objective() {
+    if (!state.flags.chapter2WokeInWard) return "Get your bearings.";
+    if (!state.flags.chapter2DoctorTalked) return "Speak with the doctor.";
+    if (!state.flags.chapter2GotMedicine) return "Take the medicine bottle.";
+    if (!state.flags.chapter2InquiryFinished) return "Finish the conversation.";
+    return "Leave for the parking lot.";
+  },
+  message() {
+    if (!state.flags.chapter2WokeInWard) return "A familiar figure is reading your case file at bedside.";
+    if (!state.flags.chapter2DoctorTalked) return "The doctor gestures for you to breathe slowly.";
+    if (!state.flags.chapter2GotMedicine) return "A white medicine bottle is placed within reach.";
+    if (!state.flags.chapter2InquiryFinished) return "You can still ask one more thing.";
+    return "The bottle is in your hand. The corridor outside is cold white light.";
+  },
+  hotspots() {
+    return [
+      { id: "wake", label: "Wake Up", x: 18, y: 34, w: 20, h: 28, visible: !state.flags.chapter2WokeInWard, pulse: true, action() { state.flags.chapter2WokeInWard = true; showMessage("You sit up hard. The doctor says: This time, you didn't wake in the car."); render(); } },
+      { id: "doctor", label: "Doctor", x: 44, y: 24, w: 20, h: 40, visible: state.flags.chapter2WokeInWard, action() { state.flags.chapter2DoctorTalked = true; addNote("The doctor says you must face the memory instead of rewriting it."); showMessage("Face that day. If you keep rewriting it, you won't leave the loop."); render(); } },
+      { id: "medicine", label: "Medicine Bottle", x: 24, y: 60, w: 16, h: 14, visible: state.flags.chapter2DoctorTalked && !state.flags.chapter2GotMedicine, pulse: true, action() { state.flags.chapter2GotMedicine = true; state.flags.chapter2InquiryFinished = true; acquireItem("Medicine Bottle"); collectDocument({ id: "chapter2-ptsd-casefile-en", title: "Case File Extract", source: "Psychiatry Ward", body: ["Diagnosis: PTSD", "", "Symptoms: looped dreams, reality avoidance, temporal displacement.", "Trigger Event: █████████", "", "Instruction: Take medicine daily. Do not stop on your own."].join("\n") }); showMessage("You pick up the bottle. The trigger event line is fully blacked out."); render(); } },
+      { id: "leave", label: "Leave Ward", x: 38, y: 72, w: 24, h: 14, visible: state.flags.chapter2InquiryFinished, action() { setScene("chapter2ParkingLot"); } }
+    ];
+  }
+};
+
+scenes.chapter2ParkingLot = {
+  title: "Chapter 2 - Parking Lot",
+  hint: "Your car waits below the clinic.",
+  objective() { return "Drive home, or stay and steady yourself."; },
+  message() { return "Headlights carve pale lines in wet concrete."; },
+  hotspots() {
+    return [
+      { id: "drive", label: "Drive Home", x: 24, y: 58, w: 38, h: 18, pulse: true, action() { setScene("chapter2DriveHome"); } },
+      { id: "stay", label: "Stay Here", x: 66, y: 58, w: 22, h: 18, action() {
+        collectDocument({ id: "chapter2-roadside-flyers-a-en", title: "Roadside Flyers (Services)", source: "Clinic Billboard", body: ["Moving / Cleaning / Repairs", "", "All-night moving service.", "Deep cleaning and emergency home repair."].join("\n") });
+        collectDocument({ id: "chapter2-roadside-flyers-b-en", title: "Roadside Flyers (Classes)", source: "Clinic Billboard", body: ["Night Classes / Resume Review / Agency Services", "", "Stacks of paper overlap each other.", "A narrow strip ad is pinned in the corner."].join("\n") });
+        collectDocument({ id: "chapter2-roadside-divination-strip-en", title: "Divination Strip Ad", source: "Clinic Billboard Corner", body: ["Small handwritten strip:", "", "Night readings. No names asked.", "Phone: 800-4411-0726", "", "Back side:", "The most important date will choose for you."].join("\n") });
+        addNote("Among random flyers, you notice a tiny divination strip with number 800-4411-0726.");
+        showMessage("You scan the crowded billboard: moving, cleaning, classes, agencies. A narrow strip in the corner reads: 800-4411-0726.");
+      } }
+    ];
+  }
+};
+
+scenes.chapter2DriveHome = {
+  title: "Chapter 2 - Drive",
+  hint: "Streetlights slide past in rain.",
+  objective() { return "Continue to the apartment."; },
+  message() { return "For a blink, the passenger seat looks recently occupied."; },
+  hotspots() { return [{ id: "continue", label: "Continue", x: 34, y: 72, w: 32, h: 14, action() { setScene("chapter2CarAtApartment"); } }]; }
+};
+
+scenes.chapter2CarAtApartment = {
+  title: "Chapter 2 - Outside the Building",
+  hint: "You park exactly where you parked that night.",
+  objective() { return "Get out and check the entrance mailbox."; },
+  message() { return "Home is only a few steps away, and still hard to approach."; },
+  hotspots() { return [{ id: "exit", label: "Get Out", x: 78, y: 28, w: 14, h: 34, pulse: true, action() { setScene("chapter2Entrance"); } }]; }
+};
+
+scenes.chapter2Entrance = {
+  title: "Chapter 2 - Entrance",
+  hint: "Two newly delivered papers are inside the mailbox.",
+  objective() { return state.flags.chapter2MailboxOpened ? "Enter the building." : "Read the mailbox documents first."; },
+  message() { return state.flags.chapter2MailboxOpened ? "Layoff subsidy. Medical accident. The words keep repeating in your head." : "A white paper edge sticks out from the mailbox slot."; },
+  hotspots() {
+    return [
+      { id: "mailbox", label: "Mailbox", x: 10, y: 38, w: 18, h: 26, pulse: !state.flags.chapter2MailboxOpened, action() { if (!state.flags.chapter2MailboxOpened) { state.flags.chapter2MailboxOpened = true; collectDocument({ id: "chapter2-layoff-subsidy-en", title: "Layoff Subsidy Notice", source: "Entrance Mailbox", body: ["Your subsidy request has been approved.", "Recipient: John", "Issue date: 03/25"].join("\n") }); collectDocument({ id: "chapter2-medical-accident-news-en", title: "News Clipping: Medical Accident", source: "Entrance Mailbox", body: ["A disputed obstetrics operation has triggered a family complaint.", "Hospital says internal review is ongoing."].join("\n") }); showMessage("You pull out two papers. Layoff subsidy. Medical accident."); render(); return; } showMessage("The same two papers. Same words. Same tremor in your hand."); } },
+      { id: "door", label: "Building Door", x: 42, y: 18, w: 22, h: 56, locked: !state.flags.chapter2MailboxOpened, action() { if (!state.flags.chapter2MailboxOpened) { showMessage("Read the mailbox papers first."); return; } setScene("chapter2Hallway"); } }
+    ];
+  }
+};
+
+scenes.chapter2Hallway = {
+  title: "Chapter 2 - First Floor Hall",
+  hint: "The ritual notice is gone. A normal property notice is back.",
+  objective() { return state.flags.chapter2FirstFloorFireExitUnlocked ? "Fire exit unlocked. Keep investigating upstairs." : "Check the notice and move deeper."; },
+  message() { return "The silence here feels staged."; },
+  hotspots() {
+    return [
+      { id: "fire", label: "Fire Exit", x: 8, y: 22, w: 18, h: 48, action() { if (!state.flags.chapter2FirstFloorFireExitUnlocked) { showMessage("Locked. Duty room authorization required."); return; } setScene("chapter2FireExitStairwell"); } },
+      { id: "stairs", label: "Upstairs", x: 42, y: 24, w: 18, h: 48, action() { setScene("chapter2StairwellNormal"); } },
+      { id: "notice", label: "Property Notice", x: 74, y: 18, w: 18, h: 42, pulse: true, action() { collectDocument({ id: "chapter2-normal-property-notice-en", title: "Property Maintenance Notice", source: "First Floor Wall", body: ["Elevator inspection Wednesday 10:00-12:00.", "Property Service Center"].join("\n") }); showMessage("A normal notice. That unsettles you more."); } }
+    ];
+  }
+};
+
+scenes.chapter2FireExitStairwell = {
+  title: "Chapter 2 - Fire Stairwell",
+  hint: "Emergency lights lead upward.",
+  objective() { return "Search the stairwell and continue to the third-floor exit."; },
+  message() { return "Concrete walls throw your footsteps back at you."; },
+  hotspots() {
+    return [
+      { id: "photo", label: "Photo in Corner", x: 8, y: 74, w: 18, h: 14, pulse: true, action() { collectDocument({ id: "chapter2-marriage-photo-en", title: "Erased Wedding Photo", source: "First Floor Fire Stairwell", body: ["Your wife\'s face is smeared out again.", "Back side shows only one date: 1106."].join("\n") }); showMessage("Her face is erased. The back only reads: 1106."); } },
+      { id: "sheet", label: "Inspection Sheet", x: 8, y: 28, w: 20, h: 26, pulse: true, action() { collectDocument({ id: "chapter2-fire-exit-inspection-sheet-en", title: "Fire Exit Inspection Sheet", source: "Fire Stairwell Wall", body: ["Inspector: David", "Property ID: WY-3A-017", "03/27: third-floor outlet switched to controlled mode."].join("\n") }); showMessage("Inspector name: David. Property ID: WY-3A-017."); } },
+      { id: "to3", label: "To Third-Floor Outlet", x: 62, y: 18, w: 24, h: 30, pulse: true, action() { setScene("chapter2ThirdFloorHall"); } },
+      { id: "back", label: "Back", x: 14, y: 70, w: 24, h: 14, action() { setScene("chapter2Hallway"); } }
+    ];
+  }
+};
+
+scenes.chapter2StairwellNormal = { title: "Chapter 2 - Stairwell", hint: "First and second floors connect here.", objective() { return "Reach the second floor."; }, message() { return "Everything looks ordinary. Too ordinary."; }, hotspots() { return [{ id: "to2", label: "To Second Floor", x: 62, y: 18, w: 22, h: 28, action() { setScene("chapter2SecondFloorHall"); } }, { id: "to1", label: "Back to First Floor", x: 16, y: 54, w: 22, h: 18, action() { setScene("chapter2Hallway"); } }]; } };
+scenes.chapter2SecondFloorHall = { title: "Chapter 2 - Second Floor Hall", hint: "Residential entrance is on the right.", objective() { return "Check the duty room and continue upward."; }, message() { return "No marks. No noise. Just stale hallway air."; }, hotspots() { return [{ id: "resi", label: "Residential Entrance", x: 74, y: 18, w: 18, h: 48, action() { setScene("chapter2SecondFloorResidential"); } }, { id: "stairs", label: "Upstairs", x: 42, y: 24, w: 18, h: 48, action() { setScene("chapter2UpperStairwell"); } }, { id: "back", label: "Back", x: 40, y: 78, w: 20, h: 12, action() { setScene("chapter2StairwellNormal"); } }]; } };
+scenes.chapter2SecondFloorResidential = { title: "Chapter 2 - Second Floor Residences", hint: "A lit door says Duty Room.", objective() { return "Enter the duty room."; }, message() { return "No voices behind the door."; }, hotspots() { return [{ id: "duty", label: "Property Duty Room", x: 42, y: 18, w: 18, h: 48, pulse: true, action() { setScene("chapter2PropertyDutyRoom"); } }, { id: "back", label: "Back", x: 38, y: 78, w: 20, h: 12, action() { setScene("chapter2SecondFloorHall"); } }]; } };
+
+scenes.chapter2PropertyDutyRoom = {
+  title: "Chapter 2 - Duty Room",
+  hint: "Ledger, monitor, desk phone, and duty terminal.",
+  objective() { return state.flags.chapter2ThirdFloorFireExitUnlocked ? "Return to the third floor." : "Use the phone and terminal to uncover access routes."; },
+  message() { return "No staff in sight. The fan is still spinning."; },
+  hotspots() {
+    return [
+      { id: "ledger", label: "Duty Ledger", x: 24, y: 56, w: 30, h: 16, pulse: true, action() { collectDocument({ id: "chapter2-duty-room-log-en", title: "Duty Log Extract", source: "Duty Room Desk", body: ["After that incident, third floor was sealed.", "Residents moved out. Access restricted."].join("\n") }); showMessage("The line repeats: after that incident, third floor was sealed."); } },
+      { id: "monitor", label: "Monitor", x: 10, y: 18, w: 16, h: 18, action() { showMessage("Snow noise only. No usable feed."); } },
+      { id: "phone", label: "Desk Phone", x: 30, y: 18, w: 14, h: 18, action() {
+        const input = promptCode("Dial a number");
+        if (input === null) { showMessage("You lower the receiver without dialing."); return; }
+        const dialed = input.replace(/\D/g, "");
+        if (!dialed) { showMessage("No valid number entered."); return; }
+        if (dialed === "80044110726") {
+          const hasDevil = hasItem("Tarot - Devil");
+          const hasLovers = hasItem("Tarot - Lovers");
+          if (!hasDevil && !hasLovers) {
+            if (!hasItem("Tarot - Justice")) acquireItem("Tarot - Justice");
+            collectDocument({ id: "chapter2-divination-call-record-justice-en", title: "Call Record: Justice", source: "Duty Room Phone", body: ["Voice: You haven't drawn the real question yet.", "Card drawn: Justice.", "Meaning: you carry unresolved guilt toward someone."].join("\n") });
+            addNote("The hotline drew Justice for you and called out your guilt.");
+            showMessage("The voice says: Justice. You are guilty toward someone. When you hang up, a new card is in your pocket.");
+            render();
+            return;
+          }
+          const opts = [];
+          if (hasDevil) opts.push("1=Ask Devil");
+          if (hasLovers) opts.push("2=Ask Lovers");
+          opts.push("0=Hang up");
+          const choice = promptCode(`Ask about a card (${opts.join(", ")})`);
+          if (choice === null || choice.replace(/\s+/g, "") === "0") { showMessage("You hang up in silence."); return; }
+          const c = choice.replace(/\s+/g, "");
+          if (c === "1" && hasDevil) { collectDocument({ id: "chapter2-divination-devil-meaning-en", title: "Hotline Reading: Devil", source: "Duty Room Phone", body: ["Devil is not temptation.", "It is the chain you refuse to release."].join("\n") }); showMessage("Voice: Devil is the chain you keep choosing."); return; }
+          if (c === "2" && hasLovers) { collectDocument({ id: "chapter2-divination-lovers-meaning-en", title: "Hotline Reading: Lovers", source: "Duty Room Phone", body: ["Lovers is not comfort.", "It is a choice between a person and a truth."].join("\n") }); showMessage("Voice: Lovers is a choice, not forgiveness."); return; }
+          showMessage("Voice: Look at what you're holding before you ask.");
+          return;
+        }
+        if (dialed === "110" || dialed === "119" || dialed === "120") { showMessage("The line cuts out before connection."); return; }
+        showMessage("Continuous busy tone. No answer.");
+      } },
+      { id: "computer", label: "Duty Terminal", x: 72, y: 22, w: 16, h: 18, pulse: !state.flags.chapter2ThirdFloorFireExitUnlocked, action() {
+        if (!state.flags.chapter2DutyComputerUsed) {
+          state.flags.chapter2DutyComputerUsed = true;
+          state.flags.chapter2FirstFloorFireExitUnlocked = true;
+          collectDocument({ id: "chapter2-fire-exit-ops-note-en", title: "Fire Exit Operations Note", source: "Duty Terminal", body: ["1F fire exit can be remotely unlocked here.", "3F outlet requires staff login: name + property ID."].join("\n") });
+          showMessage("1F fire exit unlocked. 3F outlet requires staff credentials.");
+          render();
+          return;
+        }
+        if (!state.flags.chapter2ThirdFloorFireExitUnlocked) {
+          const n = promptCode("Staff name");
+          if (n === null) { showMessage("No name entered."); return; }
+          const p = promptCode("Property ID");
+          if (p === null) { showMessage("No ID entered."); return; }
+          const okN = n.replace(/\s+/g, "").toLowerCase() === "david";
+          const okP = p.replace(/[^a-z0-9]/gi, "").toLowerCase() === "wy3a017";
+          if (okN && okP) { state.flags.chapter2ThirdFloorFireExitUnlocked = true; showMessage("Authorization accepted. Third-floor fire outlet unlocked."); render(); return; }
+          showMessage("Login mismatch.");
+          return;
+        }
+        showMessage("Status: 1F unlocked. 3F outlet authorized.");
+      } },
+      { id: "back", label: "Back", x: 42, y: 78, w: 18, h: 12, action() { setScene("chapter2SecondFloorResidential"); } }
+    ];
+  }
+};
+
+scenes.chapter2UpperStairwell = { title: "Chapter 2 - Upper Stairwell", hint: "Second and third floors connect here.", objective() { return "Go to the third floor."; }, message() { return "Silence thickens with each step."; }, hotspots() { return [{ id: "to3", label: "To Third Floor", x: 62, y: 18, w: 22, h: 28, action() { setScene("chapter2ThirdFloorHall"); } }, { id: "back", label: "Back", x: 18, y: 72, w: 22, h: 14, action() { setScene("chapter2SecondFloorHall"); } }]; } };
+
+scenes.chapter2ThirdFloorHall = {
+  title: "Chapter 2 - Third Floor",
+  hint: "Residential gate is sealed with chain and tape.",
+  objective() { return state.flags.chapter2ThirdFloorFireExitUnlocked ? "Use fire outlet side entry." : "Read the seal and unlock outlet from duty room."; },
+  message() { return "The floor is quiet. The seal looks fresh."; },
+  hotspots() {
+    return [
+      { id: "sealed", label: "Sealed Residential Gate", x: 74, y: 18, w: 18, h: 48, pulse: true, action() { collectDocument({ id: "chapter2-sealed-notice-3f-en", title: "Third-Floor Seal Notice", source: "Third Floor Residential Gate", body: ["Temporary lockdown. Entry prohibited.", "Report anomalies at second-floor duty room."].join("\n") }); showMessage("Locked and sealed. Report anomalies at second-floor duty room."); } },
+      { id: "fire", label: state.flags.chapter2ThirdFloorFireExitUnlocked ? "Fire Outlet (Unlocked)" : "Fire Outlet", x: 8, y: 18, w: 18, h: 48, pulse: !state.flags.chapter2ThirdFloorFireExitUnlocked, action() { if (!state.flags.chapter2FirstFloorFireExitUnlocked) { showMessage("No response. Unlock 1F fire control first."); return; } if (!state.flags.chapter2ThirdFloorFireExitUnlocked) { showMessage("Outlet asks for remote authorization from duty room."); return; } setScene("chapter2ThirdFloorResidential"); } },
+      { id: "back", label: "Back to Stairwell", x: 42, y: 24, w: 18, h: 48, action() { setScene("chapter2UpperStairwell"); } }
+    ];
+  }
+};
+
+scenes.chapter2ThirdFloorResidential = { title: "Chapter 2 - Third Floor Residences", hint: "Your door is still there.", objective() { return "Enter your apartment."; }, message() { return "Only your footsteps answer you."; }, hotspots() { return [{ id: "home", label: "Your Door", x: 42, y: 18, w: 18, h: 48, pulse: true, action() { setScene("chapter2HomeDusty"); } }, { id: "back", label: "Back", x: 38, y: 78, w: 20, h: 12, action() { setScene("chapter2ThirdFloorHall"); } }]; } };
+
+scenes.chapter2HomeDusty = {
+  title: "Chapter 2 - Home",
+  hint: "Dust everywhere. No one has cleaned in a long time.",
+  objective() { return state.flags.chapter2PendingEnding ? "Sit in the living room and face what comes next." : "Search the apartment for clues."; },
+  message() { return "Dry dust smell fills the room. Your finger leaves marks on every surface."; },
+  hotspots() {
+    return [
+      { id: "sofa", label: state.flags.chapter2PendingEnding ? "Old Sofa" : "Dusty Table", x: 22, y: 56, w: 34, h: 16, action() {
+        if (hasItem("Handgun")) {
+          const sitGun = window.confirm("Sit down?");
+          if (!sitGun) { showMessage("You stay standing with your hand still near your pocket."); return; }
+          setScene("chapter2GunEnding");
+          return;
+        }
+        if (state.flags.chapter2PendingEnding) {
+          const sit = window.confirm("Sit down?");
+          if (!sit) { showMessage("You remain standing. The room keeps listening."); return; }
+          setScene("chapter2EchoJudgment");
+          return;
+        }
+        showMessage("You drag one finger through the dust. Raw wood appears beneath.");
+      } },
+      { id: "cabinet", label: "Cabinet", x: 70, y: 20, w: 18, h: 36, action() { collectDocument({ id: "chapter2-home-cleaning-note-en", title: "Unfinished Cleaning Note", source: "Living Room Cabinet", body: ["A curled sticky note under dust:", "", "Full-apartment cleaning this weekend.", "", "No date. No signature."].join("\n") }); showMessage("A half-written cleaning note sits under dust."); } },
+      { id: "bedroom", label: "Bedroom Door", x: 70, y: 18, w: 18, h: 36, pulse: true, action() { setScene("chapter2Bedroom"); } },
+      { id: "back", label: "Back to Corridor", x: 42, y: 78, w: 18, h: 12, action() { setScene("chapter2ThirdFloorResidential"); } }
+    ];
+  }
+};
+
+scenes.chapter2Bedroom = {
+  title: "Chapter 2 - Bedroom",
+  hint: "A crib. A lockbox. A carved line: The most important date.",
+  objective() { return state.flags.chapter2TarotChoice ? "You already made your card choice." : "Enter a 4-digit date on the lockbox."; },
+  message() { return "The lockbox rests in the center of the crib mattress."; },
+  hotspots() {
+    return [
+      { id: "crib", label: "Crib", x: 20, y: 42, w: 30, h: 26, action() { showMessage("Dust circles the crib rails. The lockbox waits in the middle."); } },
+      { id: "lockbox", label: "Lockbox", x: 56, y: 38, w: 22, h: 24, pulse: !state.flags.chapter2TarotChoice, action() {
+        const hasJustice = hasItem("Tarot - Justice");
+        const hasGun = hasItem("Handgun");
+        if (state.flags.chapter2TarotChoice && !(hasJustice && !hasGun)) {
+          const picked = state.flags.chapter2TarotChoice === "devil" ? "Tarot - Devil" : "Tarot - Lovers";
+          showMessage(`The box is already open. The slot is empty. You took: ${picked}.`);
+          return;
+        }
+        const input = promptCode("Enter 4 digits");
+        if (input === null) { showMessage("You stop over the keypad without entering anything."); return; }
+        const code = input.replace(/\D/g, "");
+        if (code === "0325") {
+          if (hasJustice && !hasGun) {
+            acquireItem("Handgun");
+            collectDocument({ id: "chapter2-lockbox-handgun-en", title: "Hidden Compartment: Handgun", source: "Crib Lockbox", body: ["You enter 0325.", "A hidden side panel opens.", "Inside is a handgun, cold as stored metal."].join("\n") });
+            addNote("With Justice in hand, 0325 opened a hidden compartment and gave you a handgun.");
+            showMessage("A hidden side panel clicks open. A handgun is inside.");
+            render();
+            return;
+          }
+          showMessage("0325 does nothing. Something else is missing.");
+          return;
+        }
+        if (code === "0327") {
+          state.flags.chapter2TarotChoice = "devil";
+          acquireItem("Tarot - Devil");
+          collectDocument({ id: "chapter2-tarot-devil-en", title: "Tarot - Devil", source: "Crib Lockbox", body: ["A single card slides out: Devil.", "A chain binds two figures in repeating loops."].join("\n") });
+          if (!state.flags.chapter2MedicineUsed) {
+            state.flags.chapter2PendingEnding = "chapter2BloodCradleEnding";
+            showMessage("As your finger touches the Devil card, wet red starts to seep from the crib rails. You back into the living room.");
+            render();
+            return;
+          }
+          state.flags.chapter2PendingEnding = "chapter2MonsterReturnEnding";
+          showMessage("Your vision stutters under medicine. A familiar impact sound hits the bedroom door. You retreat to the living room.");
+          render();
+          return;
+        }
+        if (code === "1106") {
+          state.flags.chapter2TarotChoice = "love";
+          acquireItem("Tarot - Lovers");
+          collectDocument({ id: "chapter2-tarot-lovers-en", title: "Tarot - Lovers", source: "Crib Lockbox", body: ["A single card slides out: Lovers.", "Two figures face each other in fixed light."].join("\n") });
+          if (!state.flags.chapter2MedicineUsed) {
+            state.flags.chapter2PendingEnding = "chapter2UneasyReunionEnding";
+            showMessage("Footsteps outside the bedroom. You clutch the Lovers card and step back to the living room.");
+            render();
+            return;
+          }
+          state.flags.chapter2PendingEnding = "chapter2WaitWifeEnding";
+          showMessage("The room darkens in patches under medicine. You carry the Lovers card back to the living room.");
+          render();
+          return;
+        }
+        showMessage("Wrong code. The lockbox light blinks twice and goes still.");
+      } },
+      { id: "back", label: "Back to Living Room", x: 40, y: 78, w: 20, h: 12, action() { setScene("chapter2HomeDusty"); } }
+    ];
+  }
+};
+
+scenes.chapter2EchoJudgment = {
+  title: "Chapter 2 - Echo in the Living Room",
+  hint() {
+    const p = state.flags.chapter2PendingEnding;
+    if (p === "chapter2UneasyReunionEnding") return "She stands at the end of the hall, smiling at you.";
+    if (p === "chapter2BloodCradleEnding") return "A blood-stained version of her waits in the doorway.";
+    if (p === "chapter2MonsterReturnEnding") return "The twisted creature is in the bedroom doorway.";
+    return "The room is hollow and listening.";
+  },
+  onEnter() {
+    if (hasItem("Handgun")) { state.flags.chapter2PendingEnding = ""; setScene("chapter2GunEnding"); return true; }
+    if (state.flags.chapter2PendingEnding === "chapter2WaitWifeEnding") { state.flags.chapter2PendingEnding = ""; setScene("chapter2WaitWifeEnding"); return true; }
+    return false;
+  },
+  objective() {
+    const p = state.flags.chapter2PendingEnding;
+    if (p === "chapter2UneasyReunionEnding" || p === "chapter2BloodCradleEnding") return "Click her.";
+    if (p === "chapter2MonsterReturnEnding") return "Click the creature.";
+    return "Hold steady.";
+  },
+  message() {
+    const p = state.flags.chapter2PendingEnding;
+    if (p === "chapter2UneasyReunionEnding") return "She appears at the end of the hall and reaches toward you.";
+    if (p === "chapter2BloodCradleEnding") return "A dripping sound from the bedroom. She steps out with blood on her sleeves.";
+    if (p === "chapter2MonsterReturnEnding") return "The bedroom door shakes. The same twisted thing from Chapter 1 pushes through.";
+    return "You sit and wait.";
+  },
+  hotspots() {
+    const p = state.flags.chapter2PendingEnding;
+    return [
+      { id: "wife", label: "Wife", x: 72, y: 20, w: 18, h: 36, pulse: true, visible: p === "chapter2UneasyReunionEnding", action() { state.flags.chapter2PendingEnding = ""; setScene("chapter2UneasyReunionEnding"); } },
+      { id: "wife-blood", label: "Blood-Stained Wife", x: 72, y: 20, w: 18, h: 36, pulse: true, visible: p === "chapter2BloodCradleEnding", action() { state.flags.chapter2PendingEnding = ""; setScene("chapter2BloodCradleEnding"); } },
+      { id: "monster", label: "Twisted Creature", x: 58, y: 28, w: 18, h: 34, pulse: true, visible: p === "chapter2MonsterReturnEnding", action() { state.flags.chapter2PendingEnding = ""; setScene("chapter2MonsterReturnEnding"); } }
+    ];
+  }
+};
+
+scenes.chapter3Entry = {
+  title: "Chapter 3 - Final Resonance",
+  hint: "Chapter 3 unlocked.",
+  objective() { return "The final chapter continues from here."; },
+  message() { return "All branch paths have converged. One final threshold remains."; },
+  hotspots() { return [{ id: "back", label: "Back to Main Menu", x: 38, y: 72, w: 24, h: 14, action() { openMainMenu(); } }]; }
+};
+
+scenes.chapter2UneasyReunionEnding = { endingId: "chapter2UneasyReunionEnding", title: "Ending - Uneasy Reunion", hint: "She returns, but the calm feels wrong.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "After you sit down, she walks in and holds you without a word. Her warmth is real. The calm is too perfect."; }, overlay() { return buildEndingOverlay({ order: 6, variant: "good", name: "Uneasy Reunion", summary: "No medicine. Lovers card. Reunion arrives exactly as desired, and that is what makes it frightening." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
+scenes.chapter2WaitWifeEnding = { endingId: "chapter2WaitWifeEnding", title: "Ending - Waiting Room", hint: "Medicine strips color from the world.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "You sit and finally see the house as a ruined shell with peeling walls. Still, you wait for her to come home."; }, overlay() { return buildEndingOverlay({ order: 7, variant: "normal", name: "Waiting Room", summary: "Medicine plus Lovers card reveals decay, but you choose to stay and wait." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
+scenes.chapter2BloodCradleEnding = { endingId: "chapter2BloodCradleEnding", title: "Ending - Blood Cradle", hint: "No medicine. No barrier left.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "The crib bleeds through the rails. She returns with blood on her sleeves and embraces you as if this is ordinary."; }, overlay() { return buildEndingOverlay({ order: 8, variant: "bad", name: "Blood Cradle", summary: "No medicine plus Devil card lets blood and memory flood back in together." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
+scenes.chapter2MonsterReturnEnding = { endingId: "chapter2MonsterReturnEnding", title: "Ending - Old Shadow", hint: "Medicine steadies you just enough to watch it return.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "The same twisted creature from Chapter 1 crashes in and lunges without slowing."; }, overlay() { return buildEndingOverlay({ order: 9, variant: "bad", name: "Old Shadow", summary: "Medicine plus Devil card reopens the original nightmare entry point." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
+scenes.chapter2GunEnding = { endingId: "chapter2GunEnding", title: "Ending - Swallow the Gun", hint: "You leave the last choice to the trigger.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "You sit with the handgun and stop waiting for footsteps. Steel against your teeth. One muffled shot, and the room falls silent."; }, overlay() { return buildEndingOverlay({ order: 10, variant: "bad", name: "Swallow the Gun", summary: "With the hidden handgun in hand, you choose an ending that leaves no witness." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };

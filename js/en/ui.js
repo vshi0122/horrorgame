@@ -60,7 +60,12 @@ function renderInventory() {
   }
 
   inventoryEl.innerHTML = state.inventory
-    .map((item) => `<span class="inventory-item">${item}</span>`)
+    .map((item) => {
+      if (item === "Medicine Bottle") {
+        return `<button class="inventory-item inventory-item-usable" data-item="${item}" type="button">${item} (Use)</button>`;
+      }
+      return `<span class="inventory-item">${item}</span>`;
+    })
     .join("");
 }
 

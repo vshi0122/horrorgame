@@ -14,27 +14,48 @@ const MENU_ENDING_CATALOG = [
 ];
 
 const MENU_DOCUMENT_TOTAL = 25;
+const CHAPTER3_UNLOCK_ENDING_IDS = [
+  "chapter2UneasyReunionEnding",
+  "chapter2WaitWifeEnding",
+  "chapter2BloodCradleEnding",
+  "chapter2MonsterReturnEnding"
+];
+
+function hasChapter3Access() {
+  return CHAPTER3_UNLOCK_ENDING_IDS.some((endingId) => hasUnlockedEnding(endingId));
+}
 
 function buildMainMenuHome() {
   const chapter2Unlocked = hasChapter2Access();
+  const chapter3Unlocked = hasChapter3Access();
 
   const chapter2Action = chapter2Unlocked
     ? '<button class="menu-action" type="button" data-action="start-chapter2">第二章：回声住户</button>'
     : '<button class="menu-action" type="button" disabled title="达成“醒来？”结局后解锁">第二章：回声住户（未解锁）</button>';
 
+  const chapter3Action = chapter3Unlocked
+    ? '<button class="menu-action" type="button" data-action="start-chapter3">第三章：终章回响</button>'
+    : '<button class="menu-action" type="button" disabled title="触发任一第二章结局（吞枪除外）后解锁">第三章：终章回响（未解锁）</button>';
+
+  const menuTitle = chapter3Unlocked ? "降临之日：终" : (chapter2Unlocked ? "降临之日：回声" : "降临之日");
+  const menuTagline = chapter3Unlocked
+    ? "你已经穿过第二章的分歧。现在，第三章已开启。"
+    : (chapter2Unlocked
+      ? "你已经穿过最深的一层。现在，选择是否进入第二章，继续面对被你改写过的记忆。"
+      : "深夜醒来。公寓楼静立车前。<br>选择再次走进那个夜晚，或翻阅你已经带出的记忆。");
+
   return `
     <section class="scene-overlay menu-overlay" aria-label="主界面">
       <div class="menu-home">
         <p class="menu-kicker">A Point &amp; Click Horror Game</p>
-        <h2 class="menu-title">${chapter2Unlocked ? "降临之日：回声" : "降临之日"}</h2>
-        <p class="menu-tagline">${chapter2Unlocked
-          ? "你已经穿过最深的一层。现在，选择是否进入第二章，继续面对被你改写过的记忆。"
-          : "深夜醒来。公寓楼静立车前。<br>选择再次走进那个夜晚，或翻阅你已经带出的记忆。"}
+        <h2 class="menu-title">${menuTitle}</h2>
+        <p class="menu-tagline">${menuTagline}
         </p>
         <div class="menu-divider"></div>
         <nav class="menu-actions">
           <button class="menu-action menu-primary" type="button" data-action="start-game">再次醒来</button>
           ${chapter2Action}
+          ${chapter3Action}
           <button class="menu-action" type="button" data-action="open-endings">结局图鉴</button>
           <button class="menu-action" type="button" data-action="open-documents">文本图鉴</button>
         </nav>
@@ -154,17 +175,21 @@ function buildDocumentArchive() {
 
 window.scenes.mainMenu = {
   title: "主界面",
-  hint: hasChapter2Access()
+  hint: hasChapter3Access()
+    ? "你已完成第二章分支，第三章入口已开启。"
+    : hasChapter2Access()
     ? "你已经抵达“醒来？”结局。主界面发生了变化。"
     : "黑暗尚未完全散去，你可以再次醒来，或先回看那些已被你带出的痕迹。",
   objective() {
     if (state.menuTab === "endings") return `浏览已解锁结局 ${getUnlockedEndingCount()}/${MENU_ENDING_CATALOG.length}。`;
     if (state.menuTab === "documents") return `浏览已收录文本 ${getUnlockedDocumentCount()}/${MENU_DOCUMENT_TOTAL}。`;
+    if (hasChapter3Access()) return "第三章已解锁。你可以前往终章，或继续回看图鉴。";
     return hasChapter2Access() ? "第二章已解锁。你可以继续深入，或回看图鉴。" : "选择再次醒来，或进入图鉴。";
   },
   message() {
     if (state.menuTab === "endings") return "有些门已经被你推开，有些还没有。";
     if (state.menuTab === "documents") return "字条不会自己说话，但你可以把它们重新排成线索。";
+    if (hasChapter3Access()) return "你走到了章节分歧的尽头。最后一层回响正在等你。";
     return hasChapter2Access() ? "你已经醒过一次。接下来，轮到你回头。" : "每一次醒来，都只是从另一个入口重新开始。";
   },
   hotspots() {
@@ -174,5 +199,31 @@ window.scenes.mainMenu = {
     if (state.menuTab === "endings") return buildEndingArchive();
     if (state.menuTab === "documents") return buildDocumentArchive();
     return buildMainMenuHome();
+  }
+};
+
+window.scenes.chapter3Entry = {
+  title: "第三章 · 终章回响",
+  hint: "第三章入口已开启。",
+  objective() {
+    return "终章内容将在这里继续接入。";
+  },
+  message() {
+    return "你站在新的门槛前。所有分歧都在这里收束，最后的答案只剩一步之遥。";
+  },
+  hotspots() {
+    return [
+      {
+        id: "back-menu",
+        label: "返回主界面",
+        x: 38,
+        y: 72,
+        w: 24,
+        h: 14,
+        action() {
+          openMainMenu();
+        }
+      }
+    ];
   }
 };
