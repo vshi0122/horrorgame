@@ -231,7 +231,11 @@ function getUnlockedDocumentCount() {
 
 function setMenuTab(tab, selectedDocumentId = null) {
   state.menuTab = tab;
-  state.selectedArchiveDocumentId = selectedDocumentId;
+  if (tab === "documents") {
+    state.selectedArchiveDocumentId = selectedDocumentId || getUnlockedDocuments()[0]?.id || null;
+  } else {
+    state.selectedArchiveDocumentId = selectedDocumentId;
+  }
   if (tab === "documents" && selectedDocumentId) {
     markDocumentSeen(selectedDocumentId);
   }
@@ -241,7 +245,9 @@ function openMainMenu(tab = "home", selectedDocumentId = null) {
   state = initialState();
   state.currentScene = "mainMenu";
   state.menuTab = tab;
-  state.selectedArchiveDocumentId = selectedDocumentId;
+  state.selectedArchiveDocumentId = tab === "documents"
+    ? (selectedDocumentId || getUnlockedDocuments()[0]?.id || null)
+    : selectedDocumentId;
   messageTextEl.innerHTML = scenes.mainMenu.message();
   render();
 }
@@ -283,6 +289,7 @@ function collectDocument(document) {
   }
   unlockDocument(document);
   state.selectedDocumentId = document.id;
+  state.selectedArchiveDocumentId = document.id;
 }
 
 function selectDocument(documentId) {

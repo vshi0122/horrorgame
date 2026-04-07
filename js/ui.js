@@ -85,6 +85,7 @@ function renderNotes() {
 
 function renderDocuments() {
   if (state.currentScene === "mainMenu") {
+    documentViewerEl.hidden = false;
     documentsListEl.innerHTML = '<p class="documents-empty">主界面中的文本图鉴会显示在场景中央。</p>';
     documentViewerEl.classList.add("document-empty");
     documentTitleEl.textContent = "文本图鉴";
@@ -94,6 +95,7 @@ function renderDocuments() {
   }
 
   if (!state.documents.length) {
+    documentViewerEl.hidden = false;
     documentsListEl.innerHTML = '<p class="documents-empty">还没有发现可回看的文本。</p>';
     documentViewerEl.classList.add("document-empty");
     documentTitleEl.textContent = "还没有收录文本";
@@ -102,18 +104,31 @@ function renderDocuments() {
     return;
   }
 
+  documentViewerEl.hidden = true;
   documentsListEl.innerHTML = state.documents
     .map((doc) => {
       const activeClass = doc.id === state.selectedDocumentId ? " active" : "";
       const unread = !isDocumentSeen(doc.id);
+      const inlineDetail = doc.id === state.selectedDocumentId
+        ? `
+          <article class="document-viewer document-inline-viewer">
+            <h3>${doc.title}</h3>
+            <p class="document-meta">${doc.source}</p>
+            <div class="document-body">${doc.body}</div>
+          </article>
+        `
+        : "";
       return `
-        <button class="document-entry${activeClass}" data-id="${doc.id}" type="button">
-          <span class="document-entry-title-row">
-            <span class="document-entry-title">${doc.title}</span>
-            ${unread ? '<span class="document-status-badges"><span class="document-badge document-badge-unread">未读</span><span class="document-badge document-badge-new">NEW</span></span>' : ""}
-          </span>
-          <span class="document-entry-meta">${doc.source}</span>
-        </button>
+        <div class="document-entry-group">
+          <button class="document-entry${activeClass}" data-id="${doc.id}" type="button">
+            <span class="document-entry-title-row">
+              <span class="document-entry-title">${doc.title}</span>
+              ${unread ? '<span class="document-status-badges"><span class="document-badge document-badge-unread">未读</span><span class="document-badge document-badge-new">NEW</span></span>' : ""}
+            </span>
+            <span class="document-entry-meta">${doc.source}</span>
+          </button>
+          ${inlineDetail}
+        </div>
       `;
     })
     .join("");

@@ -329,6 +329,11 @@ h3 {
   margin-top: 12px;
 }
 
+.document-entry-group {
+  display: grid;
+  gap: 10px;
+}
+
 .document-entry {
   width: 100%;
   text-align: left;
@@ -405,6 +410,10 @@ h3 {
 
 .document-viewer.document-empty {
   color: var(--muted);
+}
+
+.document-inline-viewer {
+  margin-top: 0;
 }
 
 .document-viewer p {

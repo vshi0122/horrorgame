@@ -85,6 +85,7 @@ function renderNotes() {
 
 function renderDocuments() {
   if (state.currentScene === "mainMenu") {
+    documentViewerEl.hidden = false;
     documentsListEl.innerHTML = '<p class="documents-empty">The codex is displayed in the center of the main menu.</p>';
     documentViewerEl.classList.add("document-empty");
     documentTitleEl.textContent = "Text Archive";
@@ -94,6 +95,7 @@ function renderDocuments() {
   }
 
   if (!state.documents.length) {
+    documentViewerEl.hidden = false;
     documentsListEl.innerHTML = '<p class="documents-empty">No discovered text to review yet.</p>';
     documentViewerEl.classList.add("document-empty");
     documentTitleEl.textContent = "No text collected yet";
@@ -102,18 +104,31 @@ function renderDocuments() {
     return;
   }
 
+  documentViewerEl.hidden = true;
   documentsListEl.innerHTML = state.documents
     .map((doc) => {
       const activeClass = doc.id === state.selectedDocumentId ? " active" : "";
       const unread = !isDocumentSeen(doc.id);
+      const inlineDetail = doc.id === state.selectedDocumentId
+        ? `
+          <article class="document-viewer document-inline-viewer">
+            <h3>${doc.title}</h3>
+            <p class="document-meta">${doc.source}</p>
+            <div class="document-body">${doc.body}</div>
+          </article>
+        `
+        : "";
       return `
-        <button class="document-entry${activeClass}" data-id="${doc.id}" type="button">
-          <span class="document-entry-title-row">
-            <span class="document-entry-title">${doc.title}</span>
-            ${unread ? '<span class="document-status-badges"><span class="document-badge document-badge-unread">UNREAD</span><span class="document-badge document-badge-new">NEW</span></span>' : ""}
-          </span>
-          <span class="document-entry-meta">${doc.source}</span>
-        </button>
+        <div class="document-entry-group">
+          <button class="document-entry${activeClass}" data-id="${doc.id}" type="button">
+            <span class="document-entry-title-row">
+              <span class="document-entry-title">${doc.title}</span>
+              ${unread ? '<span class="document-status-badges"><span class="document-badge document-badge-unread">UNREAD</span><span class="document-badge document-badge-new">NEW</span></span>' : ""}
+            </span>
+            <span class="document-entry-meta">${doc.source}</span>
+          </button>
+          ${inlineDetail}
+        </div>
       `;
     })
     .join("");
