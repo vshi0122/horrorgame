@@ -10,17 +10,22 @@ const documentViewerEl = document.querySelector("#documentViewer");
 const documentTitleEl = document.querySelector("#documentTitle");
 const documentMetaEl = document.querySelector("#documentMeta");
 const documentBodyEl = document.querySelector("#documentBody");
+const menuButton = document.querySelector("#menuButton");
 const restartButton = document.querySelector("#restartButton");
 const sceneFrame = document.querySelector("#sceneFrame");
 
 function render() {
   const scene = scenes[state.currentScene];
+  const isMainMenu = state.currentScene === "mainMenu";
   const title = typeof scene.title === "function" ? scene.title() : scene.title;
   const hint = typeof scene.hint === "function" ? scene.hint() : scene.hint;
+  const overlay = typeof scene.overlay === "function" ? scene.overlay() : (scene.overlay || "");
+  document.body.classList.toggle("main-menu-mode", isMainMenu);
+  restartButton.textContent = isMainMenu ? "再次醒来" : "重新开始";
   sceneTitleEl.textContent = title;
   sceneHintEl.innerHTML = hint;
   objectiveTextEl.innerHTML = scene.objective();
-  sceneEl.innerHTML = sceneArt[state.currentScene] + buildHotspots(scene.hotspots());
+  sceneEl.innerHTML = sceneArt[state.currentScene] + buildHotspots(scene.hotspots()) + overlay;
   renderInventory();
   renderNotes();
   renderDocuments();
@@ -64,6 +69,15 @@ function renderNotes() {
 }
 
 function renderDocuments() {
+  if (state.currentScene === "mainMenu") {
+    documentsListEl.innerHTML = '<p class="documents-empty">主界面中的文本图鉴会显示在场景中央。</p>';
+    documentViewerEl.classList.add("document-empty");
+    documentTitleEl.textContent = "文本图鉴";
+    documentMetaEl.textContent = "在主界面中查看已解锁文本。";
+    documentBodyEl.textContent = "";
+    return;
+  }
+
   if (!state.documents.length) {
     documentsListEl.innerHTML = '<p class="documents-empty">还没有发现可回看的文本。</p>';
     documentViewerEl.classList.add("document-empty");
