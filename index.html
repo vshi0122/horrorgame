@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>午夜来电</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="grain"></div>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Point & Click Horror</p>
+        <h1>午夜来电</h1>
+      </div>
+      <button id="restartButton" class="ghost-button" type="button">重新开始</button>
+    </header>
+
+    <section class="hud">
+      <div class="panel objective-panel">
+        <p class="panel-label">目标</p>
+        <p id="objectiveText">先在车里找到钥匙，再把番茄酱带上楼。</p>
+      </div>
+      <div class="panel inventory-panel">
+        <p class="panel-label">物品</p>
+        <div id="inventory" class="inventory"></div>
+      </div>
+    </section>
+
+    <section class="game-layout">
+      <div id="sceneFrame" class="scene-frame">
+        <div class="scene-header">
+          <div>
+            <p class="panel-label">地点</p>
+            <h2 id="sceneTitle">车里</h2>
+          </div>
+          <p id="sceneHint" class="scene-hint">雨刚停，挡风玻璃上还残着水痕。</p>
+        </div>
+
+        <div id="scene" class="scene" aria-live="polite"></div>
+
+        <div class="dialogue-bar">
+          <p class="panel-label">观察</p>
+          <p id="messageText">你在驾驶座上猛地惊醒，公寓楼正静静立在车前。</p>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="panel notes-panel">
+          <p class="panel-label">线索</p>
+          <ul id="notesList" class="notes-list"></ul>
+        </div>
+
+        <div class="panel documents-panel">
+          <p class="panel-label">发现的文本</p>
+          <div id="documentsList" class="documents-list"></div>
+          <article id="documentViewer" class="document-viewer document-empty">
+            <h3 id="documentTitle">还没有收录文本</h3>
+            <p id="documentMeta">发现文本后会显示在这里。</p>
+            <div id="documentBody" class="document-body"></div>
+          </article>
+        </div>
+
+        <div class="panel controls-panel">
+          <p class="panel-label">操作</p>
+          <p>点击场景中的高亮区域调查环境、拾取物品、查看文档并推进剧情。</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="js/state.js"></script>
+  <script src="js/scenes.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
