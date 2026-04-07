@@ -38,7 +38,7 @@ window.handleSceneMenuAction = function handleSceneMenuAction(action) {
   if (action === "chapter2-ask-cause") {
     if (!state.flags.chapter2AskedCause) {
       state.flags.chapter2AskedCause = true;
-      showMessage("医生沉默几秒：\"那一栏现在还不是你能直接看的内容。先把你愿意承认的部分说出来。\"");
+      showMessage("医生沉默几秒：\"那是你不愿意承认的部分，我也无权过问。\"");
     } else {
       showMessage("医生没有再重复这个问题的答案。");
     }
@@ -48,7 +48,7 @@ window.handleSceneMenuAction = function handleSceneMenuAction(action) {
   if (action === "chapter2-ask-medicine") {
     if (!state.flags.chapter2AskedMedicine) {
       state.flags.chapter2AskedMedicine = true;
-      showMessage("医生说：\"你可以不吃，但你会更快滑回循环里。药不能治好过去，只能让你别再逃。\"");
+      showMessage("医生说：\"药不能治好过去，只能让你别再逃。\"");
     } else {
       showMessage("你已经听过用药风险了。");
     }
@@ -56,14 +56,8 @@ window.handleSceneMenuAction = function handleSceneMenuAction(action) {
   }
 
   if (action === "chapter2-finish-inquiry") {
-    const askedCount = [state.flags.chapter2AskedPstd, state.flags.chapter2AskedCause, state.flags.chapter2AskedMedicine].filter(Boolean).length;
-    if (askedCount === 0) {
-      showMessage("你还没有提问。至少问一个问题再走。");
-      return true;
-    }
-
     state.flags.chapter2InquiryFinished = true;
-    showMessage("你结束了问询。医生点点头：\"去吧，别再绕开那一天。\"");
+    showMessage("你结束了问询。医生点点头：\"去吧，记得吃药。\"");
     render();
     return true;
   }

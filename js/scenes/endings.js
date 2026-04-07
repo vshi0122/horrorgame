@@ -1,8 +1,8 @@
 // Endings
 window.scenes = window.scenes || {};
 
-const TOTAL_ENDINGS = 9;
-const TOTAL_DOCUMENTS = 6;
+const TOTAL_ENDINGS = 10;
+const TOTAL_DOCUMENTS = 25;
 
 function buildEndingOverlay(config) {
   const collectedDocuments = state.documents.length;
@@ -82,7 +82,7 @@ window.scenes.badEnding = {
 
 window.scenes.failedEscapeEnding = {
   endingId: "failedEscapeEnding",
-  title: "结局 · 门外之物",
+  title: "结局 · 门外",
   hint: "门没有为你打开。",
   objective() {
     return `已解锁结局 ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}，已收集字条 ${state.documents.length}/${TOTAL_DOCUMENTS}。`;
@@ -94,7 +94,7 @@ window.scenes.failedEscapeEnding = {
     return buildEndingOverlay({
       order: 2,
       variant: "failed",
-      name: "门外之物",
+      name: "门外",
       summary: "你到达了一楼，却没能用正确方式离开。门不是出口，而是你的下一层噩梦。"
     });
   },
@@ -105,7 +105,7 @@ window.scenes.failedEscapeEnding = {
 
 window.scenes.normalEnding = {
   endingId: "normalEnding",
-  title: "结局 · 离开公寓",
+  title: "结局 · 离开",
   hint: "你离开了公寓。",
   objective() {
     return `已解锁结局 ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}，已收集字条 ${state.documents.length}/${TOTAL_DOCUMENTS}。`;
@@ -117,7 +117,7 @@ window.scenes.normalEnding = {
     return buildEndingOverlay({
       order: 3,
       variant: "normal",
-      name: "离开公寓",
+      name: "离开",
       summary: "你活着离开了这里，但真相并没有跟着你一起。"
     });
   },
@@ -141,7 +141,7 @@ window.scenes.goodEndingQuestion = {
       order: 4,
       variant: "good",
       name: "醒来？",
-      summary: "你抵达了最深的一层。至于这是清醒、循环，还是另一场伪装得更好的梦，还没有答案。未完待续。"
+      summary: "你抵达了最深的一层。至于这是清醒、循环，还是另一场伪装得更好的梦，还没有答案。"
     });
   },
   hotspots() {
@@ -151,8 +151,8 @@ window.scenes.goodEndingQuestion = {
 
 window.scenes.chapter2UneasyReunionEnding = {
   endingId: "chapter2UneasyReunionEnding",
-  title: "结局 · 静默重逢",
-  hint: "她回来了，可这一切安静得让人发冷。",
+  title: "结局 · 重逢",
+  hint: "她回来了，你们会永远在一起。",
   objective() {
     return `已解锁结局 ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}，已收集字条 ${state.documents.length}/${TOTAL_DOCUMENTS}。`;
   },
@@ -163,8 +163,8 @@ window.scenes.chapter2UneasyReunionEnding = {
     return buildEndingOverlay({
       order: 6,
       variant: "good",
-      name: "静默重逢",
-      summary: "你没有服药，抽到爱情牌后回到客厅坐下等她。重逢如愿发生，却平静得不像现实。"
+      name: "重逢",
+      summary: "回到客厅坐下等她。重逢如愿发生，却平静得不像现实。"
     });
   },
   hotspots() {
@@ -174,7 +174,7 @@ window.scenes.chapter2UneasyReunionEnding = {
 
 window.scenes.chapter2WaitWifeEnding = {
   endingId: "chapter2WaitWifeEnding",
-  title: "结局 · 客厅守候",
+  title: "结局 · 守候",
   hint: "药效让世界安静下来，也把颜色一起带走。",
   objective() {
     return `已解锁结局 ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}，已收集字条 ${state.documents.length}/${TOTAL_DOCUMENTS}。`;
@@ -186,8 +186,8 @@ window.scenes.chapter2WaitWifeEnding = {
     return buildEndingOverlay({
       order: 7,
       variant: "normal",
-      name: "客厅守候",
-      summary: "你服药后抽到爱情牌，在客厅坐下时看见了破败现实，却仍选择继续等待。"
+      name: "守候",
+      summary: "回到客厅坐下时看见了破败现实，却仍选择继续等待。"
     });
   },
   hotspots() {
@@ -197,8 +197,8 @@ window.scenes.chapter2WaitWifeEnding = {
 
 window.scenes.chapter2BloodCradleEnding = {
   endingId: "chapter2BloodCradleEnding",
-  title: "结局 · 血色摇篮",
-  hint: "你没有服药，恶魔牌把压住的画面全都推回来了。",
+  title: "结局 · 摇篮",
+  hint: "她回来了，可是，值得吗。",
   objective() {
     return `已解锁结局 ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}，已收集字条 ${state.documents.length}/${TOTAL_DOCUMENTS}。`;
   },
@@ -209,8 +209,8 @@ window.scenes.chapter2BloodCradleEnding = {
     return buildEndingOverlay({
       order: 8,
       variant: "bad",
-      name: "血色摇篮",
-      summary: "你未服药且选择恶魔牌，回到客厅坐下后，血迹与重逢一同失控。"
+      name: "摇篮",
+      summary: "回到客厅坐下后，血迹与重逢一同失控。"
     });
   },
   hotspots() {
@@ -220,20 +220,43 @@ window.scenes.chapter2BloodCradleEnding = {
 
 window.scenes.chapter2MonsterReturnEnding = {
   endingId: "chapter2MonsterReturnEnding",
-  title: "结局 · 回廊旧影",
-  hint: "药让你短暂清醒，也让第一章的东西重新找到了你。",
+  title: "结局 · 旧影",
+  hint: "药让你短暂清醒，也让它重新找到了你。",
   objective() {
     return `已解锁结局 ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}，已收集字条 ${state.documents.length}/${TOTAL_DOCUMENTS}。`;
   },
   message() {
-    return "你在客厅刚坐下，门外就传来熟悉的刮擦声。门被猛地撞开，第一章里那个扭曲的怪物站在门口，脸部轮廓像被撕裂后又草草缝回。它没有停顿，直接朝你扑了上来。";
+    return "你在客厅刚坐下，门外就传来熟悉的刮擦声。门被猛地撞开，那个扭曲的怪物站在门口，脸部轮廓像被撕裂后又草草缝回。它没有停顿，直接朝你扑了上来。";
   },
   overlay() {
     return buildEndingOverlay({
       order: 9,
       variant: "bad",
-      name: "回廊旧影",
-      summary: "你服药后仍选择恶魔牌，回到客厅坐下的瞬间，第一章的怪物再次破门而入。"
+      name: "旧影",
+      summary: "回到客厅坐下的瞬间，那个扭曲的怪物再次破门而入。"
+    });
+  },
+  hotspots() {
+    return [{ id: "to-menu", label: "进入主界面", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }];
+  }
+};
+
+window.scenes.chapter2GunEnding = {
+  endingId: "chapter2GunEnding",
+  title: "结局 · 吞枪",
+  hint: "带着愧疚，你把最后的选择留给了扳机。",
+  objective() {
+    return `已解锁结局 ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}，已收集字条 ${state.documents.length}/${TOTAL_DOCUMENTS}。`;
+  },
+  message() {
+    return "你在客厅坐下，手里的枪越来越沉。门外有没有脚步声已经不重要了。你把冰冷的枪口抵进嘴里，喉咙被金属顶住。下一秒，只剩一声闷响，整间屋子的回声像被瞬间掐断。";
+  },
+  overlay() {
+    return buildEndingOverlay({
+      order: 10,
+      variant: "bad",
+      name: "吞枪",
+      summary: "拿到手枪后，你没有再等待任何人，结局在你扣下扳机的瞬间结束。"
     });
   },
   hotspots() {

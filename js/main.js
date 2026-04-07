@@ -90,6 +90,10 @@ function setScene(sceneId) {
   if (scene.endingId) {
     unlockEnding(scene.endingId);
   }
+  if (typeof scene.onEnter === "function") {
+    const handled = scene.onEnter();
+    if (handled) return;
+  }
   messageTextEl.innerHTML = scene.message();
   render();
 }

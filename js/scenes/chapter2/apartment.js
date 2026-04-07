@@ -13,17 +13,18 @@ sceneArt.chapter2ThirdFloorHall = sceneArt.thirdFloorHallNormal;
 sceneArt.chapter2ThirdFloorResidential = sceneArt.thirdFloorResidentialNormal;
 sceneArt.chapter2HomeDusty = sceneArt.dinnerTableScene;
 sceneArt.chapter2Bedroom = sceneArt.thirdFloorResidentialNormal;
+sceneArt.chapter2EchoJudgment = sceneArt.dinnerTableScene;
 sceneArt.chapter2PropertyDutyRoom = sceneArt.dinnerTableScene;
 sceneArt.chapter2FireExitStairwell = sceneArt.escapeStairwell;
 
 window.scenes.chapter2CarAtApartment = {
   title: "第二章 · 公寓楼下",
-  hint: "你把车停回了熟悉的位置，楼体轮廓像从未改变。",
+  hint: "你把车停回了熟悉的位置，楼一如昨日像从未改变。",
   objective() {
     return "下车去门口信箱，确认刚才那份记忆是否真实。";
   },
   message() {
-    return "你盯着公寓门口看了几秒。回家的路就在前面，却比昨晚更难迈步。";
+    return "你盯着公寓门口看了几秒。回家的路就在前面，却比之前更难迈步。";
   },
   hotspots() {
     return [
@@ -88,8 +89,8 @@ window.scenes.chapter2Entrance = {
                 "人力资源服务中心通知",
                 "",
                 "您申请的阶段性裁员补贴已进入发放流程。",
-                "发放对象：林某某",
-                "发放日期：03/27",
+                "发放对象：John",
+                "发放日期：03/25",
                 "",
                 "备注：请本人携带身份证原件办理最终确认。"
               ].join("\n")
@@ -106,7 +107,7 @@ window.scenes.chapter2Entrance = {
                 "涉事家属表示，将继续申请公开手术流程记录。",
                 "院方回应称：目前仍在内部复核。",
                 "",
-                "边栏手写字迹：\"别再看了。\""
+                "边栏手写字迹：\"你得做出正确的选择。\""
               ].join("\n")
             });
 
@@ -152,7 +153,7 @@ window.scenes.chapter2Entrance = {
 
 window.scenes.chapter2Hallway = {
   title: "第二章 · 一楼楼道",
-  hint: "布局和昨夜一样，但右侧海报恢复成了正常的物业通知。",
+  hint: "布局没有变，但右侧海报恢复成了正常的物业通知。",
   objective() {
     return state.flags.chapter2FirstFloorFireExitUnlocked
       ? "消防通道已远程解锁。你可以上楼继续调查，或从消防通道离开。"
@@ -172,7 +173,7 @@ window.scenes.chapter2Hallway = {
         h: 48,
         action() {
           if (!state.flags.chapter2FirstFloorFireExitUnlocked) {
-            showMessage("消防门依旧锁着。门牌旁新贴着提示：请至二楼物业值班室申请远程解锁。");
+            showMessage("消防门依旧锁着。");
             return;
           }
           setScene("chapter2FireExitStairwell");
@@ -200,10 +201,10 @@ window.scenes.chapter2Hallway = {
         action() {
           collectDocument({
             id: "chapter2-normal-property-notice",
-            title: "物业维修通知",
+            title: "物业缴费通知",
             source: "一楼楼道右侧墙面",
             body: [
-              "物业通知",
+              "物业缴费通知",
               "",
               "本周三 10:00-12:00 进行电梯例行检修。",
               "请住户提前安排出行时间。",
@@ -212,7 +213,7 @@ window.scenes.chapter2Hallway = {
               "落款：城南公寓物业服务中心"
             ].join("\n")
           });
-          showMessage("这次只是普通的物业维修通知。你却因此更不安。");
+          showMessage("这次只是普通的物业缴费通知。你却因此更不安。");
         }
       },
       {
@@ -329,7 +330,7 @@ window.scenes.chapter2StairwellNormal = {
     return "继续前往二楼。";
   },
   message() {
-    return "墙面干净、灯光稳定，像昨夜那些痕迹从未出现过。";
+    return "墙面干净、灯光稳定，像那些痕迹从未出现过。";
   },
   hotspots() {
     return [
@@ -341,7 +342,7 @@ window.scenes.chapter2StairwellNormal = {
 
 window.scenes.chapter2SecondFloorHall = {
   title: "第二章 · 二楼大厅",
-  hint: "布局与第一章一致，静得只能听见自己的脚步声。",
+  hint: "布局一致，静得只能听见自己的脚步声。",
   objective() {
     return "先去三楼确认情况，必要时回二楼居民区找物业值班室。";
   },
@@ -409,7 +410,7 @@ window.scenes.chapter2ThirdFloorHall = {
               "若发现可疑现象，请前往二楼居民区物业值班室登记。",
               "擅自破坏封条或进入者，将依法追责。",
               "",
-              "落款：城南公寓物业服务中心"
+              "落款：公寓物业服务中心"
             ].join("\n")
           });
           showMessage("铁链把门彻底锁死，封条上写着：禁止进入。如发现可疑现象，请前往二楼居民区物业值班室。");
@@ -425,11 +426,11 @@ window.scenes.chapter2ThirdFloorHall = {
         pulse: !state.flags.chapter2ThirdFloorFireExitUnlocked,
         action() {
           if (!state.flags.chapter2FirstFloorFireExitUnlocked) {
-            showMessage("出口控制器无响应。你需要先去二楼物业值班室通过电脑解锁一楼消防通道主控。");
+            showMessage("出口控制器无响应。");
             return;
           }
           if (!state.flags.chapter2ThirdFloorFireExitUnlocked) {
-            showMessage("出口屏幕提示：请前往二楼物业值班室登录“物业姓名 + 物业编号”后再重试。");
+            showMessage("出口屏幕提示：请前往二楼物业值班室登录后再重试。");
             return;
           }
           setScene("chapter2ThirdFloorResidential");
@@ -443,7 +444,7 @@ window.scenes.chapter2SecondFloorResidential = {
   title: "第二章 · 二楼居民区",
   hint: "走廊尽头亮着一盏白灯，门牌写着“物业值班室”。",
   objective() {
-    return "进入物业值班室，询问三楼封锁原因。";
+    return "进入物业值班室，调查三楼封锁原因。";
   },
   message() {
     return "二楼走廊里有生活气息，但值班室门缝里没有任何声音。";
@@ -499,14 +500,12 @@ window.scenes.chapter2PropertyDutyRoom = {
             body: [
               "值班登记簿（摘录）",
               "",
-              "03/27 21:10  三楼居民区出现异常噪声，临时封锁。",
-              "03/27 21:40  已加装链条锁并贴封条。",
-              "03/27 22:05  移交夜班继续观察，禁止住户上三楼。",
+              "发生那件事之后三楼的住户都搬空了，物业也封锁了整个三楼居民区。一切无异常。",
               "",
-              "备注：异常来源疑似 3-07，待进一步核查。"
+              "备注：消防通道无异常，待进一步核查。"
             ].join("\n")
           });
-          showMessage("登记簿最后一行写着“异常来源疑似 3-07”。那正是你家的门牌号。");
+          showMessage("发生了那件事？三楼住户都搬空了？物业封锁了三楼？登记簿里没有更多信息，只有这些简短的记录。");
         }
       },
       {
@@ -517,7 +516,111 @@ window.scenes.chapter2PropertyDutyRoom = {
         w: 16,
         h: 18,
         action() {
-          showMessage("所有画面都被雪花噪点覆盖，只有三楼通道偶尔闪过一帧黑影。");
+          showMessage("所有画面都被雪花噪点覆盖，看起来很久没用。");
+        }
+      },
+      {
+        id: "phone",
+        label: "值班电话",
+        x: 30,
+        y: 18,
+        w: 14,
+        h: 18,
+        action() {
+          const input = promptCode("请输入要拨打的电话号码");
+          if (input === null) {
+            showMessage("你拿起听筒又放下，没有拨号。");
+            return;
+          }
+
+          const dialed = input.replace(/\D/g, "");
+          if (!dialed) {
+            showMessage("电话里只有电流底噪，你没有拨出任何有效号码。");
+            return;
+          }
+
+          if (dialed === "80044110726") {
+            const hasDevil = hasItem("塔罗牌·恶魔");
+            const hasLovers = hasItem("塔罗牌·恋人");
+
+            if (!hasDevil && !hasLovers) {
+              collectDocument({
+                id: "chapter2-divination-call-record-justice",
+                title: "拨号记录：正义",
+                source: "二楼物业值班室电话",
+                body: [
+                  "你拨通了 800-4411-0726。",
+                  "",
+                  "女声说：\"你还没抽到真正的问题。\"",
+                  "几秒后，听筒里传来纸牌被翻开的摩擦声。",
+                  "她念出牌名：\"正义。\"",
+                  "",
+                  "\"你对某个人怀有无法偿还的愧疚。\"",
+                  "\"你一直在逃避那天的责任。\""
+                ].join("\n")
+              });
+
+              if (!hasItem("塔罗牌·正义")) {
+                acquireItem("塔罗牌·正义");
+              }
+              addNote("占卜热线为你抽到“正义”，并指出你对某个人怀有强烈愧疚。");
+              showMessage("电话那头沉默片刻后说：\"你还没有牌，我替你抽一张。\"\n听筒里传来翻牌声。\"正义。你对某个人很愧疚。\"\n你放下电话时，口袋里多了一张“塔罗牌·正义”。");
+              render();
+              return;
+            }
+
+            const options = [];
+            if (hasDevil) options.push("1=问恶魔牌的意思");
+            if (hasLovers) options.push("2=问恋人牌的意思");
+            options.push("0=挂断");
+            const choice = promptCode(`你想问什么？（${options.join("，")}）`);
+
+            if (choice === null || choice.replace(/\s+/g, "") === "0") {
+              showMessage("你听着听筒里的呼吸声，最后什么也没问，挂断了电话。");
+              return;
+            }
+
+            const normalizedChoice = choice.replace(/\s+/g, "");
+            if (normalizedChoice === "1" && hasDevil) {
+              collectDocument({
+                id: "chapter2-divination-devil-meaning",
+                title: "占卜回话：恶魔",
+                source: "二楼物业值班室电话",
+                body: [
+                  "女声说：\"恶魔不是诱惑，是你自愿不松手的锁链。\"",
+                  "\"你以为自己在找出口，其实一直在喂养它。\""
+                ].join("\n")
+              });
+              addNote("占卜热线解释恶魔牌：杀人恶魔已经偿命。 ");
+              showMessage("失真女声低低笑了一下：\"恶魔牌的意思？杀人恶魔已经偿命。\"");
+              return;
+            }
+
+            if (normalizedChoice === "2" && hasLovers) {
+              collectDocument({
+                id: "chapter2-divination-lovers-meaning",
+                title: "占卜回话：恋人",
+                source: "二楼物业值班室电话",
+                body: [
+                  "女声说：\"恋人不是甜蜜，是选择。\"",
+                  "\"你想拥抱的人，和你该承认的真相，未必是同一个。\""
+                ].join("\n")
+              });
+              addNote("占卜热线解释恋人牌：它代表选择，而不是单纯重逢。 ");
+              showMessage("她停顿几秒后说：\"恋人牌代表选择，不代表原谅。你要选的是人，还是你愿意承认的真相？\"");
+              return;
+            }
+
+            showMessage("电话那头只回了一句：\"先看清你手里有什么，再提问。\"");
+            return;
+          }
+
+          if (dialed === "110" || dialed === "119" || dialed === "120") {
+            showMessage("线路里传来短促忙音，像被某种转接系统硬生生切断。你没有拨通。 ");
+            return;
+          }
+
+          showMessage("你拨出了号码，但听筒里只剩持续的忙音，没有人接听。");
         }
       },
       {
@@ -628,7 +731,7 @@ window.scenes.chapter2ThirdFloorResidential = {
 };
 
 window.scenes.chapter2HomeDusty = {
-  title: "第二章 · 你家",
+  title: "第二章 · 家",
   hint: "屋里落了明显的灰，像很久没人认真打扫。",
   objective() {
     if (state.flags.chapter2PendingEnding) return "回到客厅后，坐下来面对接下来会发生的事。";
@@ -647,15 +750,23 @@ window.scenes.chapter2HomeDusty = {
         w: 34,
         h: 16,
         action() {
+          if (hasItem("手枪")) {
+            const shouldSitWithGun = window.confirm("要在客厅坐下吗？");
+            if (!shouldSitWithGun) {
+              showMessage("你把手从口袋里移开，仍旧站在原地。房间安静得让人发冷。");
+              return;
+            }
+            setScene("chapter2GunEnding");
+            return;
+          }
+
           if (state.flags.chapter2PendingEnding) {
             const shouldSit = window.confirm("要在客厅坐下吗？");
             if (!shouldSit) {
               showMessage("你站在沙发前，迟迟没有坐下。空气静得只剩自己的呼吸声。");
               return;
             }
-            const pendingScene = state.flags.chapter2PendingEnding;
-            state.flags.chapter2PendingEnding = "";
-            setScene(pendingScene);
+            setScene("chapter2EchoJudgment");
             return;
           }
           showMessage("你在灰尘上轻轻划了一下，下面露出原木色。这里确实很久没人清理了。");
@@ -732,7 +843,7 @@ window.scenes.chapter2Bedroom = {
         w: 30,
         h: 26,
         action() {
-          showMessage("床沿有一圈薄灰，像很久没人碰过。密码箱正放在床垫中央。\n箱盖刻字：最重要的日期。");
+          showMessage("床沿有一圈薄灰，像很久没人碰过。密码箱正放在床垫中央。\n箱盖刻字：改变一切的日子。");
         }
       },
       {
@@ -744,8 +855,11 @@ window.scenes.chapter2Bedroom = {
         h: 24,
         pulse: !state.flags.chapter2TarotChoice,
         action() {
-          if (state.flags.chapter2TarotChoice) {
-            const picked = state.flags.chapter2TarotChoice === "devil" ? "塔罗牌·恶魔" : "塔罗牌·爱情";
+          const hasJustice = hasItem("塔罗牌·正义");
+          const hasGun = hasItem("手枪");
+
+          if (state.flags.chapter2TarotChoice && !(hasJustice && !hasGun)) {
+            const picked = state.flags.chapter2TarotChoice === "devil" ? "塔罗牌·恶魔" : "塔罗牌·恋人";
             showMessage(`密码箱已经打开，里面只剩你拿走卡牌后的空槽。你之前拿到的是：${picked}。`);
             return;
           }
@@ -757,6 +871,29 @@ window.scenes.chapter2Bedroom = {
           }
 
           const code = input.replace(/\D/g, "");
+          if (code === "0325") {
+            if (hasJustice && !hasGun) {
+              acquireItem("手枪");
+              collectDocument({
+                id: "chapter2-lockbox-handgun",
+                title: "密码箱暗格：手枪",
+                source: "卧室婴儿床内的密码箱",
+                body: [
+                  "你输入 0325 后，箱体内部发出一声轻响。",
+                  "一层原本看不见的暗格弹开，里面放着一把手枪。",
+                  "",
+                  "枪身很冷，像早就有人把它放在这里，等你找到。"
+                ].join("\n")
+              });
+              addNote("你持有“正义”后输入 0325，打开密码箱暗格并拿到一把手枪。");
+              showMessage("密码盘归零后，箱体侧边弹出暗格。里面静静躺着一把手枪。你把它拿了起来。");
+              render();
+              return;
+            }
+            showMessage("你输入 0325，密码箱没有反应。也许还缺少某个前提。 ");
+            return;
+          }
+
           if (code === "0327") {
             state.flags.chapter2TarotChoice = "devil";
             acquireItem("塔罗牌·恶魔");
@@ -765,7 +902,7 @@ window.scenes.chapter2Bedroom = {
               title: "塔罗牌·恶魔",
               source: "卧室婴儿床内的密码箱",
               body: [
-                "你抽出的塔罗牌是“恶魔”。",
+                "密码箱弹开，一张纸牌滑出，你定神细看，手上的纸牌是塔罗牌“恶魔”。",
                 "",
                 "牌面上的锁链缠住两道人影，像某种无法挣脱的重复。"
               ].join("\n")
@@ -785,26 +922,26 @@ window.scenes.chapter2Bedroom = {
 
           if (code === "1106") {
             state.flags.chapter2TarotChoice = "love";
-            acquireItem("塔罗牌·爱情");
+            acquireItem("塔罗牌·恋人");
             collectDocument({
               id: "chapter2-tarot-lovers",
-              title: "塔罗牌·爱情",
+              title: "塔罗牌·恋人",
               source: "卧室婴儿床内的密码箱",
               body: [
-                "你抽出的塔罗牌是“爱情”。",
+                "密码箱弹开，一张纸牌滑出，你定神细看，手上的纸牌是塔罗牌“恋人”。",
                 "",
                 "牌面上两人相望，背景像一场被时间固定住的誓言。"
               ].join("\n")
             });
-            addNote("你在卧室密码箱输入 1106，得到塔罗牌“爱情”。");
+            addNote("你在卧室密码箱输入 1106，得到塔罗牌“恋人”。");
             if (!state.flags.chapter2MedicineUsed) {
               state.flags.chapter2PendingEnding = "chapter2UneasyReunionEnding";
-              showMessage("密码盘归零的瞬间，卧室门外传来熟悉脚步声。你攥紧“爱情”那张牌，几乎不敢回头。\n你先退回客厅，准备坐下等她走近。");
+              showMessage("密码盘归零的瞬间，卧室门外传来熟悉脚步声。你攥紧“恋人”那张牌，几乎不敢回头。\n你先退回客厅，准备坐下等她走近。");
               render();
               return;
             }
             state.flags.chapter2PendingEnding = "chapter2WaitWifeEnding";
-            showMessage("你吞下药后的眩晕还没散去。卧室边缘忽然暗下去，墙面像被潮水泡烂。\n你抱着“爱情”那张牌退回客厅，准备坐下来等她回家。");
+            showMessage("你吞下药后的眩晕还没散去。卧室边缘忽然暗下去，墙面像被潮水泡烂。\n你抱着“恋人”那张牌退回客厅，准备坐下来等她回家。");
             render();
             return;
           }
@@ -819,6 +956,109 @@ window.scenes.chapter2Bedroom = {
         y: 78,
         w: 20,
         h: 12,
+        action() {
+          setScene("chapter2HomeDusty");
+        }
+      }
+    ];
+  }
+};
+
+window.scenes.chapter2EchoJudgment = {
+  title: "第二章 · 客厅回声",
+  hint() {
+    const pending = state.flags.chapter2PendingEnding;
+    if (pending === "chapter2UneasyReunionEnding") return "你坐下后，门厅尽头站着冲你微笑的妻子。";
+    if (pending === "chapter2BloodCradleEnding") return "你坐下后，门厅里出现了浑身是血的妻子。";
+    if (pending === "chapter2MonsterReturnEnding") return "你坐下后，卧室门口出现了扭曲的怪物。";
+    return "你刚坐下，四周黑暗和破败一层层压过来。";
+  },
+  onEnter() {
+    if (hasItem("手枪")) {
+      state.flags.chapter2PendingEnding = "";
+      setScene("chapter2GunEnding");
+      return true;
+    }
+
+    if (state.flags.chapter2PendingEnding === "chapter2WaitWifeEnding") {
+      state.flags.chapter2PendingEnding = "";
+      setScene("chapter2WaitWifeEnding");
+      return true;
+    }
+    return false;
+  },
+  objective() {
+    const pending = state.flags.chapter2PendingEnding;
+    if (pending === "chapter2UneasyReunionEnding" || pending === "chapter2BloodCradleEnding") return "点选眼前的她。";
+    if (pending === "chapter2MonsterReturnEnding") return "点选眼前的怪物。";
+    return "保持冷静。";
+  },
+  message() {
+    const pending = state.flags.chapter2PendingEnding;
+    if (pending === "chapter2UneasyReunionEnding") {
+      return "你坐下后，门厅尽头出现了妻子的温暖身影。她没有说话，只是朝你伸出手。";
+    }
+    if (pending === "chapter2BloodCradleEnding") {
+      return "你坐下后，卧室方向传来滴落声。她从门厅里走出来，袖口和指缝都沾着血。";
+    }
+    if (pending === "chapter2MonsterReturnEnding") {
+      return "你坐下后，卧室门被撞得发颤。下一秒，第一章里那道扭曲身影推门而入。";
+    }
+    return "你坐在沙发上，空气像结了壳。";
+  },
+  hotspots() {
+    const pending = state.flags.chapter2PendingEnding;
+    return [
+      {
+        id: "wife-normal",
+        label: "妻子",
+        x: 72,
+        y: 20,
+        w: 18,
+        h: 36,
+        pulse: true,
+        visible: pending === "chapter2UneasyReunionEnding",
+        action() {
+          state.flags.chapter2PendingEnding = "";
+          setScene("chapter2UneasyReunionEnding");
+        }
+      },
+      {
+        id: "wife-blood",
+        label: "带血的妻子",
+        x: 72,
+        y: 20,
+        w: 18,
+        h: 36,
+        pulse: true,
+        visible: pending === "chapter2BloodCradleEnding",
+        action() {
+          state.flags.chapter2PendingEnding = "";
+          setScene("chapter2BloodCradleEnding");
+        }
+      },
+      {
+        id: "monster",
+        label: "扭曲怪物",
+        x: 58,
+        y: 28,
+        w: 18,
+        h: 34,
+        pulse: true,
+        visible: pending === "chapter2MonsterReturnEnding",
+        action() {
+          state.flags.chapter2PendingEnding = "";
+          setScene("chapter2MonsterReturnEnding");
+        }
+      },
+      {
+        id: "back",
+        label: "站起身",
+        x: 40,
+        y: 78,
+        w: 20,
+        h: 12,
+        visible: !pending,
         action() {
           setScene("chapter2HomeDusty");
         }

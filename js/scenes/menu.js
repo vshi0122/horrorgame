@@ -9,10 +9,11 @@ const MENU_ENDING_CATALOG = [
   { id: "chapter2UneasyReunionEnding", order: 6, name: "静默重逢", teaser: "你和她重逢了，但这份平静像一层薄薄的假象。" },
   { id: "chapter2WaitWifeEnding", order: 7, name: "客厅守候", teaser: "你看见了破败现实，却仍坐在客厅等她回家。" },
   { id: "chapter2BloodCradleEnding", order: 8, name: "血色摇篮", teaser: "你没吃药就抽到恶魔牌，婴儿床与重逢一起被血染透。" },
-  { id: "chapter2MonsterReturnEnding", order: 9, name: "回廊旧影", teaser: "你在吃药后抽到恶魔牌，第一章的怪物再次破门扑来。" }
+  { id: "chapter2MonsterReturnEnding", order: 9, name: "回廊旧影", teaser: "你在吃药后抽到恶魔牌，第一章的怪物再次破门扑来。" },
+  { id: "chapter2GunEnding", order: 10, name: "吞枪", teaser: "你拿到了那把枪，也亲手把故事停在了这里。" }
 ];
 
-const MENU_DOCUMENT_TOTAL = 6;
+const MENU_DOCUMENT_TOTAL = 25;
 
 function buildMainMenuHome() {
   const chapter2Unlocked = hasChapter2Access();
