@@ -61,6 +61,40 @@ button {
   margin-bottom: 18px;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+}
+
+.lang-link {
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.lang-link:hover {
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.lang-link.active {
+  color: var(--text);
+  background: rgba(216, 195, 154, 0.14);
+}
+
 .eyebrow,
 .panel-label {
   margin: 0;
@@ -377,6 +411,11 @@ h3 {
   .game-layout,
   .topbar {
     grid-template-columns: 1fr;
+  }
+
+  .topbar-actions {
+    justify-content: space-between;
+    flex-wrap: wrap;
   }
 
   .scene-header {

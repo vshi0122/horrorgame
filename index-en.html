@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day of Arrival</title>
+  <meta name="description" content="An English point-and-click horror game prototype. Wake up in your car, return to the apartment, and search for a way out between nightmare and normalcy.">
+  <meta name="theme-color" content="#07090d">
+  <meta property="og:title" content="Day of Arrival">
+  <meta property="og:description" content="An English point-and-click horror game prototype. Wake up in your car, return to the apartment, and search for a way out between nightmare and normalcy.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="grain"></div>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Point & Click Horror</p>
+        <h1>Day of Arrival</h1>
+      </div>
+      <div class="topbar-actions">
+        <nav class="lang-switch" aria-label="Language switch">
+          <a class="lang-link" href="index.html">中文</a>
+          <a class="lang-link active" href="index-en.html">EN</a>
+        </nav>
+        <button id="restartButton" class="ghost-button" type="button">Restart</button>
+      </div>
+    </header>
+
+    <section class="hud">
+      <div class="panel objective-panel">
+        <p class="panel-label">Objective</p>
+        <p id="objectiveText">Find the keys in the car, then bring the ketchup upstairs.</p>
+      </div>
+      <div class="panel inventory-panel">
+        <p class="panel-label">Items</p>
+        <div id="inventory" class="inventory"></div>
+      </div>
+    </section>
+
+    <section class="game-layout">
+      <div id="sceneFrame" class="scene-frame">
+        <div class="scene-header">
+          <div>
+            <p class="panel-label">Location</p>
+            <h2 id="sceneTitle">Inside the Car</h2>
+          </div>
+          <p id="sceneHint" class="scene-hint">The rain has just stopped. Water still clings to the windshield.</p>
+        </div>
+
+        <div id="scene" class="scene" aria-live="polite"></div>
+
+        <div class="dialogue-bar">
+          <p class="panel-label">Observation</p>
+          <p id="messageText">You jolt awake in the driver's seat. The apartment building stands silently ahead.</p>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="panel notes-panel">
+          <p class="panel-label">Clues</p>
+          <ul id="notesList" class="notes-list"></ul>
+        </div>
+
+        <div class="panel documents-panel">
+          <p class="panel-label">Collected Texts</p>
+          <div id="documentsList" class="documents-list"></div>
+          <article id="documentViewer" class="document-viewer document-empty">
+            <h3 id="documentTitle">No text collected yet</h3>
+            <p id="documentMeta">Discovered notes and documents will appear here.</p>
+            <div id="documentBody" class="document-body"></div>
+          </article>
+        </div>
+
+        <div class="panel controls-panel">
+          <p class="panel-label">How to Play</p>
+          <p>Click highlighted areas to inspect the scene, collect items, read documents, and push the story forward.</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="js/en/state.js"></script>
+  <script src="js/en/scenes.js"></script>
+  <script src="js/en/ui.js"></script>
+  <script src="js/en/main.js"></script>
+</body>
+</html>
