@@ -331,49 +331,54 @@ const scenes = {
         },
         {
           id: "notice",
-          label: state.flags.powerOutage ? "尝试出门" : "物业告示",
+          label: "物业告示",
           x: 74, y: 18, w: 18, h: 42,
           action() {
+            collectDocument({
+              id: "arrival-notice-1f",
+              title: "降临之日告示",
+              source: "一楼楼道右侧墙面",
+              body: [
+                "物业提醒：",
+                "",
+                "住户请提前准备迎接 <span class=\"blood-text\">降临之日</span>。",
+                "如听见陌生声音呼唤姓名，请勿回应。"
+              ].join("\n")
+            });
+
             if (!state.flags.powerOutage) {
-              collectDocument({
-                id: "arrival-notice-1f",
-                title: "降临之日告示",
-                source: "一楼楼道右侧墙面",
-                body: [
-                  "物业提醒：",
-                  "",
-                  "住户请提前准备迎接 <span class=\"blood-text\">降临之日</span>。",
-                  "如听见陌生声音呼唤姓名，请勿回应。"
-                ].join("\n")
-              });
               showMessage("告示写得像整栋楼都在准备某个仪式。");
               return;
             }
-            const shouldLeave = window.confirm("要离开公寓吗？");
-            if (!shouldLeave) {
-              showMessage("你没有立刻去碰那扇门。");
-              return;
-            }
-            const input = promptCode("请输入停电状态下的门禁密码");
-            if (input === null) {
-              showMessage("你迟疑了一下，没有输入。");
-              return;
-            }
-            if (input.replace(/\s+/g, "") === "0000") {
-              setScene("normalEnding");
-              return;
-            }
-            setScene("failedEscapeEnding");
+            showMessage("停电后再看这张告示，你立刻想起了那句备注：门禁会临时重置为 0000。");
           }
         },
         {
           id: "back-outside",
-          label: "返回车里",
+          label: state.flags.powerOutage ? "离开公寓" : "返回车里",
           x: 38,
           y: 82,
           w: 24,
           h: 10,
           action() {
+            if (state.flags.powerOutage) {
+              const shouldLeave = window.confirm("要离开公寓吗？");
+              if (!shouldLeave) {
+                showMessage("你没有立刻去碰那扇门。");
+                return;
+              }
+              const input = promptCode("请输入停电状态下的门禁密码");
+              if (input === null) {
+                showMessage("你迟疑了一下，没有输入。");
+                return;
+              }
+              if (input.replace(/\s+/g, "") === "0000") {
+                setScene("normalEnding");
+                return;
+              }
+              setScene("failedEscapeEnding");
+              return;
+            }
             setScene("entrance");
           }
         }
