@@ -213,9 +213,10 @@ h3 {
 
 .scene {
   position: relative;
-  min-height: 560px;
+  min-height: 320px;
   border-radius: 22px;
   overflow: hidden;
+  padding: 24px;
   background:
     radial-gradient(circle at 50% 25%, rgba(202, 219, 255, 0.08), transparent 24%),
     linear-gradient(180deg, rgba(21, 29, 40, 0.95), rgba(7, 10, 14, 0.98));
@@ -232,6 +233,52 @@ h3 {
 .room-art {
   position: absolute;
   inset: 0;
+}
+
+.text-scene {
+  position: relative;
+  z-index: 1;
+}
+
+.text-scene-label {
+  margin: 0 0 14px;
+  color: var(--gold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+
+.choice-list {
+  display: grid;
+  gap: 12px;
+}
+
+.choice-button {
+  width: 100%;
+  text-align: left;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.choice-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(216, 195, 154, 0.36);
+  background: linear-gradient(180deg, rgba(216, 195, 154, 0.12), rgba(255, 255, 255, 0.02));
+}
+
+.choice-button.locked {
+  border-color: rgba(180, 44, 44, 0.35);
+  background: rgba(180, 44, 44, 0.12);
+}
+
+.choice-title {
+  display: block;
+  font-weight: 700;
 }
 
 .art-layer {
@@ -277,6 +324,12 @@ h3 {
 .side-panel {
   display: grid;
   gap: 18px;
+  grid-template-columns: 0.75fr 1.25fr;
+  align-items: start;
+}
+
+.controls-panel {
+  grid-column: 1 / -1;
 }
 
 .notes-list {
@@ -423,7 +476,15 @@ h3 {
     align-items: start;
   }
 
+  .side-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-panel {
+    grid-column: auto;
+  }
+
   .scene {
-    min-height: 440px;
+    min-height: 280px;
   }
 }

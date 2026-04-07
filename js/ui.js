@@ -20,32 +20,36 @@ function render() {
   sceneTitleEl.textContent = title;
   sceneHintEl.innerHTML = hint;
   objectiveTextEl.innerHTML = scene.objective();
-  sceneEl.innerHTML = sceneArt[state.currentScene] + buildHotspots(scene.hotspots());
+  sceneEl.innerHTML = buildHotspots(scene.hotspots());
   renderInventory();
   renderNotes();
   renderDocuments();
 }
 
 function buildHotspots(hotspots) {
-  return hotspots
+  const entries = hotspots
     .filter((spot) => spot.visible !== false)
     .map((spot) => {
-      const classes = ["hotspot"];
+      const classes = ["choice-button"];
       if (spot.locked) classes.push("locked");
       if (spot.pulse) classes.push("pulse");
 
       return `
-        <button
-          class="${classes.join(" ")}"
-          data-id="${spot.id}"
-          type="button"
-          style="left:${spot.x}%;top:${spot.y}%;width:${spot.w}%;height:${spot.h}%"
-        >
-          <span class="hotspot-label">${spot.label}</span>
+        <button class="${classes.join(" ")}" data-id="${spot.id}" type="button">
+          <span class="choice-title">${spot.label}</span>
         </button>
       `;
     })
     .join("");
+
+  return `
+    <div class="text-scene">
+      <p class="text-scene-label">可选行动</p>
+      <div class="choice-list">
+        ${entries}
+      </div>
+    </div>
+  `;
 }
 
 function renderInventory() {
