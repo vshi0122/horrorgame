@@ -13,10 +13,13 @@ const documentBodyEl = document.querySelector("#documentBody");
 const menuButton = document.querySelector("#menuButton");
 const restartButton = document.querySelector("#restartButton");
 const sceneFrame = document.querySelector("#sceneFrame");
+const dialogueBarEl = document.querySelector(".dialogue-bar");
+const guidedScenes = new Set();
 
 function render() {
   const scene = scenes[state.currentScene];
   const isMainMenu = state.currentScene === "mainMenu";
+  const shouldGuideHotspots = !isMainMenu && !guidedScenes.has(state.currentScene);
   const title = typeof scene.title === "function" ? scene.title() : scene.title;
   const hint = typeof scene.hint === "function" ? scene.hint() : scene.hint;
   const overlay = typeof scene.overlay === "function" ? scene.overlay() : (scene.overlay || "");
@@ -25,19 +28,26 @@ function render() {
   sceneTitleEl.textContent = title;
   sceneHintEl.innerHTML = hint;
   objectiveTextEl.innerHTML = scene.objective();
-  sceneEl.innerHTML = sceneArt[state.currentScene] + buildHotspots(scene.hotspots()) + overlay;
+  sceneEl.innerHTML = sceneArt[state.currentScene] + buildHotspots(scene.hotspots(), shouldGuideHotspots) + overlay;
+  if (shouldGuideHotspots) {
+    guidedScenes.add(state.currentScene);
+  }
+  dialogueBarEl.classList.remove("dialogue-bar-attention");
+  void dialogueBarEl.offsetWidth;
+  dialogueBarEl.classList.add("dialogue-bar-attention");
   renderInventory();
   renderNotes();
   renderDocuments();
 }
 
-function buildHotspots(hotspots) {
+function buildHotspots(hotspots, shouldGuideHotspots = false) {
   return hotspots
     .filter((spot) => spot.visible !== false)
     .map((spot) => {
       const classes = ["hotspot"];
       if (spot.locked) classes.push("locked");
       if (spot.pulse) classes.push("pulse");
+      if (shouldGuideHotspots && !spot.locked) classes.push("hotspot-attention");
 
       return `
         <button

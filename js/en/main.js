@@ -1,9 +1,94 @@
+const TUTORIAL_STORAGE_KEY = "horrorgame-tutorial-seen-en";
+
+function hasSeenTutorial() {
+  try {
+    return window.localStorage.getItem(TUTORIAL_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markTutorialSeen() {
+  try {
+    window.localStorage.setItem(TUTORIAL_STORAGE_KEY, "1");
+  } catch {
+    // Ignore storage failures so gameplay still works.
+  }
+}
+
+function ensureTutorialOverlay() {
+  let overlay = document.querySelector("#tutorialOverlay");
+  if (overlay) return overlay;
+
+  overlay = document.createElement("div");
+  overlay.id = "tutorialOverlay";
+  overlay.className = "tutorial-overlay";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.innerHTML = `
+    <div class="tutorial-card" role="dialog" aria-modal="true" aria-label="Quick tutorial">
+      <p class="tutorial-kicker">Quick Tutorial</p>
+      <h3 class="tutorial-title">Read this before you explore</h3>
+      <ul class="tutorial-list">
+        <li><strong>Objective</strong>: your current task. Check this first if you feel stuck.</li>
+        <li><strong>Items</strong>: tools in your inventory. Some can be used directly.</li>
+        <li><strong>Scene</strong>: click highlighted areas to inspect and advance events.</li>
+        <li><strong>Observation</strong>: the bottom message bar gives feedback and clues.</li>
+        <li><strong>Clues / Text Archive</strong>: your discovered information is stored on the right.</li>
+      </ul>
+      <p class="tutorial-tip">Tip: start with glowing hotspots. They usually contain key interactions.</p>
+      <button class="menu-action menu-primary tutorial-close" type="button" data-action="close-tutorial">Got it, start game</button>
+    </div>
+  `;
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) {
+      hideTutorialOverlay();
+    }
+  });
+
+  overlay.addEventListener("click", (event) => {
+    const closeButton = event.target.closest(".tutorial-close");
+    if (!closeButton) return;
+    hideTutorialOverlay();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && overlay.classList.contains("is-visible")) {
+      hideTutorialOverlay();
+    }
+  });
+
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function showTutorialOverlay() {
+  const overlay = ensureTutorialOverlay();
+  overlay.classList.add("is-visible");
+  overlay.setAttribute("aria-hidden", "false");
+}
+
+function hideTutorialOverlay() {
+  const overlay = document.querySelector("#tutorialOverlay");
+  if (!overlay) return;
+  overlay.classList.remove("is-visible");
+  overlay.setAttribute("aria-hidden", "true");
+  markTutorialSeen();
+}
+
+function startNewGameWithTutorial() {
+  startNewGame();
+  if (!hasSeenTutorial()) {
+    showTutorialOverlay();
+  }
+}
+
 restartButton.addEventListener("click", () => {
   if (state.currentScene === "mainMenu") {
-    startNewGame();
+    startNewGameWithTutorial();
     return;
   }
-  startNewGame();
+  startNewGameWithTutorial();
 });
 
 menuButton.addEventListener("click", () => {
@@ -39,7 +124,7 @@ sceneEl.addEventListener("click", (event) => {
   const menuActionButton = event.target.closest(".menu-action");
   if (menuActionButton) {
     const action = menuActionButton.dataset.action;
-    if (action === "start-game") startNewGame();
+    if (action === "start-game") startNewGameWithTutorial();
     if (action === "start-chapter2") {
       if (!hasUnlockedEnding("goodEndingQuestion")) {
         showMessage("Chapter 2 is locked. Reach the ending 'Awake?' first.");
@@ -107,7 +192,7 @@ function showMessage(message) {
 }
 
 function resetGame() {
-  startNewGame();
+  startNewGameWithTutorial();
 }
 
 openMainMenu();

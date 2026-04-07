@@ -1,9 +1,94 @@
+const TUTORIAL_STORAGE_KEY = "horrorgame-tutorial-seen";
+
+function hasSeenTutorial() {
+  try {
+    return window.localStorage.getItem(TUTORIAL_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markTutorialSeen() {
+  try {
+    window.localStorage.setItem(TUTORIAL_STORAGE_KEY, "1");
+  } catch {
+    // Ignore storage failures so gameplay still works.
+  }
+}
+
+function ensureTutorialOverlay() {
+  let overlay = document.querySelector("#tutorialOverlay");
+  if (overlay) return overlay;
+
+  overlay = document.createElement("div");
+  overlay.id = "tutorialOverlay";
+  overlay.className = "tutorial-overlay";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.innerHTML = `
+    <div class="tutorial-card" role="dialog" aria-modal="true" aria-label="新手引导">
+      <p class="tutorial-kicker">快速上手</p>
+      <h3 class="tutorial-title">先看这里，再开始探索</h3>
+      <ul class="tutorial-list">
+        <li><strong>目标</strong>：当前要做什么，卡住时先看它。</li>
+        <li><strong>物品</strong>：你身上带着的道具，有些可以直接使用。</li>
+        <li><strong>场景</strong>：点击画面里的高亮区域即可调查和推进剧情。</li>
+        <li><strong>观察</strong>：底部信息栏会告诉你当前反馈和线索变化。</li>
+        <li><strong>线索 / 文本</strong>：右侧会累计你发现的信息，方便回看。</li>
+      </ul>
+      <p class="tutorial-tip">提示：优先点击场景中的发光区域，通常都有可互动内容。</p>
+      <button class="menu-action menu-primary tutorial-close" type="button" data-action="close-tutorial">我知道了，开始吧</button>
+    </div>
+  `;
+
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) {
+      hideTutorialOverlay();
+    }
+  });
+
+  overlay.addEventListener("click", (event) => {
+    const closeButton = event.target.closest(".tutorial-close");
+    if (!closeButton) return;
+    hideTutorialOverlay();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && overlay.classList.contains("is-visible")) {
+      hideTutorialOverlay();
+    }
+  });
+
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function showTutorialOverlay() {
+  const overlay = ensureTutorialOverlay();
+  overlay.classList.add("is-visible");
+  overlay.setAttribute("aria-hidden", "false");
+}
+
+function hideTutorialOverlay() {
+  const overlay = document.querySelector("#tutorialOverlay");
+  if (!overlay) return;
+  overlay.classList.remove("is-visible");
+  overlay.setAttribute("aria-hidden", "true");
+  markTutorialSeen();
+}
+
+function startNewGameWithTutorial() {
+  startNewGame();
+  if (!hasSeenTutorial()) {
+    showTutorialOverlay();
+  }
+}
+
 restartButton.addEventListener("click", () => {
   if (state.currentScene === "mainMenu") {
-    startNewGame();
+    startNewGameWithTutorial();
     return;
   }
-  startNewGame();
+  startNewGameWithTutorial();
 });
 
 menuButton.addEventListener("click", () => {
@@ -43,7 +128,7 @@ sceneEl.addEventListener("click", (event) => {
       const consumed = window.handleSceneMenuAction(action);
       if (consumed) return;
     }
-    if (action === "start-game") startNewGame();
+    if (action === "start-game") startNewGameWithTutorial();
     if (action === "start-chapter2") {
       if (!hasUnlockedEnding("goodEndingQuestion")) {
         showMessage("你还没有抵达“醒来？”结局，第二章暂时无法进入。");
@@ -111,7 +196,7 @@ function showMessage(message) {
 }
 
 function resetGame() {
-  startNewGame();
+  startNewGameWithTutorial();
 }
 
 openMainMenu();
