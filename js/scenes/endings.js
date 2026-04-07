@@ -49,7 +49,7 @@ window.scenes.fleeEnding = {
       order: 5,
       variant: "bad",
       name: "奔逃",
-      summary: "你没有走进那栋楼。你的妻子和真相都留在里面，你却选择不弹公采。"
+      summary: "你的妻子和真相都留在里面，你却选择不予理睬。"
     });
   },
   hotspots() {
