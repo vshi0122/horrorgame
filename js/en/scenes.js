@@ -285,13 +285,16 @@ function buildMainMenuHome() {
 
 function buildEndingArchive() {
   const unlockedEndings = readUnlockedEndings();
+  const endingCounters = getEndingCounters();
   const entries = MENU_ENDING_CATALOG.map((ending) => {
     const unlocked = unlockedEndings.includes(ending.id);
+    const triggerCount = endingCounters[ending.id] || 0;
     return `
       <article class="archive-card ${unlocked ? "archive-card-unlocked" : "archive-card-locked"}">
         <p class="archive-index">Ending ${ending.order}</p>
         <h4 class="archive-title">${unlocked ? ending.name : "???"}</h4>
         <p class="archive-copy">${unlocked ? ending.teaser : "You have not reached this ending yet."}</p>
+        <p class="archive-copy">Times triggered: ${triggerCount}</p>
       </article>
     `;
   }).join("");
@@ -327,7 +330,10 @@ function buildDocumentArchive() {
   const entries = unlockedDocuments.length
     ? unlockedDocuments.map((document) => `
         <button class="archive-document-entry${document.id === selectedDocument?.id ? " active" : ""}" type="button" data-id="${document.id}">
-          <span class="archive-document-title">${document.title}</span>
+          <span class="archive-document-title-row">
+            <span class="archive-document-title">${document.title}</span>
+            ${!isDocumentSeen(document.id) ? '<span class="document-status-badges"><span class="document-badge document-badge-unread">UNREAD</span><span class="document-badge document-badge-new">NEW</span></span>' : ""}
+          </span>
           <span class="archive-document-source">${document.source}</span>
         </button>
       `).join("")

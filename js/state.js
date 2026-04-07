@@ -5,6 +5,9 @@ const baseNotes = [
 
 const ENDING_STORAGE_KEY = "horrorgame-unlocked-endings";
 const DOCUMENT_STORAGE_KEY = "horrorgame-unlocked-documents";
+const DOCUMENT_SEEN_STORAGE_KEY = "horrorgame-seen-documents";
+const DECISION_COUNTERS_STORAGE_KEY = "horrorgame-decision-counters";
+const ENDING_COUNTERS_STORAGE_KEY = "horrorgame-ending-counters";
 
 const initialState = () => ({
   currentScene: "mainMenu",
@@ -98,6 +101,63 @@ function readUnlockedDocuments() {
   }
 }
 
+function readCounterMap(storageKey) {
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeCounterMap(storageKey, counters) {
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(counters));
+  } catch {
+    // Ignore storage failures so gameplay still works.
+  }
+}
+
+function incrementCounter(storageKey, counterId) {
+  if (!counterId) return;
+  const counters = readCounterMap(storageKey);
+  counters[counterId] = (counters[counterId] || 0) + 1;
+  writeCounterMap(storageKey, counters);
+}
+
+function incrementDecisionCounter(decisionId) {
+  incrementCounter(DECISION_COUNTERS_STORAGE_KEY, decisionId);
+}
+
+function incrementEndingCounter(endingId) {
+  incrementCounter(ENDING_COUNTERS_STORAGE_KEY, endingId);
+}
+
+function getDecisionCounters() {
+  return readCounterMap(DECISION_COUNTERS_STORAGE_KEY);
+}
+
+function getEndingCounters() {
+  return readCounterMap(ENDING_COUNTERS_STORAGE_KEY);
+}
+
+function getChoiceCounters() {
+  return {
+    decisions: getDecisionCounters(),
+    endings: getEndingCounters()
+  };
+}
+
+function resetChoiceCounters() {
+  writeCounterMap(DECISION_COUNTERS_STORAGE_KEY, {});
+  writeCounterMap(ENDING_COUNTERS_STORAGE_KEY, {});
+}
+
+window.getChoiceCounters = getChoiceCounters;
+window.resetChoiceCounters = resetChoiceCounters;
+
 function writeUnlockedDocuments(documents) {
   try {
     window.localStorage.setItem(DOCUMENT_STORAGE_KEY, JSON.stringify(documents));
@@ -106,13 +166,60 @@ function writeUnlockedDocuments(documents) {
   }
 }
 
+function readSeenDocumentIds() {
+  try {
+    const raw = window.localStorage.getItem(DOCUMENT_SEEN_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSeenDocumentIds(documentIds) {
+  try {
+    window.localStorage.setItem(DOCUMENT_SEEN_STORAGE_KEY, JSON.stringify(documentIds));
+  } catch {
+    // Ignore storage failures so gameplay still works.
+  }
+}
+
+function markDocumentSeen(documentId) {
+  if (!documentId) return;
+  const seenDocumentIds = readSeenDocumentIds();
+  if (seenDocumentIds.includes(documentId)) return;
+  writeSeenDocumentIds([documentId, ...seenDocumentIds]);
+}
+
+function isDocumentSeen(documentId) {
+  if (!documentId) return false;
+  return readSeenDocumentIds().includes(documentId);
+}
+
 function unlockDocument(document) {
   const unlockedDocuments = readUnlockedDocuments();
-  if (unlockedDocuments.some((entry) => entry.id === document.id)) {
+  const existingIndex = unlockedDocuments.findIndex((entry) => entry.id === document.id);
+  if (existingIndex === -1) {
+    const nextUnlockedDocuments = [document, ...unlockedDocuments];
+    writeUnlockedDocuments(nextUnlockedDocuments);
+    return nextUnlockedDocuments;
+  }
+
+  const existingDocument = unlockedDocuments[existingIndex];
+  const unchanged =
+    existingDocument.title === document.title &&
+    existingDocument.source === document.source &&
+    existingDocument.body === document.body;
+
+  if (unchanged) {
     return unlockedDocuments;
   }
 
-  const nextUnlockedDocuments = [...unlockedDocuments, document];
+  const nextUnlockedDocuments = [
+    document,
+    ...unlockedDocuments.filter((entry) => entry.id !== document.id)
+  ];
   writeUnlockedDocuments(nextUnlockedDocuments);
   return nextUnlockedDocuments;
 }
@@ -128,6 +235,9 @@ function getUnlockedDocumentCount() {
 function setMenuTab(tab, selectedDocumentId = null) {
   state.menuTab = tab;
   state.selectedArchiveDocumentId = selectedDocumentId;
+  if (tab === "documents" && selectedDocumentId) {
+    markDocumentSeen(selectedDocumentId);
+  }
 }
 
 function openMainMenu(tab = "home", selectedDocumentId = null) {
@@ -167,9 +277,12 @@ function hasItem(item) {
 }
 
 function collectDocument(document) {
-  const existing = state.documents.find((entry) => entry.id === document.id);
-  if (!existing) {
-    state.documents.push(document);
+  const existingIndex = state.documents.findIndex((entry) => entry.id === document.id);
+  if (existingIndex === -1) {
+    state.documents.unshift(document);
+  } else {
+    state.documents.splice(existingIndex, 1);
+    state.documents.unshift(document);
   }
   unlockDocument(document);
   state.selectedDocumentId = document.id;
@@ -177,5 +290,6 @@ function collectDocument(document) {
 
 function selectDocument(documentId) {
   state.selectedDocumentId = documentId;
+  markDocumentSeen(documentId);
   renderDocuments();
 }

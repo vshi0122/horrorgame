@@ -105,9 +105,13 @@ function renderDocuments() {
   documentsListEl.innerHTML = state.documents
     .map((doc) => {
       const activeClass = doc.id === state.selectedDocumentId ? " active" : "";
+      const unread = !isDocumentSeen(doc.id);
       return `
         <button class="document-entry${activeClass}" data-id="${doc.id}" type="button">
-          <span class="document-entry-title">${doc.title}</span>
+          <span class="document-entry-title-row">
+            <span class="document-entry-title">${doc.title}</span>
+            ${unread ? '<span class="document-status-badges"><span class="document-badge document-badge-unread">未读</span><span class="document-badge document-badge-new">NEW</span></span>' : ""}
+          </span>
           <span class="document-entry-meta">${doc.source}</span>
         </button>
       `;

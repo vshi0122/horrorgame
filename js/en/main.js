@@ -110,10 +110,12 @@ inventoryEl.addEventListener("click", (event) => {
 
   const shouldUse = window.confirm("Take the medicine now?");
   if (!shouldUse) {
+    incrementDecisionCounter("inventory:medicine-bottle:defer");
     showMessage("You put the bottle back in your pocket for now.");
     return;
   }
 
+  incrementDecisionCounter("inventory:medicine-bottle:use");
   removeItem("Medicine Bottle");
   state.flags.chapter2MedicineUsed = true;
   addNote("You took the medicine from the doctor. Your pulse steadied for a moment.");
@@ -124,6 +126,7 @@ sceneEl.addEventListener("click", (event) => {
   const menuActionButton = event.target.closest(".menu-action");
   if (menuActionButton) {
     const action = menuActionButton.dataset.action;
+    incrementDecisionCounter(`menu:${action}`);
     if (action === "start-game") startNewGameWithTutorial();
     if (action === "start-chapter2") {
       if (!hasUnlockedEnding("goodEndingQuestion")) {
@@ -168,6 +171,7 @@ sceneEl.addEventListener("click", (event) => {
   const scene = scenes[state.currentScene];
   const hotspot = scene.hotspots().find((spot) => spot.id === hotspotButton.dataset.id);
   if (hotspot) {
+    incrementDecisionCounter(`hotspot:${state.currentScene}:${hotspot.id}`);
     hotspot.action();
   }
 });
@@ -176,6 +180,7 @@ function setScene(sceneId) {
   state.currentScene = sceneId;
   const scene = scenes[sceneId];
   if (scene.endingId) {
+    incrementEndingCounter(scene.endingId);
     unlockEnding(scene.endingId);
   }
   if (typeof scene.onEnter === "function") {

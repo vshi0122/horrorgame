@@ -1,16 +1,16 @@
 window.scenes = window.scenes || {};
 
 const MENU_ENDING_CATALOG = [
-  { id: "badEnding", order: 1, name: "失陷", teaser: "你没能从三楼居民区脱身。" },
-  { id: "failedEscapeEnding", order: 2, name: "门外之物", teaser: "你到达出口，却没有真正离开。" },
-  { id: "normalEnding", order: 3, name: "离开公寓", teaser: "你活着走出去了，但仍带着缺口。" },
-  { id: "goodEndingQuestion", order: 4, name: "醒来？", teaser: "你似乎抗达了更深的答案。" },
+  { id: "badEnding", order: 1, name: "失陷", teaser: "你在居民区停得太久，最终没能从那层楼里活着离开。" },
+  { id: "failedEscapeEnding", order: 2, name: "门外", teaser: "你到达了一楼，却没能用正确方式离开。门不是出口，而是你的下一层噩梦。" },
+  { id: "normalEnding", order: 3, name: "离开", teaser: "你活着离开了这里，但真相并没有跟着你一起。" },
+  { id: "goodEndingQuestion", order: 4, name: "醒来？", teaser: "你抵达了最深的一层。至于这是清醒、循环，还是另一场伪装得更好的梦，还没有答案。" },
   { id: "fleeEnding", order: 5, name: "奔逃", teaser: "你选择不进入那栋楼。" },
-  { id: "chapter2UneasyReunionEnding", order: 6, name: "静默重逢", teaser: "你和她重逢了，但这份平静像一层薄薄的假象。" },
-  { id: "chapter2WaitWifeEnding", order: 7, name: "客厅守候", teaser: "你看见了破败现实，却仍坐在客厅等她回家。" },
-  { id: "chapter2BloodCradleEnding", order: 8, name: "血色摇篮", teaser: "你没吃药就抽到恶魔牌，婴儿床与重逢一起被血染透。" },
-  { id: "chapter2MonsterReturnEnding", order: 9, name: "回廊旧影", teaser: "你在吃药后抽到恶魔牌，第一章的怪物再次破门扑来。" },
-  { id: "chapter2GunEnding", order: 10, name: "吞枪", teaser: "你拿到了那把枪，也亲手把故事停在了这里。" }
+  { id: "chapter2UneasyReunionEnding", order: 6, name: "重逢", teaser: "回到客厅坐下等她。重逢如愿发生，却平静得不像现实。" },
+  { id: "chapter2WaitWifeEnding", order: 7, name: "守候", teaser: "回到客厅坐下时看见了破败现实，却仍选择继续等待。" },
+  { id: "chapter2BloodCradleEnding", order: 8, name: "摇篮", teaser: "回到客厅坐下后，血迹与重逢一同失控。" },
+  { id: "chapter2MonsterReturnEnding", order: 9, name: "旧影", teaser: "回到客厅坐下的瞬间，那个扭曲的怪物再次破门而入。" },
+  { id: "chapter2GunEnding", order: 10, name: "吞枪", teaser: "拿到手枪后，你没有再等待任何人，结局在你扣下扳机的瞬间结束。" }
 ];
 
 const MENU_DOCUMENT_TOTAL = 25;
@@ -82,13 +82,16 @@ function buildMainMenuHome() {
 
 function buildEndingArchive() {
   const unlockedEndings = readUnlockedEndings();
+  const endingCounters = getEndingCounters();
   const entries = MENU_ENDING_CATALOG.map((ending) => {
     const unlocked = unlockedEndings.includes(ending.id);
+    const triggerCount = endingCounters[ending.id] || 0;
     return `
       <article class="archive-card ${unlocked ? "archive-card-unlocked" : "archive-card-locked"}">
         <p class="archive-index">结局 ${ending.order}</p>
         <h4 class="archive-title">${unlocked ? ending.name : "？？？"}</h4>
         <p class="archive-copy">${unlocked ? ending.teaser : "尚未抵达这个结局。"}</p>
+        <p class="archive-copy">触发次数：${triggerCount}</p>
       </article>
     `;
   }).join("");
@@ -124,7 +127,10 @@ function buildDocumentArchive() {
   const entries = unlockedDocuments.length
     ? unlockedDocuments.map((document) => `
         <button class="archive-document-entry${document.id === selectedDocument?.id ? " active" : ""}" type="button" data-id="${document.id}">
-          <span class="archive-document-title">${document.title}</span>
+          <span class="archive-document-title-row">
+            <span class="archive-document-title">${document.title}</span>
+            ${!isDocumentSeen(document.id) ? '<span class="document-status-badges"><span class="document-badge document-badge-unread">未读</span><span class="document-badge document-badge-new">NEW</span></span>' : ""}
+          </span>
           <span class="archive-document-source">${document.source}</span>
         </button>
       `).join("")

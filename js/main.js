@@ -110,10 +110,12 @@ inventoryEl.addEventListener("click", (event) => {
 
   const shouldUse = window.confirm("要现在服用医生给的药吗？");
   if (!shouldUse) {
+    incrementDecisionCounter("inventory:medicine-bottle:defer");
     showMessage("你把药瓶又放回口袋，决定再等等。");
     return;
   }
 
+  incrementDecisionCounter("inventory:medicine-bottle:use");
   removeItem("药瓶");
   state.flags.chapter2MedicineUsed = true;
   addNote("你在探索过程中服用了医生开的药。情绪短暂平稳了一些。");
@@ -124,6 +126,7 @@ sceneEl.addEventListener("click", (event) => {
   const menuActionButton = event.target.closest(".menu-action");
   if (menuActionButton) {
     const action = menuActionButton.dataset.action;
+    incrementDecisionCounter(`menu:${action}`);
     if (typeof window.handleSceneMenuAction === "function") {
       const consumed = window.handleSceneMenuAction(action);
       if (consumed) return;
@@ -172,6 +175,7 @@ sceneEl.addEventListener("click", (event) => {
   const scene = scenes[state.currentScene];
   const hotspot = scene.hotspots().find((spot) => spot.id === hotspotButton.dataset.id);
   if (hotspot) {
+    incrementDecisionCounter(`hotspot:${state.currentScene}:${hotspot.id}`);
     hotspot.action();
   }
 });
@@ -180,6 +184,7 @@ function setScene(sceneId) {
   state.currentScene = sceneId;
   const scene = scenes[sceneId];
   if (scene.endingId) {
+    incrementEndingCounter(scene.endingId);
     unlockEnding(scene.endingId);
   }
   if (typeof scene.onEnter === "function") {
