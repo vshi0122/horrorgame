@@ -5,21 +5,35 @@ const MENU_ENDING_CATALOG = [
   { id: "failedEscapeEnding", order: 2, name: "门外之物", teaser: "你到达出口，却没有真正离开。" },
   { id: "normalEnding", order: 3, name: "离开公寓", teaser: "你活着走出去了，但仍带着缺口。" },
   { id: "goodEndingQuestion", order: 4, name: "醒来？", teaser: "你似乎抗达了更深的答案。" },
-  { id: "fleeEnding", order: 5, name: "奔逃", teaser: "你选择不进入那栋楼。" }
+  { id: "fleeEnding", order: 5, name: "奔逃", teaser: "你选择不进入那栋楼。" },
+  { id: "chapter2UneasyReunionEnding", order: 6, name: "静默重逢", teaser: "你和她重逢了，但这份平静像一层薄薄的假象。" },
+  { id: "chapter2WaitWifeEnding", order: 7, name: "客厅守候", teaser: "你看见了破败现实，却仍坐在客厅等她回家。" },
+  { id: "chapter2BloodCradleEnding", order: 8, name: "血色摇篮", teaser: "你没吃药就抽到恶魔牌，婴儿床与重逢一起被血染透。" },
+  { id: "chapter2MonsterReturnEnding", order: 9, name: "回廊旧影", teaser: "你在吃药后抽到恶魔牌，第一章的怪物再次破门扑来。" }
 ];
 
 const MENU_DOCUMENT_TOTAL = 6;
 
 function buildMainMenuHome() {
+  const chapter2Unlocked = hasChapter2Access();
+
+  const chapter2Action = chapter2Unlocked
+    ? '<button class="menu-action" type="button" data-action="start-chapter2">第二章：回声住户</button>'
+    : '<button class="menu-action" type="button" disabled title="达成“醒来？”结局后解锁">第二章：回声住户（未解锁）</button>';
+
   return `
     <section class="scene-overlay menu-overlay" aria-label="主界面">
       <div class="menu-home">
         <p class="menu-kicker">A Point &amp; Click Horror Game</p>
-        <h2 class="menu-title">降临之日</h2>
-        <p class="menu-tagline">深夜醒来。公寓楼静立车前。<br>选择再次走进那个夜晚，或翻阅你已经带出的记忆。</p>
+        <h2 class="menu-title">${chapter2Unlocked ? "降临之日：回声" : "降临之日"}</h2>
+        <p class="menu-tagline">${chapter2Unlocked
+          ? "你已经穿过最深的一层。现在，选择是否进入第二章，继续面对被你改写过的记忆。"
+          : "深夜醒来。公寓楼静立车前。<br>选择再次走进那个夜晚，或翻阅你已经带出的记忆。"}
+        </p>
         <div class="menu-divider"></div>
         <nav class="menu-actions">
           <button class="menu-action menu-primary" type="button" data-action="start-game">再次醒来</button>
+          ${chapter2Action}
           <button class="menu-action" type="button" data-action="open-endings">结局图鉴</button>
           <button class="menu-action" type="button" data-action="open-documents">文本图鉴</button>
         </nav>
@@ -139,16 +153,18 @@ function buildDocumentArchive() {
 
 window.scenes.mainMenu = {
   title: "主界面",
-  hint: "黑暗尚未完全散去，你可以再次醒来，或先回看那些已被你带出的痕迹。",
+  hint: hasChapter2Access()
+    ? "你已经抵达“醒来？”结局。主界面发生了变化。"
+    : "黑暗尚未完全散去，你可以再次醒来，或先回看那些已被你带出的痕迹。",
   objective() {
     if (state.menuTab === "endings") return `浏览已解锁结局 ${getUnlockedEndingCount()}/${MENU_ENDING_CATALOG.length}。`;
     if (state.menuTab === "documents") return `浏览已收录文本 ${getUnlockedDocumentCount()}/${MENU_DOCUMENT_TOTAL}。`;
-    return "选择再次醒来，或进入图鉴。";
+    return hasChapter2Access() ? "第二章已解锁。你可以继续深入，或回看图鉴。" : "选择再次醒来，或进入图鉴。";
   },
   message() {
     if (state.menuTab === "endings") return "有些门已经被你推开，有些还没有。";
     if (state.menuTab === "documents") return "字条不会自己说话，但你可以把它们重新排成线索。";
-    return "每一次醒来，都只是从另一个入口重新开始。";
+    return hasChapter2Access() ? "你已经醒过一次。接下来，轮到你回头。" : "每一次醒来，都只是从另一个入口重新开始。";
   },
   hotspots() {
     return [];

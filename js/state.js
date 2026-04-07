@@ -28,6 +28,20 @@ const initialState = () => ({
     homeDoorExamined: false,
     creatureAlerted: false,
     fleePromptShown: false,
+    chapter2WokeInWard: false,
+    chapter2DoctorTalked: false,
+    chapter2GotMedicine: false,
+    chapter2AskedPstd: false,
+    chapter2AskedCause: false,
+    chapter2AskedMedicine: false,
+    chapter2InquiryFinished: false,
+    chapter2MailboxOpened: false,
+    chapter2DutyComputerUsed: false,
+    chapter2FirstFloorFireExitUnlocked: false,
+    chapter2ThirdFloorFireExitUnlocked: false,
+    chapter2MedicineUsed: false,
+    chapter2TarotChoice: "",
+    chapter2PendingEnding: "",
     powerOutage: false,
     normalAfterOutage: false,
     dinnerKetchupGiven: false,
@@ -67,6 +81,10 @@ function unlockEnding(endingId) {
 
 function getUnlockedEndingCount() {
   return readUnlockedEndings().length;
+}
+
+function hasUnlockedEnding(endingId) {
+  return readUnlockedEndings().includes(endingId);
 }
 
 function readUnlockedDocuments() {
