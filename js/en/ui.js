@@ -10,17 +10,22 @@ const documentViewerEl = document.querySelector("#documentViewer");
 const documentTitleEl = document.querySelector("#documentTitle");
 const documentMetaEl = document.querySelector("#documentMeta");
 const documentBodyEl = document.querySelector("#documentBody");
+const menuButton = document.querySelector("#menuButton");
 const restartButton = document.querySelector("#restartButton");
 const sceneFrame = document.querySelector("#sceneFrame");
 
 function render() {
   const scene = scenes[state.currentScene];
+  const isMainMenu = state.currentScene === "mainMenu";
   const title = typeof scene.title === "function" ? scene.title() : scene.title;
   const hint = typeof scene.hint === "function" ? scene.hint() : scene.hint;
+  const overlay = typeof scene.overlay === "function" ? scene.overlay() : (scene.overlay || "");
+  document.body.classList.toggle("main-menu-mode", isMainMenu);
+  restartButton.textContent = isMainMenu ? "Wake Again" : "Restart";
   sceneTitleEl.textContent = title;
   sceneHintEl.innerHTML = hint;
   objectiveTextEl.innerHTML = scene.objective();
-  sceneEl.innerHTML = sceneArt[state.currentScene] + buildHotspots(scene.hotspots());
+  sceneEl.innerHTML = sceneArt[state.currentScene] + buildHotspots(scene.hotspots()) + overlay;
   renderInventory();
   renderNotes();
   renderDocuments();
@@ -64,6 +69,15 @@ function renderNotes() {
 }
 
 function renderDocuments() {
+  if (state.currentScene === "mainMenu") {
+    documentsListEl.innerHTML = '<p class="documents-empty">The codex is displayed in the center of the main menu.</p>';
+    documentViewerEl.classList.add("document-empty");
+    documentTitleEl.textContent = "Text Archive";
+    documentMetaEl.textContent = "Review unlocked documents from the main menu.";
+    documentBodyEl.textContent = "";
+    return;
+  }
+
   if (!state.documents.length) {
     documentsListEl.innerHTML = '<p class="documents-empty">No discovered text to review yet.</p>';
     documentViewerEl.classList.add("document-empty");

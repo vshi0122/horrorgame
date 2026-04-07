@@ -1,4 +1,24 @@
-﻿const sceneArt = {
+﻿const MENU_ENDING_CATALOG = [
+  { id: "badEnding", order: 1, name: "Taken", teaser: "You failed to escape the third-floor residences." },
+  { id: "failedEscapeEnding", order: 2, name: "What Waits Outside", teaser: "You reached the exit, but you did not truly leave." },
+  { id: "normalEnding", order: 3, name: "Leave the Apartment", teaser: "You made it out alive, but something is still missing." },
+  { id: "goodEndingQuestion", order: 4, name: "Awake?", teaser: "You seem to have reached a deeper answer." },
+  { id: "fleeEnding", order: 5, name: "Flight", teaser: "You chose not to enter the building at all." }
+];
+
+const TOTAL_ENDINGS = 5;
+const TOTAL_DOCUMENTS = 6;
+
+const sceneArt = {
+  mainMenu: `
+    <div class="room-art">
+      <div class="art-layer" style="left:0;right:0;top:0;height:100%;background:radial-gradient(circle at 50% 20%, rgba(185,214,255,0.18), transparent 22%), linear-gradient(180deg,#090d13 0%,#030405 100%);"></div>
+      <div class="art-layer" style="left:12%;top:16%;width:20%;height:54%;background:linear-gradient(180deg,rgba(27,34,44,0.94),rgba(8,10,12,0.92));border-radius:14px;"></div>
+      <div class="art-layer" style="right:10%;top:10%;width:24%;height:60%;background:linear-gradient(180deg,rgba(24,19,18,0.94),rgba(7,6,6,0.92));border-radius:18px;"></div>
+      <div class="art-layer" style="left:38%;top:22%;width:24%;height:50%;background:linear-gradient(180deg,rgba(37,28,24,0.9),rgba(11,8,7,0.94));border-radius:14px;"></div>
+      <div class="art-layer" style="left:45%;top:8%;width:10%;height:12%;background:radial-gradient(circle,rgba(216,195,154,0.72),rgba(216,195,154,0.04));border-radius:999px;"></div>
+    </div>
+  `,
   carInterior: `
     <div class="room-art">
       <div class="art-layer" style="left:0;right:0;top:0;height:54%;background:linear-gradient(180deg,#161f29 0%,#0e141b 100%);"></div>
@@ -143,11 +163,182 @@
       <div class="art-layer" style="left:12%;top:18%;width:12%;height:18%;background:linear-gradient(180deg,rgba(255,255,255,0.86),rgba(115,115,115,0.9));clip-path:polygon(50% 0,100% 35%,82% 100%,18% 100%,0 35%);"></div>
     </div>
   `,
+  fleeEnding: `
+    <div class="room-art">
+      <div class="art-layer" style="left:0;right:0;top:0;height:100%;background:linear-gradient(180deg,#070b11 0%,#020406 100%);"></div>
+      <div class="art-layer" style="left:32%;top:14%;width:36%;height:60%;background:linear-gradient(180deg,#15202d,#080d13);border-radius:6px;"></div>
+      <div class="art-layer" style="left:37%;top:22%;width:9%;height:11%;background:radial-gradient(circle,rgba(255,222,148,0.52),rgba(255,222,148,0.04));border-radius:4px;"></div>
+      <div class="art-layer" style="right:36%;top:28%;width:9%;height:11%;background:radial-gradient(circle,rgba(255,222,148,0.38),rgba(255,222,148,0.04));border-radius:4px;"></div>
+      <div class="art-layer" style="left:21%;top:0;width:2%;height:56%;background:linear-gradient(180deg,transparent,rgba(185,214,255,0.2),transparent);transform:rotate(-8deg);"></div>
+      <div class="art-layer" style="left:52%;top:0;width:1%;height:44%;background:linear-gradient(180deg,transparent,rgba(185,214,255,0.15),transparent);transform:rotate(-5deg);"></div>
+      <div class="art-layer" style="left:72%;top:8%;width:2%;height:52%;background:linear-gradient(180deg,transparent,rgba(185,214,255,0.18),transparent);transform:rotate(-7deg);"></div>
+      <div class="art-layer" style="left:0;right:0;bottom:0;height:30%;background:linear-gradient(180deg,#0b1018,#060a10);"></div>
+      <div class="art-layer" style="left:24%;bottom:6%;width:22%;height:16%;background:radial-gradient(ellipse,rgba(255,240,200,0.3),rgba(255,240,200,0));"></div>
+      <div class="art-layer" style="right:24%;bottom:6%;width:22%;height:16%;background:radial-gradient(ellipse,rgba(255,240,200,0.3),rgba(255,240,200,0));"></div>
+    </div>
+  `,
   badEnding: `<div class="room-art"><div class="art-layer" style="inset:0;background:radial-gradient(circle at center,rgba(100,0,0,0.2),transparent 34%),linear-gradient(180deg,#080809 0%,#010101 100%);"></div></div>`,
   failedEscapeEnding: `<div class="room-art"><div class="art-layer" style="inset:0;background:radial-gradient(circle at center,rgba(156,18,18,0.25),transparent 30%),linear-gradient(180deg,#0a0909 0%,#010101 100%);"></div></div>`,
   normalEnding: `<div class="room-art"><div class="art-layer" style="inset:0;background:linear-gradient(180deg,#111722 0%,#05070a 100%);"></div></div>`,
   goodEndingQuestion: `<div class="room-art"><div class="art-layer" style="inset:0;background:radial-gradient(circle at center,rgba(255,255,255,0.18),transparent 28%),linear-gradient(180deg,#f0ece2 0%,#77716b 100%);"></div></div>`
 };
+
+function buildEndingOverlay(config) {
+  const collectedDocuments = state.documents.length;
+  const documentRate = `${collectedDocuments}/${TOTAL_DOCUMENTS}`;
+  const unlockedEndingRate = `${getUnlockedEndingCount()}/${TOTAL_ENDINGS}`;
+
+  return `
+    <section class="scene-overlay ending-overlay" aria-label="Ending summary">
+      <article class="ending-card ending-card-${config.variant}">
+        <p class="ending-kicker">Result</p>
+        <h3 class="ending-name">${config.name}</h3>
+        <p class="ending-summary">${config.summary}</p>
+        <div class="ending-stats">
+          <div class="ending-stat">
+            <span class="ending-stat-label">Current Ending</span>
+            <strong class="ending-stat-value">${config.order}/${TOTAL_ENDINGS}</strong>
+          </div>
+          <div class="ending-stat">
+            <span class="ending-stat-label">Unlocked Endings</span>
+            <strong class="ending-stat-value">${unlockedEndingRate}</strong>
+          </div>
+          <div class="ending-stat">
+            <span class="ending-stat-label">Texts Collected</span>
+            <strong class="ending-stat-value">${documentRate}</strong>
+          </div>
+        </div>
+      </article>
+    </section>
+  `;
+}
+
+function buildMainMenuHome() {
+  return `
+    <section class="scene-overlay menu-overlay" aria-label="Main menu">
+      <div class="menu-home">
+        <p class="menu-kicker">A Point &amp; Click Horror Game</p>
+        <h2 class="menu-title">Day of Arrival</h2>
+        <p class="menu-tagline">Wake in the dead of night. The apartment building waits ahead.<br>Step into that night again, or review what you have already brought back out.</p>
+        <div class="menu-divider"></div>
+        <nav class="menu-actions">
+          <button class="menu-action menu-primary" type="button" data-action="start-game">Wake Again</button>
+          <button class="menu-action" type="button" data-action="open-endings">Ending Archive</button>
+          <button class="menu-action" type="button" data-action="open-documents">Text Archive</button>
+        </nav>
+        <footer class="menu-footer">
+          <div class="menu-stat">
+            <span class="menu-stat-value">${getUnlockedEndingCount()}&thinsp;/&thinsp;${MENU_ENDING_CATALOG.length}</span>
+            <span class="menu-stat-label">Endings Unlocked</span>
+          </div>
+          <div class="menu-stat-sep"></div>
+          <div class="menu-stat">
+            <span class="menu-stat-value">${getUnlockedDocumentCount()}&thinsp;/&thinsp;${TOTAL_DOCUMENTS}</span>
+            <span class="menu-stat-label">Texts Archived</span>
+          </div>
+        </footer>
+      </div>
+      <div class="menu-lang-switch">
+        <a class="menu-lang-link" href="index.html">中文</a>
+        <span class="menu-lang-sep">·</span>
+        <a class="menu-lang-link active" href="index-en.html">EN</a>
+      </div>
+    </section>
+  `;
+}
+
+function buildEndingArchive() {
+  const unlockedEndings = readUnlockedEndings();
+  const entries = MENU_ENDING_CATALOG.map((ending) => {
+    const unlocked = unlockedEndings.includes(ending.id);
+    return `
+      <article class="archive-card ${unlocked ? "archive-card-unlocked" : "archive-card-locked"}">
+        <p class="archive-index">Ending ${ending.order}</p>
+        <h4 class="archive-title">${unlocked ? ending.name : "???"}</h4>
+        <p class="archive-copy">${unlocked ? ending.teaser : "You have not reached this ending yet."}</p>
+      </article>
+    `;
+  }).join("");
+
+  return `
+    <section class="scene-overlay menu-overlay menu-overlay-archive" aria-label="Ending archive">
+      <div class="archive-page">
+        <header class="archive-topnav">
+          <nav class="archive-breadcrumb">
+            <span class="archive-breadcrumb-home">Day of Arrival</span>
+            <span class="archive-breadcrumb-sep">›</span>
+            <span class="archive-breadcrumb-current">Ending Archive</span>
+          </nav>
+          <div class="archive-topnav-right">
+            <span class="archive-count">Unlocked ${getUnlockedEndingCount()}&thinsp;/&thinsp;${MENU_ENDING_CATALOG.length}</span>
+            <button class="menu-action archive-back" type="button" data-action="go-home">Back to Main Menu</button>
+          </div>
+        </header>
+        <div class="archive-content">
+          <h2 class="archive-section-title">Ending Archive</h2>
+          <p class="archive-section-subtitle">Explore different routes to unlock every ending. Hidden entries stay sealed until you reach them yourself.</p>
+          <div class="archive-grid">${entries}</div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function buildDocumentArchive() {
+  const unlockedDocuments = getUnlockedDocuments();
+  const selectedDocument = unlockedDocuments.find((entry) => entry.id === state.selectedArchiveDocumentId) || unlockedDocuments[0] || null;
+
+  const entries = unlockedDocuments.length
+    ? unlockedDocuments.map((document) => `
+        <button class="archive-document-entry${document.id === selectedDocument?.id ? " active" : ""}" type="button" data-id="${document.id}">
+          <span class="archive-document-title">${document.title}</span>
+          <span class="archive-document-source">${document.source}</span>
+        </button>
+      `).join("")
+    : '<p class="documents-empty">You have not carried any texts out yet. Once examined in-game, they will be archived here.</p>';
+
+  const detail = selectedDocument
+    ? `
+        <article class="archive-document-viewer">
+          <h4>${selectedDocument.title}</h4>
+          <p class="archive-document-meta">${selectedDocument.source}</p>
+          <div class="archive-document-body">${selectedDocument.body}</div>
+        </article>
+      `
+    : `
+        <article class="archive-document-viewer archive-document-viewer-empty">
+          <h4>Text Archive</h4>
+          <p class="archive-document-meta">Nothing archived yet</p>
+          <div class="archive-document-body">Keep exploring. Notes, notices, and scraps that you inspect in-game will remain archived here.</div>
+        </article>
+      `;
+
+  return `
+    <section class="scene-overlay menu-overlay menu-overlay-archive" aria-label="Text archive">
+      <div class="archive-page">
+        <header class="archive-topnav">
+          <nav class="archive-breadcrumb">
+            <span class="archive-breadcrumb-home">Day of Arrival</span>
+            <span class="archive-breadcrumb-sep">›</span>
+            <span class="archive-breadcrumb-current">Text Archive</span>
+          </nav>
+          <div class="archive-topnav-right">
+            <span class="archive-count">Archived ${getUnlockedDocumentCount()}&thinsp;/&thinsp;${TOTAL_DOCUMENTS}</span>
+            <button class="menu-action archive-back" type="button" data-action="go-home">Back to Main Menu</button>
+          </div>
+        </header>
+        <div class="archive-content">
+          <h2 class="archive-section-title">Text Archive</h2>
+          <p class="archive-section-subtitle">Documents you inspect during play are permanently archived here across sessions.</p>
+          <div class="archive-documents-layout">
+            <div class="archive-document-list">${entries}</div>
+            ${detail}
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+}
 
 function promptCode(message) {
   const input = window.prompt(message);
@@ -160,6 +351,28 @@ function normalizeResidentialPassword(value) {
 }
 
 const scenes = {
+  mainMenu: {
+    title: "Main Menu",
+    hint: "The darkness has not completely faded. Wake again, or review what you have already brought out.",
+    objective() {
+      if (state.menuTab === "endings") return `Browse unlocked endings ${getUnlockedEndingCount()}/${MENU_ENDING_CATALOG.length}.`;
+      if (state.menuTab === "documents") return `Browse archived texts ${getUnlockedDocumentCount()}/${TOTAL_DOCUMENTS}.`;
+      return "Choose to wake again, or open an archive.";
+    },
+    message() {
+      if (state.menuTab === "endings") return "Some doors have already opened for you. Others have not.";
+      if (state.menuTab === "documents") return "The pages do not speak on their own, but you can arrange them back into clues.";
+      return "Every awakening is only another entrance.";
+    },
+    hotspots() {
+      return [];
+    },
+    overlay() {
+      if (state.menuTab === "endings") return buildEndingArchive();
+      if (state.menuTab === "documents") return buildDocumentArchive();
+      return buildMainMenuHome();
+    }
+  },
   carInterior: {
     title: "Inside the Car",
     hint: "The rain has just stopped. Water still clings to the windshield.",
@@ -168,7 +381,10 @@ const scenes = {
     hotspots() { return [
       { id: "seat", label: hasItem("Keyring") ? "Driver's Seat" : "Keyring", x: 22, y: 48, w: 26, h: 20, action() { state.flags.wokeUp = true; if (!hasItem("Keyring")) { acquireItem("Keyring"); acquireItem("Car Key"); acquireItem("Mailbox Key"); addNote("You found a keyring in the driver's seat. It holds the car key and the mailbox key."); showMessage("You pull a keyring from the gap beside the driver's seat. The metal is unnaturally cold."); return; } showMessage("The dashboard has been dead for a long time. The only sound left is your own breathing."); } },
       { id: "trunk", label: state.flags.trunkOpened ? "Trunk" : "Open Trunk", x: 6, y: 56, w: 22, h: 18, action() { if (!hasItem("Car Key")) { showMessage("The trunk is locked. You need the car key first."); return; } if (!state.flags.trunkOpened) { state.flags.trunkOpened = true; acquireItem("Ketchup"); addNote("You took the ketchup your wife asked for from the trunk."); showMessage("You open the trunk and find the bottle of ketchup inside a bag of groceries."); return; } showMessage("Only an empty shopping bag and a damp cardboard box remain in the trunk."); } },
-      { id: "exit-car", label: "Get Out", x: 78, y: 28, w: 14, h: 34, action() { setScene("entrance"); } }
+      { id: "exit-car", label: "Get Out", x: 78, y: 28, w: 14, h: 34, action() { setScene("entrance"); } },
+      { id: "flee-engine", label: "Start the Car and Leave", x: 28, y: 74, w: 44, h: 12, visible: state.flags.wokeUp && !state.flags.fleePromptShown, action() { state.flags.fleePromptShown = true; showMessage("The dashboard flickers once. Do you really want to drive away now? Your wife is still inside that building."); render(); } },
+      { id: "flee-confirm", label: "Yes. Leave Now", x: 14, y: 74, w: 33, h: 12, visible: state.flags.fleePromptShown, action() { setScene("fleeEnding"); } },
+      { id: "flee-cancel", label: "No. I Have to Go In", x: 53, y: 74, w: 33, h: 12, visible: state.flags.fleePromptShown, action() { state.flags.fleePromptShown = false; showMessage("You switch the engine back off. Whatever waits in that building, you still have to go inside."); render(); } }
     ]; }
   },
   entrance: {
@@ -247,13 +463,17 @@ const scenes = {
   thirdFloorResidential: {
     title: "Third Floor Residences",
     hint: "A narrow corridor stretches ahead. Your apartment door is slightly ajar.",
-    objective() { return state.flags.creatureAlerted ? "Run to the fire exit immediately." : "Observe what is happening in front of you."; },
+    objective() {
+      if (state.flags.creatureAlerted) return "Run to the fire exit immediately.";
+      const examined = [state.flags.corpseExamined, state.flags.creatureExamined, state.flags.homeDoorExamined].filter(Boolean).length;
+      return `Investigate the corridor. Examined ${examined}/3.`;
+    },
     message() { return state.flags.creatureAlerted ? 'The creature has noticed you. <span class="blood-text">Run to the fire exit.</span>' : "A corpse lies near your door. A strange figure, its back turned to you, is crouched over it and feeding."; },
-    hotspots() { const triggerAlert = (text) => { if (!state.flags.creatureAlerted) { state.flags.creatureAlerted = true; showMessage(`${text}<br><span class="blood-text">The figure stops. It has noticed you. Run to the fire exit on the left.</span>`); return; } setScene("badEnding"); }; return [
+    hotspots() { const allExamined = () => state.flags.corpseExamined && state.flags.creatureExamined && state.flags.homeDoorExamined; const examine = (flag, text) => { if (state.flags.creatureAlerted) { setScene("badEnding"); return; } if (!state.flags[flag]) { state.flags[flag] = true; if (allExamined()) { state.flags.creatureAlerted = true; showMessage(`${text}<br><span class="blood-text">The figure stops. It has noticed you. Run to the fire exit on the left.</span>`); } else { showMessage(text); } render(); return; } showMessage("You have already looked here."); }; return [
       { id: "escape", label: "Fire Exit", x: 8, y: 20, w: 18, h: 54, pulse: state.flags.creatureAlerted, action() { setScene("escapeStairwell"); } },
-      { id: "corpse", label: "Corpse", x: 38, y: 58, w: 24, h: 14, action() { triggerAlert("The body looks torn open. Blood has soaked through the clothes and spread across the floor."); } },
-      { id: "creature", label: "Feeding Figure", x: 58, y: 34, w: 14, h: 28, action() { triggerAlert("Its shoulders are bent at the wrong angle. Wet tearing sounds fill the corridor as it feeds."); } },
-      { id: "home-door", label: "Your Door", x: 74, y: 20, w: 16, h: 46, action() { triggerAlert("Beyond the narrow opening of your door there is only darkness."); } },
+      { id: "corpse", label: "Corpse", x: 38, y: 58, w: 24, h: 14, action() { examine("corpseExamined", "The body has been ripped open. Blood has soaked through the clothing and spread across the floor."); } },
+      { id: "creature", label: "Feeding Figure", x: 58, y: 34, w: 14, h: 28, action() { examine("creatureExamined", "Its shoulders bend at the wrong angle. Wet tearing sounds fill the corridor as it feeds."); } },
+      { id: "home-door", label: "Your Door", x: 74, y: 20, w: 16, h: 46, action() { examine("homeDoorExamined", "Beyond the narrow opening of your door there is only darkness."); } },
       { id: "back", label: "Back to Third Floor", x: 38, y: 78, w: 20, h: 12, action() { if (state.flags.creatureAlerted) { setScene("badEnding"); return; } setScene("thirdFloorHall"); } }
     ]; }
   },
@@ -340,32 +560,49 @@ const scenes = {
       { id: "back", label: "Back to Corridor", x: 42, y: 78, w: 18, h: 12, action() { setScene("thirdFloorResidentialNormal"); } }
     ]; }
   },
+  fleeEnding: {
+    endingId: "fleeEnding",
+    title: "Flight Ending",
+    hint: "You chose to leave.",
+    objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; },
+    message() { return "The apartment building vanishes behind the rain-streaked glass. The passenger seat is empty. You drive away anyway."; },
+    overlay() { return buildEndingOverlay({ order: 5, variant: "bad", name: "Flight", summary: "You never entered the building. Your wife and the truth remained inside, and you chose not to look back." }); },
+    hotspots() { return [{ id: "restart", label: "Wake Up Again", x: 38, y: 68, w: 24, h: 14, action() { resetGame(); } }]; }
+  },
   badEnding: {
+    endingId: "badEnding",
     title: "Bad Ending",
     hint: "You failed to escape.",
-    objective() { return "Restart."; },
+    objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; },
     message() { return "When you turn back, the thing is already on you. Darkness and the wet stink of blood swallow your vision in an instant."; },
+    overlay() { return buildEndingOverlay({ order: 1, variant: "bad", name: "Taken", summary: "You lingered too long in the residences and failed to leave that floor alive." }); },
     hotspots() { return [{ id: "restart", label: "Wake Up Again", x: 38, y: 68, w: 24, h: 14, action() { resetGame(); } }]; }
   },
   failedEscapeEnding: {
+    endingId: "failedEscapeEnding",
     title: "Bad Ending",
     hint: "The door did not open for you.",
-    objective() { return "Restart."; },
+    objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; },
     message() { return "The moment you enter the wrong code, you feel something behind you. It looks like a flayed human body, but its face is your own. Blood spills from the corners of its mouth before it lunges at you."; },
+    overlay() { return buildEndingOverlay({ order: 2, variant: "failed", name: "What Waits Outside", summary: "You reached the ground floor, but failed to leave by the right means. Outside was not freedom. It was the next layer of the nightmare." }); },
     hotspots() { return [{ id: "restart", label: "Wake Up Again", x: 38, y: 68, w: 24, h: 14, action() { resetGame(); } }]; }
   },
   normalEnding: {
+    endingId: "normalEnding",
     title: "Normal Ending",
     hint: "You made it out of the building.",
-    objective() { return "Restart."; },
-    message() { return "At last you push the front door open. The night air outside is cold and real. You leave the apartment building without looking back."; },
+    objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; },
+    message() { return "At last you push the front door open. The night air outside is cold and real. You leave the apartment building, but where is your wife?"; },
+    overlay() { return buildEndingOverlay({ order: 3, variant: "normal", name: "Leave the Apartment", summary: "You made it out alive, but the truth did not come out with you." }); },
     hotspots() { return [{ id: "restart", label: "Wake Up Again", x: 38, y: 68, w: 24, h: 14, action() { resetGame(); } }]; }
   },
   goodEndingQuestion: {
+    endingId: "goodEndingQuestion",
     title: "Good Ending?",
     hint: "Maybe you really woke up. Maybe you didn't.",
-    objective() { return "Restart."; },
+    objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; },
     message() { return 'You jerk awake from the dream, but a voice is already whispering close to your ear: <span class="glitch-text">You finally woke up.</span>'; },
+    overlay() { return buildEndingOverlay({ order: 4, variant: "good", name: "Awake?", summary: "You reached the deepest layer. Whether this is waking, another loop, or a better-disguised dream still has no answer. To be continued." }); },
     hotspots() { return [{ id: "restart", label: "Wake Up Again", x: 38, y: 68, w: 24, h: 14, action() { resetGame(); } }]; }
   }
 };
