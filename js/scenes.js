@@ -342,7 +342,7 @@ const scenes = {
                 body: [
                   "物业提醒：",
                   "",
-                  "住户请提前准备照明、食物和饮水，迎接 <span class=\"blood-text\">降临之日</span>。",
+                  "住户请提前准备迎接 <span class=\"blood-text\">降临之日</span>。",
                   "如听见陌生声音呼唤姓名，请勿回应。"
                 ].join("\n")
               });
@@ -364,6 +364,17 @@ const scenes = {
               return;
             }
             setScene("failedEscapeEnding");
+          }
+        },
+        {
+          id: "back-outside",
+          label: "返回车里",
+          x: 38,
+          y: 82,
+          w: 24,
+          h: 10,
+          action() {
+            setScene("entrance");
           }
         }
       ];
@@ -584,7 +595,7 @@ const scenes = {
     title: "一楼楼道",
     hint: "一切都突然恢复成了普通公寓楼该有的样子。",
     objective() {
-      return "继续上楼，回家看看。";
+      return "可以离开公寓，或者重新上楼回家。";
     },
     message() {
       return "灯光正常亮着，刚才的停电和追逐像从没发生过。";
@@ -592,7 +603,18 @@ const scenes = {
     hotspots() {
       return [
         { id: "stairs", label: "上楼楼梯", x: 42, y: 24, w: 18, h: 48, action() { setScene("stairwellNormal"); } },
-        { id: "wall", label: "普通告示栏", x: 74, y: 18, w: 18, h: 42, action() { showMessage("只是常见的物业通知和快递提醒。"); } }
+        { id: "wall", label: "普通告示栏", x: 74, y: 18, w: 18, h: 42, action() { showMessage("右侧墙面贴着正常的物业告示和快递提醒。"); } },
+        {
+          id: "leave",
+          label: "离开公寓",
+          x: 38,
+          y: 82,
+          w: 24,
+          h: 10,
+          action() {
+            setScene("normalEnding");
+          }
+        }
       ];
     }
   },
@@ -749,7 +771,7 @@ const scenes = {
       return "重新开始。";
     },
     message() {
-      return "你终于推开大门，外面的夜风冰冷得真实。你离开了公寓，但没有回头。";
+      return "你终于推开大门，外面的夜风冰冷得真实。你离开了公寓，但妻子又在何方?";
     },
     hotspots() {
       return [{ id: "restart", label: "再次醒来", x: 38, y: 68, w: 24, h: 14, action() { resetGame(); } }];
