@@ -17,6 +17,113 @@ sceneArt.chapter2EchoJudgment = sceneArt.dinnerTableScene;
 sceneArt.chapter2PropertyDutyRoom = sceneArt.dinnerTableScene;
 sceneArt.chapter2FireExitStairwell = sceneArt.escapeStairwell;
 
+function isChapter2MedicineRoute() {
+  return state.flags.chapter2MedicineUsed;
+}
+
+function handleChapter2DivinationCall(source) {
+  const input = promptCode("请输入要拨打的电话号码");
+  if (input === null) {
+    showMessage("你拿起听筒又放下，没有拨号。");
+    return;
+  }
+
+  const dialed = input.replace(/\D/g, "");
+  if (!dialed) {
+    showMessage("电话里只有电流底噪，你没有拨出任何有效号码。");
+    return;
+  }
+
+  if (dialed === "80044110726") {
+    const hasDevil = hasItem("塔罗牌·恶魔");
+    const hasLovers = hasItem("塔罗牌·恋人");
+    const isHallPhone = source === "二楼居民区墙上电话";
+
+    if (!hasDevil && !hasLovers) {
+      collectDocument({
+        id: "chapter2-divination-call-record-justice",
+        title: "拨号记录：正义",
+        source,
+        body: [
+          "你拨通了 800-4411-0726。",
+          "",
+          "机械音说：\"你还没抽到真正的问题。\"",
+          isHallPhone ? "机械音又补了一句：\"别只想着把她带回家。还有一个从没能被抱回家的。\"" : "",
+          "几秒后，听筒里传来纸牌被翻开的摩擦声。",
+          "它报出牌名：\"正义。\"",
+          "",
+          "\"你对某个人怀有无法偿还的愧疚。\"",
+          "\"你一直在逃避那天的责任。\""
+        ].filter(Boolean).join("\n")
+      });
+
+      if (!hasItem("塔罗牌·正义")) {
+        acquireItem("塔罗牌·正义");
+      }
+      addNote("占卜热线为你抽到“正义”，并指出你对某个人怀有强烈愧疚。");
+      showMessage(
+        isHallPhone
+          ? "电话里先是一阵电流底噪，随后机械音报出：\"你还没有牌，我替你抽一张。别只想着把她带回家，还有一个从没能被抱回家的。\"\n听筒里传来翻牌声。\"正义。你对某个人很愧疚。\"\n你放下电话时，口袋里多了一张“塔罗牌·正义”。"
+          : "电话里先是一阵电流底噪，随后机械音报出：\"你还没有牌，我替你抽一张。\"\n听筒里传来翻牌声。\"正义。你对某个人很愧疚。\"\n你放下电话时，口袋里多了一张“塔罗牌·正义”。"
+      );
+      render();
+      return;
+    }
+
+    const options = [];
+    if (hasDevil) options.push("1=问恶魔牌的意思");
+    if (hasLovers) options.push("2=问恋人牌的意思");
+    options.push("0=挂断");
+    const choice = promptCode(`你想问什么？（${options.join("，")}）`);
+
+    if (choice === null || choice.replace(/\s+/g, "") === "0") {
+      showMessage("你听着听筒里的呼吸声，最后什么也没问，挂断了电话。");
+      return;
+    }
+
+    const normalizedChoice = choice.replace(/\s+/g, "");
+    if (normalizedChoice === "1" && hasDevil) {
+      collectDocument({
+        id: "chapter2-divination-devil-meaning",
+        title: "占卜回话：恶魔",
+        source,
+        body: [
+          "机械音说：\"恶魔不是诱惑，是你自愿不松手的锁链。\"",
+          "\"你以为自己在找出口，其实一直在喂养它。\""
+        ].join("\n")
+      });
+      addNote("占卜热线解释恶魔牌：杀人恶魔已经偿命。 ");
+      showMessage("电话里的机械音没有起伏：\"恶魔牌的意思？杀人恶魔已经偿命。\"");
+      return;
+    }
+
+    if (normalizedChoice === "2" && hasLovers) {
+      collectDocument({
+        id: "chapter2-divination-lovers-meaning",
+        title: "占卜回话：恋人",
+        source,
+        body: [
+          "机械音说：\"恋人不是甜蜜，是选择。\"",
+          "\"你想拥抱的人，和你该承认的真相，未必是同一个。\""
+        ].join("\n")
+      });
+      addNote("占卜热线解释恋人牌：它代表选择，而不是单纯重逢。 ");
+      showMessage("机械音停顿了两秒，才继续报出：\"恋人牌代表选择，不代表原谅。你要选的是人，还是你愿意承认的真相？\"");
+      return;
+    }
+
+    showMessage("电话那头只回了一句：\"先看清你手里有什么，再提问。\"");
+    return;
+  }
+
+  if (dialed === "110" || dialed === "119" || dialed === "120") {
+    showMessage("线路里传来短促忙音，像被某种转接系统硬生生切断。你没有拨通。 ");
+    return;
+  }
+
+  showMessage("你拨出了号码，但听筒里只剩持续的忙音，没有人接听。");
+}
+
 window.scenes.chapter2CarAtApartment = {
   title: "第二章 · 公寓楼下",
   hint: "你把车停回了熟悉的位置，楼一如昨日像从未改变。",
@@ -83,16 +190,17 @@ window.scenes.chapter2Entrance = {
             state.flags.chapter2MailboxOpened = true;
             collectDocument({
               id: "chapter2-layoff-subsidy",
-              title: "裁员补贴发放通知",
+              title: "裁员通知",
               source: "公寓门口信箱",
               body: [
-                "人力资源服务中心通知",
+                "人力资源部通知",
                 "",
-                "您申请的阶段性裁员补贴已进入发放流程。",
-                "发放对象：John",
-                "发放日期：03/25",
+                "因公司组织调整，您所在岗位已被裁撤。",
+                "您与公司的劳动合同将于本周内终止。",
+                "收件人：John",
+                "发放日期：03/21",
                 "",
-                "备注：请本人携带身份证原件办理最终确认。"
+                "备注：请本人于三个工作日内到场办理离职与交接手续。"
               ].join("\n")
             });
 
@@ -104,15 +212,15 @@ window.scenes.chapter2Entrance = {
                 "本地晚报 · 社会版",
                 "",
                 "某医院产科手术事故引发家属争议。",
-                "涉事家属表示，将继续申请公开手术流程记录。",
                 "院方回应称：目前仍在内部复核。",
+                "家属质疑复核公正性，已向监管部门提交申诉。",
                 "",
                 "边栏手写字迹：\"你得做出正确的选择。\""
               ].join("\n")
             });
 
-            addNote("你在信箱里看到“裁员补贴发放通知”和一篇“医疗事故”报纸剪页。");
-            showMessage("你抽出两份文件，呼吸一下子变得很浅。上面分别写着“裁员补贴发放”和“医疗事故”。");
+            addNote("你在信箱里看到“裁员通知”和一篇“医疗事故”报纸剪页。");
+            showMessage("你抽出两份文件，呼吸一下子变得很浅。上面分别写着“裁员通知”和“医疗事故”。");
             render();
             return;
           }
@@ -155,15 +263,59 @@ window.scenes.chapter2Hallway = {
   title: "第二章 · 一楼楼道",
   hint: "布局没有变，但右侧海报恢复成了正常的物业通知。",
   objective() {
+    if (isChapter2MedicineRoute()) {
+      if (!hasItem("旧钥匙串")) return "先检查楼道里散落的购物袋。";
+      if (!hasItem("结婚戒指")) return "用旧钥匙串打开消防通道，绕去二楼找你们家的遗物。";
+      if (!hasItem("婴儿挂饰金属杆")) return "继续上楼，在通往三楼的夹层里找还能用的东西。";
+      if (!state.flags.chapter2MedicineGateUnlocked) return "回三楼居民区入口，用旧钥匙串打开外层链锁。";
+      return "你已经拿齐进门前需要的遗物，回三楼继续。";
+    }
     return state.flags.chapter2FirstFloorFireExitUnlocked
       ? "消防通道已远程解锁。你可以上楼继续调查，或从消防通道离开。"
       : "先检查右侧物业通知，再决定是否继续上楼。";
   },
   message() {
+    if (isChapter2MedicineRoute()) {
+      return "楼道里有股散不掉的腥甜味。墙边摔碎的购物袋、番茄酱和暗色污痕，让这里看起来像有人还没来得及把东西带回家。";
+    }
     return "楼道安静得异常。昨夜那种仪式感告示不见了，取而代之的是一张普通通知。";
   },
   hotspots() {
     return [
+      {
+        id: "shopping-bags",
+        label: "散落的购物袋",
+        x: 30,
+        y: 64,
+        w: 18,
+        h: 12,
+        visible: isChapter2MedicineRoute(),
+        pulse: isChapter2MedicineRoute() && !hasItem("旧钥匙串"),
+        action() {
+          if (!hasItem("旧钥匙串")) {
+            acquireItem("旧钥匙串");
+            collectDocument({
+              id: "chapter2-medicine-shopping-bags",
+              title: "楼道散落物",
+              source: "一楼楼道地面",
+              body: [
+                "塑料袋已经被踩破，番茄酱瓶碎在里面。",
+                "",
+                "收据上的最后一行写着：",
+                "番茄酱 x1",
+                "",
+                "袋底压着一串旧钥匙，上面挂着褪色的门牌挂件和一只磨旧的小布偶。"
+              ].join("\n")
+            });
+            addNote("你在摔碎的购物袋里找到了一串旧钥匙。");
+            showMessage("你拨开碎玻璃和黏稠番茄酱，在袋底摸到一串旧钥匙。钥匙扣上的门牌挂件和小布偶，你不可能认错。");
+            render();
+            return;
+          }
+
+          showMessage("购物袋里的碎瓶和收据还在。钥匙串已经被你拿走了。");
+        }
+      },
       {
         id: "fire-exit",
         label: "消防通道入口",
@@ -172,6 +324,14 @@ window.scenes.chapter2Hallway = {
         w: 18,
         h: 48,
         action() {
+          if (isChapter2MedicineRoute()) {
+            if (!hasItem("旧钥匙串")) {
+              showMessage("消防门是老式机械锁。你下意识摸向口袋，却发现自己还没有能试的钥匙。");
+              return;
+            }
+            setScene("chapter2FireExitStairwell");
+            return;
+          }
           if (!state.flags.chapter2FirstFloorFireExitUnlocked) {
             showMessage("消防门依旧锁着。");
             return;
@@ -197,23 +357,41 @@ window.scenes.chapter2Hallway = {
         y: 18,
         w: 18,
         h: 42,
-        pulse: true,
+        pulse: !isChapter2MedicineRoute(),
         action() {
+          if (isChapter2MedicineRoute()) {
+            collectDocument({
+              id: "chapter2-medicine-wall-smear",
+              title: "被蹭脏的告示",
+              source: "一楼楼道右侧墙面",
+              body: [
+                "原本的物业通知已经被红色污痕糊开。",
+                "",
+                "只剩一句还能看清：",
+                "“住户遗留物请勿擅自带离。”",
+                "",
+                "字迹下方还粘着已经干掉的番茄酱。"
+              ].join("\n")
+            });
+            showMessage("通知上的字大多糊掉了，只剩“住户遗留物”几个字还能看清。你忽然觉得，这栋楼像在把什么东西还给你。");
+            return;
+          }
           collectDocument({
             id: "chapter2-normal-property-notice",
-            title: "物业缴费通知",
+            title: "物业临时封锁通知",
             source: "一楼楼道右侧墙面",
             body: [
-              "物业缴费通知",
+              "物业临时封锁通知",
               "",
-              "本周三 10:00-12:00 进行电梯例行检修。",
-              "请住户提前安排出行时间。",
-              "如有紧急需求，请联系值班电话。",
+              "因 03/27 夜间突发事件，三楼居民区暂时封锁。",
+              "相关住户遗留物由物业统一登记后处理。",
+              "未经允许，请勿擅自前往三楼或带离现场物品。",
+              "如需核查封锁原因，请前往二楼物业值班室登记。",
               "",
               "落款：城南公寓物业服务中心"
             ].join("\n")
           });
-          showMessage("这次只是普通的物业缴费通知。你却因此更不安。");
+          showMessage("告示看起来终于和这里真正发生过的事对上了：03/27 之后，三楼一直被物业临时封锁。");
         }
       },
       {
@@ -235,14 +413,73 @@ window.scenes.chapter2FireExitStairwell = {
   title: "第二章 · 消防通道",
   hint: "应急灯一路向上，楼梯狭窄且潮湿。",
   objective() {
+    if (isChapter2MedicineRoute()) {
+      if (!hasItem("结婚戒指")) return "继续往二楼平台走，找你们家的旧物。";
+      return "遗物已经在你身上了，回楼梯间继续往上。";
+    }
     return state.flags.chapter2ThirdFloorFireExitUnlocked
       ? "三楼出口已通过验证，你可以直接进入三楼居民区。"
       : "沿消防通道上行，尝试从三楼出口进入。";
   },
   message() {
+    if (isChapter2MedicineRoute()) {
+      return "门在你身后合上时，你闻到的是灰尘、潮气，还有一点像旧木头家具泡过血水后的腥味。";
+    }
     return "你推门进入消防通道，门在身后缓缓合上，回声在混凝土墙面来回反弹。";
   },
   hotspots() {
+    if (isChapter2MedicineRoute()) {
+      return [
+        {
+          id: "family-note",
+          label: "墙角便签",
+          x: 8,
+          y: 74,
+          w: 18,
+          h: 14,
+          pulse: true,
+          action() {
+            collectDocument({
+              id: "chapter2-medicine-family-note",
+              title: "被踩脏的家庭便签",
+              source: "一楼消防通道墙角",
+              body: [
+                "便签被鞋底踩得发皱。",
+                "",
+                "只剩半句还能辨认：",
+                "“记得把她的东西……带回家。”",
+                "",
+                "最后两个字被血一样的污渍糊开。"
+              ].join("\n")
+            });
+            showMessage("便签被踩得只剩半句。你盯着“带回家”那三个字，胸口像突然被什么压住。");
+          }
+        },
+        {
+          id: "to-2f-service",
+          label: "继续往二楼平台",
+          x: 62,
+          y: 18,
+          w: 24,
+          h: 30,
+          pulse: !hasItem("结婚戒指"),
+          action() {
+            setScene("chapter2SecondFloorResidential");
+          }
+        },
+        {
+          id: "to-1f",
+          label: "回一楼楼道",
+          x: 14,
+          y: 70,
+          w: 24,
+          h: 14,
+          action() {
+            setScene("chapter2Hallway");
+          }
+        }
+      ];
+    }
     return [
       {
         id: "corner-photo",
@@ -327,9 +564,17 @@ window.scenes.chapter2StairwellNormal = {
   title: "第二章 · 楼梯间",
   hint: "这里连通一楼和二楼，一切都和普通公寓一样。",
   objective() {
+    if (isChapter2MedicineRoute()) {
+      if (!hasItem("结婚戒指")) return "先去二楼看看。那边像是堆了很多从三楼搬出来的东西。";
+      if (!hasItem("婴儿挂饰金属杆")) return "继续往上，二楼和三楼之间的夹层里还有东西。";
+      return "你已经从下面两层拿到了东西，继续上三楼。";
+    }
     return "继续前往二楼。";
   },
   message() {
+    if (isChapter2MedicineRoute()) {
+      return "楼梯间表面看着还是干净的，但墙角和扶手接缝里都嵌着洗不掉的暗红。";
+    }
     return "墙面干净、灯光稳定，像那些痕迹从未出现过。";
   },
   hotspots() {
@@ -344,16 +589,38 @@ window.scenes.chapter2SecondFloorHall = {
   title: "第二章 · 二楼大厅",
   hint: "布局一致，静得只能听见自己的脚步声。",
   objective() {
+    if (isChapter2MedicineRoute()) {
+      if (!hasItem("结婚戒指")) return "先回一楼，用旧钥匙串打开消防通道，从里面绕去二楼的临时堆放区。";
+      if (!hasItem("婴儿挂饰金属杆")) return "戒指已经找到了，继续往三楼方向走。";
+      return "二楼已经没有能带走的东西了，继续上三楼。";
+    }
     return "先去三楼确认情况，必要时回二楼居民区找物业值班室。";
   },
   message() {
+    if (isChapter2MedicineRoute()) {
+      return "二楼比一楼更安静。右侧走廊堆着几只临时搬出来的纸箱，像有人把三楼的生活硬生生拆散了搬到这里。";
+    }
     return "这里没有异常标记，只有被日常磨旧的墙面与门牌。";
   },
   hotspots() {
     return [
       { id: "stairs", label: "楼梯口", x: 42, y: 24, w: 18, h: 48, action() { setScene("chapter2UpperStairwell"); } },
       { id: "wall", label: "普通墙面", x: 8, y: 18, w: 18, h: 48, action() { showMessage("白墙上只有岁月留下的细小裂纹。"); } },
-      { id: "residential", label: "居民区入口", x: 74, y: 18, w: 18, h: 48, action() { setScene("chapter2SecondFloorResidential"); } },
+      {
+        id: "residential",
+        label: "居民区入口",
+        x: 74,
+        y: 18,
+        w: 18,
+        h: 48,
+        action() {
+          if (isChapter2MedicineRoute() && !hasItem("结婚戒指")) {
+            showMessage("入口被临时堆放的家具和封板堵死了。想过去，只能从一楼消防通道那边绕。");
+            return;
+          }
+          setScene("chapter2SecondFloorResidential");
+        }
+      },
       { id: "back", label: "回楼梯间", x: 40, y: 78, w: 20, h: 12, action() { setScene("chapter2StairwellNormal"); } }
     ];
   }
@@ -363,13 +630,52 @@ window.scenes.chapter2UpperStairwell = {
   title: "第二章 · 上行楼梯间",
   hint: "这里连通二楼和三楼。",
   objective() {
+    if (isChapter2MedicineRoute()) {
+      if (!hasItem("婴儿挂饰金属杆")) return "检查平台上的残骸，再继续往上。";
+      return "继续上三楼。";
+    }
     return "上三楼。";
   },
   message() {
+    if (isChapter2MedicineRoute()) {
+      return "越往上，扶手上的污痕越明显。平台角落躺着一个摔碎的婴儿床挂饰，像根本没来得及挂起来。";
+    }
     return "越往上走越安静，连回声都像被吸走了一部分。";
   },
   hotspots() {
     return [
+      {
+        id: "landing-mobile",
+        label: "婴儿床挂饰",
+        x: 18,
+        y: 54,
+        w: 22,
+        h: 18,
+        visible: isChapter2MedicineRoute(),
+        pulse: isChapter2MedicineRoute() && !hasItem("婴儿挂饰金属杆"),
+        action() {
+          if (!hasItem("婴儿挂饰金属杆")) {
+            acquireItem("婴儿挂饰金属杆");
+            collectDocument({
+              id: "chapter2-medicine-mobile-rod",
+              title: "摔裂的婴儿床挂饰",
+              source: "二楼与三楼之间的平台",
+              body: [
+                "挂饰已经摔裂，只剩半截塑料星星和露出来的细金属杆。",
+                "",
+                "这东西原本应该挂在婴儿床上。",
+                "可现在你只能一眼看出，它刚好细到能伸进门缝去拨动链锁。"
+              ].join("\n")
+            });
+            addNote("你从摔裂的婴儿床挂饰里抽出一根金属杆。");
+            showMessage("你捡起挂饰残骸，把里面那根细金属杆抽了出来。它原本是给没出生的孩子准备的，现在却只能拿来开门。");
+            render();
+            return;
+          }
+
+          showMessage("挂饰已经只剩空壳，那根金属杆被你收起来了。");
+        }
+      },
       { id: "to-3f", label: "通往三楼", x: 62, y: 18, w: 22, h: 28, action() { setScene("chapter2ThirdFloorHall"); } },
       { id: "back", label: "回二楼大厅", x: 18, y: 72, w: 22, h: 14, action() { setScene("chapter2SecondFloorHall"); } }
     ];
@@ -380,11 +686,20 @@ window.scenes.chapter2ThirdFloorHall = {
   title: "第二章 · 三楼",
   hint: "三楼居民区门口被加锁，门上贴着新封条。",
   objective() {
+    if (isChapter2MedicineRoute()) {
+      if (!state.flags.chapter2MedicineGateUnlocked) return "用旧钥匙串打开居民区外层链锁。";
+      return "外层锁已经开了，进去回家。";
+    }
     return state.flags.chapter2ThirdFloorFireExitUnlocked
       ? "消防通道出口验证已通过，可从侧门进入三楼居民区。"
       : "查看封条内容，然后回二楼值班室用物业信息登录解锁。";
   },
   message() {
+    if (isChapter2MedicineRoute()) {
+      return state.flags.chapter2MedicineGateUnlocked
+        ? "链条已经松开，门缝里吹出一股冷风，像这个楼层终于同意把你放进去。"
+        : "三楼居民区外层门被链条和挂锁封住。封条上沾着已经发黑的手印。";
+    }
     return "三楼很安静。居民区入口被链条锁住，封条像刚贴上去不久。";
   },
   hotspots() {
@@ -392,13 +707,30 @@ window.scenes.chapter2ThirdFloorHall = {
       { id: "stairs", label: "回楼梯间", x: 42, y: 24, w: 18, h: 48, action() { setScene("chapter2UpperStairwell"); } },
       {
         id: "residential",
-        label: "居民区入口（封锁）",
+        label: isChapter2MedicineRoute()
+          ? (state.flags.chapter2MedicineGateUnlocked ? "居民区入口（已打开）" : "居民区入口（链锁）")
+          : "居民区入口（封锁）",
         x: 74,
         y: 18,
         w: 18,
         h: 48,
         pulse: true,
         action() {
+          if (isChapter2MedicineRoute()) {
+            if (!state.flags.chapter2MedicineGateUnlocked) {
+              if (!hasItem("旧钥匙串")) {
+                showMessage("链锁是老式挂锁。你知道自己少了一串本该一直带在身上的钥匙。");
+                return;
+              }
+              state.flags.chapter2MedicineGateUnlocked = true;
+              addNote("你用旧钥匙串打开了三楼居民区外层链锁。");
+              showMessage("你试到第三把时，挂锁终于“咔哒”一声弹开。链条滑落的声音，让整层楼都像轻轻震了一下。");
+              render();
+              return;
+            }
+            setScene("chapter2ThirdFloorResidential");
+            return;
+          }
           collectDocument({
             id: "chapter2-sealed-notice-3f",
             title: "三楼居民区封条告示",
@@ -425,6 +757,10 @@ window.scenes.chapter2ThirdFloorHall = {
         h: 48,
         pulse: !state.flags.chapter2ThirdFloorFireExitUnlocked,
         action() {
+          if (isChapter2MedicineRoute()) {
+            showMessage("消防通道出口这侧被焊死了。喝药后你只看得清一件事：真正该开的不是这扇门。");
+            return;
+          }
           if (!state.flags.chapter2FirstFloorFireExitUnlocked) {
             showMessage("出口控制器无响应。");
             return;
@@ -444,26 +780,109 @@ window.scenes.chapter2SecondFloorResidential = {
   title: "第二章 · 二楼居民区",
   hint: "走廊尽头亮着一盏白灯，门牌写着“物业值班室”。",
   objective() {
+    if (isChapter2MedicineRoute()) {
+      return hasItem("结婚戒指")
+        ? "你已经拿到了二楼的遗物，回大厅继续上楼。"
+        : state.flags.chapter2MedicineSawRing
+          ? "那枚婚戒还卡在搬运箱底下。现在你得想办法把它撬出来。"
+          : "检查堆在这层的临时搬运箱。";
+    }
     return "进入物业值班室，调查三楼封锁原因。";
   },
   message() {
+    if (isChapter2MedicineRoute()) {
+      return "这层走廊堆着几只临时搬运箱，箱侧都写着“三楼”。有人把那里的一部分生活匆匆搬到了这里。";
+    }
     return "二楼走廊里有生活气息，但值班室门缝里没有任何声音。";
   },
   hotspots() {
     return [
       {
         id: "duty-room",
-        label: "物业值班室",
+        label: isChapter2MedicineRoute() ? "临时搬运箱" : "物业值班室",
         x: 42,
         y: 18,
         w: 18,
         h: 48,
         pulse: true,
         action() {
+          if (isChapter2MedicineRoute()) {
+            if (!state.flags.chapter2MedicineSawRing) {
+              state.flags.chapter2MedicineSawRing = true;
+              collectDocument({
+                id: "chapter2-medicine-wedding-ring-trapped",
+                title: "搬运箱缝里的婚戒",
+                source: "二楼居民区临时搬运箱",
+                body: [
+                  "纸箱底部压着散掉的相框、床单和碎玻璃。",
+                  "",
+                  "你在最底下看见了一枚婚戒，",
+                  "却发现它刚好卡进翻倒家具和木板缝里，手指根本够不到。",
+                  "",
+                  "戒指内侧刻着你们的名字缩写。"
+                ].join("\n")
+              });
+              addNote("你在二楼搬运箱底部看见了自己的婚戒，但暂时拿不出来。");
+              showMessage("你掀开箱盖，在最底下看见了一枚婚戒。它卡在木板和翻倒家具之间，明明就在眼前，却偏偏够不到。");
+              render();
+              return;
+            }
+            if (!hasItem("结婚戒指")) {
+              if (!hasItem("婴儿挂饰金属杆")) {
+                showMessage("婚戒还卡在缝里。你需要一件细长、够硬，能伸进去把它拨出来的东西。");
+                return;
+              }
+              acquireItem("结婚戒指");
+              collectDocument({
+                id: "chapter2-medicine-wedding-ring",
+                title: "从缝里撬出的婚戒",
+                source: "二楼居民区临时搬运箱",
+                body: [
+                  "你用那根婴儿挂饰里的金属杆伸进缝隙，",
+                  "把婚戒一点点拨了出来。",
+                  "",
+                  "它落进你掌心时很凉，",
+                  "像这个家里所有“还来得及”的念头，最后都只剩下这一枚小小的圈。"
+                ].join("\n")
+              });
+              addNote("你回到二楼，用金属杆把卡住的婚戒撬了出来。");
+              showMessage("你把金属杆探进缝里，小心拨了几下，婚戒终于滑了出来。它落进掌心时凉得像刚从水里捞出来。");
+              render();
+              return;
+            }
+            showMessage("搬运箱底下只剩空出来的缝隙。婚戒已经被你带走了。");
+            return;
+          }
           setScene("chapter2PropertyDutyRoom");
         }
       },
-      { id: "corridor-note", label: "走廊公告栏", x: 8, y: 22, w: 18, h: 44, action() { showMessage("公告栏上全是日常通知，唯独没有三楼封锁的详细说明。"); } },
+      {
+        id: "corridor-note",
+        label: isChapter2MedicineRoute() ? "尽头镜子" : "走廊公告栏",
+        x: 8,
+        y: 22,
+        w: 18,
+        h: 44,
+        action() {
+          if (isChapter2MedicineRoute()) {
+            showMessage("镜子里你身后像站着两个人。可等你回头，走廊还是只有你自己。");
+            return;
+          }
+          showMessage("公告栏上全是日常通知，唯独没有三楼封锁的详细说明。");
+        }
+      },
+      {
+        id: "hall-phone",
+        label: "墙上电话",
+        x: 64,
+        y: 56,
+        w: 14,
+        h: 16,
+        visible: isChapter2MedicineRoute(),
+        action() {
+          handleChapter2DivinationCall("二楼居民区墙上电话");
+        }
+      },
       { id: "back", label: "回二楼大厅", x: 38, y: 78, w: 20, h: 12, action() { setScene("chapter2SecondFloorHall"); } }
     ];
   }
@@ -473,6 +892,9 @@ window.scenes.chapter2PropertyDutyRoom = {
   title: "第二章 · 物业值班室",
   hint: "桌上摊着登记簿，墙上的监控屏全是雪花点。",
   objective() {
+    if (isChapter2MedicineRoute()) {
+      return "这里在喝药之后只剩下噪点和死机器，没有你要的东西。";
+    }
     return state.flags.chapter2ThirdFloorFireExitUnlocked
       ? "三楼消防通道门已解锁，返回三楼验证入口状态。"
       : state.flags.chapter2DutyComputerUsed
@@ -480,6 +902,9 @@ window.scenes.chapter2PropertyDutyRoom = {
       : "检查值班室记录，并通过电脑处理消防通道主控。";
   },
   message() {
+    if (isChapter2MedicineRoute()) {
+      return "监控屏和电脑都还亮着，但你一眼就知道这里什么也给不了你。真正要开的锁都不在这间屋里。";
+    }
     return "房间里没人，只有风扇轻微转动，像有人刚离开。";
   },
   hotspots() {
@@ -493,6 +918,10 @@ window.scenes.chapter2PropertyDutyRoom = {
         h: 16,
         pulse: true,
         action() {
+          if (isChapter2MedicineRoute()) {
+            showMessage("登记簿上的字像被水泡过，全糊成一团。这里现在只像个空壳。");
+            return;
+          }
           collectDocument({
             id: "chapter2-duty-room-log",
             title: "物业值班登记摘录",
@@ -516,6 +945,10 @@ window.scenes.chapter2PropertyDutyRoom = {
         w: 16,
         h: 18,
         action() {
+          if (isChapter2MedicineRoute()) {
+            showMessage("屏幕上的雪花点一格格跳动，你却只觉得它们在试图把你从这条路上引开。");
+            return;
+          }
           showMessage("所有画面都被雪花噪点覆盖，看起来很久没用。");
         }
       },
@@ -527,100 +960,7 @@ window.scenes.chapter2PropertyDutyRoom = {
         w: 14,
         h: 18,
         action() {
-          const input = promptCode("请输入要拨打的电话号码");
-          if (input === null) {
-            showMessage("你拿起听筒又放下，没有拨号。");
-            return;
-          }
-
-          const dialed = input.replace(/\D/g, "");
-          if (!dialed) {
-            showMessage("电话里只有电流底噪，你没有拨出任何有效号码。");
-            return;
-          }
-
-          if (dialed === "80044110726") {
-            const hasDevil = hasItem("塔罗牌·恶魔");
-            const hasLovers = hasItem("塔罗牌·恋人");
-
-            if (!hasDevil && !hasLovers) {
-              collectDocument({
-                id: "chapter2-divination-call-record-justice",
-                title: "拨号记录：正义",
-                source: "二楼物业值班室电话",
-                body: [
-                  "你拨通了 800-4411-0726。",
-                  "",
-                  "女声说：\"你还没抽到真正的问题。\"",
-                  "几秒后，听筒里传来纸牌被翻开的摩擦声。",
-                  "她念出牌名：\"正义。\"",
-                  "",
-                  "\"你对某个人怀有无法偿还的愧疚。\"",
-                  "\"你一直在逃避那天的责任。\""
-                ].join("\n")
-              });
-
-              if (!hasItem("塔罗牌·正义")) {
-                acquireItem("塔罗牌·正义");
-              }
-              addNote("占卜热线为你抽到“正义”，并指出你对某个人怀有强烈愧疚。");
-              showMessage("电话那头沉默片刻后说：\"你还没有牌，我替你抽一张。\"\n听筒里传来翻牌声。\"正义。你对某个人很愧疚。\"\n你放下电话时，口袋里多了一张“塔罗牌·正义”。");
-              render();
-              return;
-            }
-
-            const options = [];
-            if (hasDevil) options.push("1=问恶魔牌的意思");
-            if (hasLovers) options.push("2=问恋人牌的意思");
-            options.push("0=挂断");
-            const choice = promptCode(`你想问什么？（${options.join("，")}）`);
-
-            if (choice === null || choice.replace(/\s+/g, "") === "0") {
-              showMessage("你听着听筒里的呼吸声，最后什么也没问，挂断了电话。");
-              return;
-            }
-
-            const normalizedChoice = choice.replace(/\s+/g, "");
-            if (normalizedChoice === "1" && hasDevil) {
-              collectDocument({
-                id: "chapter2-divination-devil-meaning",
-                title: "占卜回话：恶魔",
-                source: "二楼物业值班室电话",
-                body: [
-                  "女声说：\"恶魔不是诱惑，是你自愿不松手的锁链。\"",
-                  "\"你以为自己在找出口，其实一直在喂养它。\""
-                ].join("\n")
-              });
-              addNote("占卜热线解释恶魔牌：杀人恶魔已经偿命。 ");
-              showMessage("失真女声低低笑了一下：\"恶魔牌的意思？杀人恶魔已经偿命。\"");
-              return;
-            }
-
-            if (normalizedChoice === "2" && hasLovers) {
-              collectDocument({
-                id: "chapter2-divination-lovers-meaning",
-                title: "占卜回话：恋人",
-                source: "二楼物业值班室电话",
-                body: [
-                  "女声说：\"恋人不是甜蜜，是选择。\"",
-                  "\"你想拥抱的人，和你该承认的真相，未必是同一个。\""
-                ].join("\n")
-              });
-              addNote("占卜热线解释恋人牌：它代表选择，而不是单纯重逢。 ");
-              showMessage("她停顿几秒后说：\"恋人牌代表选择，不代表原谅。你要选的是人，还是你愿意承认的真相？\"");
-              return;
-            }
-
-            showMessage("电话那头只回了一句：\"先看清你手里有什么，再提问。\"");
-            return;
-          }
-
-          if (dialed === "110" || dialed === "119" || dialed === "120") {
-            showMessage("线路里传来短促忙音，像被某种转接系统硬生生切断。你没有拨通。 ");
-            return;
-          }
-
-          showMessage("你拨出了号码，但听筒里只剩持续的忙音，没有人接听。");
+          handleChapter2DivinationCall("二楼物业值班室电话");
         }
       },
       {
@@ -632,6 +972,10 @@ window.scenes.chapter2PropertyDutyRoom = {
         h: 18,
         pulse: !state.flags.chapter2ThirdFloorFireExitUnlocked,
         action() {
+          if (isChapter2MedicineRoute()) {
+            showMessage("电脑亮着，但你没有坐下。你知道这次需要的不是物业权限，而是那些本来就属于你们家的东西。");
+            return;
+          }
           if (!state.flags.chapter2DutyComputerUsed) {
             state.flags.chapter2DutyComputerUsed = true;
             state.flags.chapter2FirstFloorFireExitUnlocked = true;
@@ -706,9 +1050,19 @@ window.scenes.chapter2ThirdFloorResidential = {
   title: "第二章 · 三楼居民区",
   hint: "消防出口旁就是你家门口，这里安静得不太正常。",
   objective() {
+    if (isChapter2MedicineRoute()) {
+      return state.flags.chapter2MedicineHomeUnlocked
+        ? hasItem("结婚戒指")
+          ? "家门已经开了，进去。"
+          : "门已经开了。先进去看看屋里缺了什么，再决定要不要回头。"
+        : "到门口，用能伸进门缝的东西拨开内侧链锁。";
+    }
     return "进入自己家，确认屋内状态。";
   },
   message() {
+    if (isChapter2MedicineRoute()) {
+      return "居民区里没有别的住户声。你家门口拖着一条暗色污痕，像有人曾经想把什么东西带进去，又中途停下。";
+    }
     return "走廊没有异样，只有你自己的脚步声在回荡。";
   },
   hotspots() {
@@ -722,6 +1076,21 @@ window.scenes.chapter2ThirdFloorResidential = {
         h: 48,
         pulse: true,
         action() {
+          if (isChapter2MedicineRoute()) {
+            if (!state.flags.chapter2MedicineHomeUnlocked) {
+              if (!hasItem("婴儿挂饰金属杆")) {
+                showMessage("门推开一道缝就被里面的链锁卡死。你需要一件够细、够硬，能从缝里伸进去的东西。");
+                return;
+              }
+              state.flags.chapter2MedicineHomeUnlocked = true;
+              addNote("你用婴儿挂饰里的金属杆拨开了家门内侧的链锁。");
+              showMessage("你把金属杆从门缝伸进去，摸索着拨了几次。链锁弹开的瞬间，你差点站不稳。");
+              render();
+              return;
+            }
+            setScene("chapter2HomeDusty");
+            return;
+          }
           setScene("chapter2HomeDusty");
         }
       },
@@ -734,26 +1103,48 @@ window.scenes.chapter2HomeDusty = {
   title: "第二章 · 家",
   hint: "屋里落了明显的灰，像很久没人认真打扫。",
   objective() {
+    if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+      if (!hasItem("音乐盒发条钥匙")) {
+        if (!state.flags.chapter2MedicineSawRing) return "先在客厅里找找，看看这个家到底少了什么。";
+        if (!hasItem("结婚戒指")) return "你已经知道缺的是什么了，回二楼把那枚婚戒带回来。";
+        return "在客厅里找到该归位的东西，再回卧室。";
+      }
+      return "你已经拿到发条钥匙，去卧室打开那个一直没敢碰的盒子。";
+    }
     if (state.flags.chapter2PendingEnding) return "回到客厅后，坐下来面对接下来会发生的事。";
     return "检查屋内异常，再决定下一步。";
   },
   message() {
+    if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+      if (!state.flags.chapter2MedicineSawRing) {
+        return "门内的灰比你想的更厚。餐桌上那顿“等你回家”的晚饭早就干掉了，血和番茄酱混在一起，几乎分不出区别。";
+      }
+      if (!hasItem("结婚戒指")) {
+        return "你已经看见梳妆台上空着的戒指位了。现在整个客厅都像在提醒你：你还少带了一样东西。";
+      }
+      return "门内的灰比你想的更厚。餐桌上那顿“等你回家”的晚饭早就干掉了，血和番茄酱混在一起，几乎分不出区别。";
+    }
     return "门刚推开，一股干燥灰尘味扑面而来。家具表面覆着薄灰，餐桌边缘有被手指划过的痕迹。";
   },
   hotspots() {
     return [
       {
         id: "dust-table",
-        label: state.flags.chapter2PendingEnding ? "旧沙发" : "积灰的餐桌",
+        label: state.flags.chapter2PendingEnding ? "黑白符号" : "积灰的餐桌",
         x: 22,
         y: 56,
         w: 34,
         h: 16,
+        pulse: !!state.flags.chapter2PendingEnding,
         action() {
+          if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+            showMessage("饭菜早已发黑发硬。盘边的暗红污渍干成了壳，像有人曾执拗地想把这顿饭留到你回来。");
+            return;
+          }
           if (hasItem("手枪")) {
-            const shouldSitWithGun = window.confirm("要在客厅坐下吗？");
+            const shouldSitWithGun = window.confirm("要让黑白符号显现吗？");
             if (!shouldSitWithGun) {
-              showMessage("你把手从口袋里移开，仍旧站在原地。房间安静得让人发冷。");
+              showMessage("你盯着沙发前那片空白墙面，迟迟没有再往前一步。空气静得让人发冷。");
               return;
             }
             setScene("chapter2GunEnding");
@@ -761,9 +1152,9 @@ window.scenes.chapter2HomeDusty = {
           }
 
           if (state.flags.chapter2PendingEnding) {
-            const shouldSit = window.confirm("要在客厅坐下吗？");
+            const shouldSit = window.confirm("要让黑白符号显现吗？");
             if (!shouldSit) {
-              showMessage("你站在沙发前，迟迟没有坐下。空气静得只剩自己的呼吸声。");
+              showMessage("你站在客厅中央，迟迟没有把视线挪向那面墙。空气静得只剩自己的呼吸声。");
               return;
             }
             setScene("chapter2EchoJudgment");
@@ -773,13 +1164,71 @@ window.scenes.chapter2HomeDusty = {
         }
       },
       {
-        id: "dust-cabinet",
-        label: "客厅柜子",
-        x: 70,
-        y: 20,
-        w: 18,
-        h: 36,
+        id: "surgery-slip",
+        label: "手术回执单",
+        x: 12,
+        y: 24,
+        w: 16,
+        h: 22,
+        pulse: true,
         action() {
+          collectDocument({
+            id: "chapter2-surgery-appointment-slip",
+            title: "手术预约回执单",
+            source: "家中客厅地面",
+            body: [
+              "医院手术预约回执单",
+              "",
+              "患者姓名：M",
+              "预约日期：03/27",
+              "科室：产科手术室",
+              "到场时间：21:30",
+              "",
+              "备注：请家属陪同签字确认。"
+            ].join("\n")
+          });
+          addNote("你在家里找到一张 03/27 的手术预约回执单。");
+          showMessage("茶几下压着一张被鞋跟踩皱的回执单。你捡起来时，最先看到的就是日期：03/27。");
+          render();
+        }
+      },
+      {
+        id: "dust-cabinet",
+        label: isChapter2MedicineRoute() ? "梳妆台" : "客厅柜子",
+        x: 66,
+        y: 18,
+        w: 14,
+        h: 30,
+        action() {
+          if (isChapter2MedicineRoute()) {
+            if (!hasItem("结婚戒指")) {
+              showMessage("梳妆台上有一只空着的首饰托盘。你立刻知道少的是哪一枚，却还没把它带回来。");
+              return;
+            }
+            if (!hasItem("音乐盒发条钥匙")) {
+              removeItem("结婚戒指");
+              acquireItem("音乐盒发条钥匙");
+              collectDocument({
+                id: "chapter2-medicine-vanity-key",
+                title: "梳妆台暗格里的发条钥匙",
+                source: "家中客厅梳妆台",
+                body: [
+                  "你把婚戒放回空着的位置后，首饰托盘轻轻陷下去一格。",
+                  "",
+                  "暗格里躺着一枚很小的发条钥匙，旁边压着一张便签：",
+                  "“1106 J&M”",
+                  "",
+                  "那是结婚纪念日她送你的礼物，也是在那天，她告诉了你她怀孕的消息。"
+                ].join("\n")
+              });
+              addNote("你把婚戒放回梳妆台后，取出了一枚音乐盒发条钥匙。");
+              showMessage("婚戒刚落回托盘，底下的暗格就弹开了。里面只有一枚小小的发条钥匙，和一张提到“她睡不着”的便签。");
+              render();
+              return;
+            }
+            showMessage("婚戒已经不在你身上。梳妆台暗格也空了，只剩那枚戒圈曾放过的位置。");
+            return;
+          }
           collectDocument({
             id: "chapter2-home-cleaning-note",
             title: "未完成的打扫便签",
@@ -798,10 +1247,10 @@ window.scenes.chapter2HomeDusty = {
       {
         id: "bedroom-door",
         label: "卧室门",
-        x: 70,
-        y: 18,
-        w: 18,
-        h: 36,
+        x: 82,
+        y: 16,
+        w: 12,
+        h: 40,
         pulse: true,
         action() {
           setScene("chapter2Bedroom");
@@ -826,11 +1275,19 @@ window.scenes.chapter2Bedroom = {
   title: "第二章 · 卧室",
   hint: "卧室里同样积灰，婴儿床边放着一个密码箱。",
   objective() {
+    if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+      return hasItem("音乐盒发条钥匙")
+        ? "用发条钥匙打开纪念盒。"
+        : "先回客厅，把该归位的戒指放回去。";
+    }
     return state.flags.chapter2TarotChoice
       ? "你已经做出选择，带着塔罗牌离开卧室。"
       : "查看婴儿床里的密码箱，输入“最重要的日期”。";
   },
   message() {
+    if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+      return "婴儿床边多了一只一直被你忽略的音乐盒纪念盒。它没有密码，只有一个很小的发条锁眼。";
+    }
     return "婴儿床里放着一个小型密码箱，箱盖上刻着一行字：最重要的日期。";
   },
   hotspots() {
@@ -847,6 +1304,44 @@ window.scenes.chapter2Bedroom = {
         }
       },
       {
+        id: "memory-box",
+        label: "纪念盒",
+        x: 18,
+        y: 18,
+        w: 18,
+        h: 24,
+        visible: isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened,
+        pulse: isChapter2MedicineRoute(),
+        action() {
+          if (!hasItem("音乐盒发条钥匙")) {
+            showMessage("盒盖上的锁眼很小。你知道钥匙不在这里，而是在这屋子外面那部分“还想维持正常”的地方。");
+            return;
+          }
+          removeItem("音乐盒发条钥匙");
+          state.flags.chapter2MemoryBoxOpened = true;
+          collectDocument({
+            id: "chapter2-medicine-memory-box",
+            title: "纪念盒里的遗物",
+            source: "卧室婴儿床边的纪念盒",
+            body: [
+              "盒子里放着三样东西：",
+              "1) 一张没来得及贴进相册的产检超声照片",
+              "2) 一张被折得发软的手术告知单复印件",
+              "3) 一只空白的婴儿脚环",
+              "",
+              "告知单边角的医生签字已经糊开，只剩一行打印字还能看清：",
+              "“03/27 22:06，术中突发并发症。”",
+              "",
+              "你不用再找别的解释了。",
+              "孩子没能出生，妻子也死在那场医疗事故里。"
+            ].join("\n")
+          });
+          addNote("纪念盒里的东西把那晚的现实彻底钉死了：孩子没出生，妻子死于医疗事故。");
+          showMessage("发条钥匙拧开的不是音乐，而是一盒被你一直回避的遗物。超声照片、空白脚环、手术单复印件，一样都没有给你留余地。");
+          render();
+        }
+      },
+      {
         id: "lockbox",
         label: "密码箱",
         x: 56,
@@ -855,6 +1350,10 @@ window.scenes.chapter2Bedroom = {
         h: 24,
         pulse: !state.flags.chapter2TarotChoice,
         action() {
+          if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+            showMessage("你盯着密码箱看了很久，却知道自己还差最后一把真正的钥匙。先把纪念盒打开。");
+            return;
+          }
           const hasJustice = hasItem("塔罗牌·正义");
           const hasGun = hasItem("手枪");
 
@@ -968,10 +1467,10 @@ window.scenes.chapter2EchoJudgment = {
   title: "第二章 · 客厅回声",
   hint() {
     const pending = state.flags.chapter2PendingEnding;
-    if (pending === "chapter2UneasyReunionEnding") return "你坐下后，门厅尽头站着冲你微笑的妻子。";
-    if (pending === "chapter2BloodCradleEnding") return "你坐下后，门厅里出现了浑身是血的妻子。";
-    if (pending === "chapter2MonsterReturnEnding") return "你坐下后，卧室门口出现了扭曲的怪物。";
-    return "你刚坐下，四周黑暗和破败一层层压过来。";
+    if (pending === "chapter2UneasyReunionEnding") return "黑白符号浮现在墙上后，门厅尽头站着冲你微笑的妻子。";
+    if (pending === "chapter2BloodCradleEnding") return "黑白符号浮现在墙上后，门厅里出现了浑身是血的妻子。";
+    if (pending === "chapter2MonsterReturnEnding") return "黑白符号浮现在墙上后，卧室门口出现了扭曲的怪物。";
+    return "黑白符号浮现的瞬间，四周黑暗和破败一层层压过来。";
   },
   onEnter() {
     if (hasItem("手枪")) {
@@ -996,15 +1495,15 @@ window.scenes.chapter2EchoJudgment = {
   message() {
     const pending = state.flags.chapter2PendingEnding;
     if (pending === "chapter2UneasyReunionEnding") {
-      return "你坐下后，门厅尽头出现了妻子的温暖身影。她没有说话，只是朝你伸出手。";
+      return "黑白符号慢慢浮现在墙面上。门厅尽头出现了妻子的温暖身影。她没有说话，只是朝你伸出手。";
     }
     if (pending === "chapter2BloodCradleEnding") {
-      return "你坐下后，卧室方向传来滴落声。她从门厅里走出来，袖口和指缝都沾着血。";
+      return "黑白符号慢慢浮现在墙面上。卧室方向传来滴落声。她从门厅里走出来，袖口和指缝都沾着血。";
     }
     if (pending === "chapter2MonsterReturnEnding") {
-      return "你坐下后，卧室门被撞得发颤。下一秒，第一章里那道扭曲身影推门而入。";
+      return "黑白符号慢慢浮现在墙面上。卧室门被撞得发颤。下一秒，第一章里那道扭曲身影推门而入。";
     }
-    return "你坐在沙发上，空气像结了壳。";
+    return "黑白符号浮现在墙面上，空气像结了壳。";
   },
   hotspots() {
     const pending = state.flags.chapter2PendingEnding;

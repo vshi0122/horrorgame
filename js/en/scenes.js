@@ -5,7 +5,7 @@
   { id: "goodEndingQuestion", order: 4, name: "Awake?", teaser: "You seem to have reached a deeper answer." },
   { id: "fleeEnding", order: 5, name: "Flight", teaser: "You chose not to enter the building at all." },
   { id: "chapter2UneasyReunionEnding", order: 6, name: "Uneasy Reunion", teaser: "She returns, but the calm feels rehearsed." },
-  { id: "chapter2WaitWifeEnding", order: 7, name: "Waiting Room", teaser: "You sit in the ruined home and wait for her anyway." },
+  { id: "chapter2WaitWifeEnding", order: 7, name: "Waiting Room", teaser: "The black-and-white symbol appears, and you still choose to wait." },
   { id: "chapter2BloodCradleEnding", order: 8, name: "Blood Cradle", teaser: "No medicine, a Devil draw, and the blood comes flooding back." },
   { id: "chapter2MonsterReturnEnding", order: 9, name: "Old Shadow", teaser: "With medicine and the Devil card, the creature returns." },
   { id: "chapter2GunEnding", order: 10, name: "Swallow the Gun", teaser: "You find the hidden handgun and choose your own ending." }
@@ -676,6 +676,92 @@ sceneArt.chapter2EchoJudgment = sceneArt.dinnerTableScene;
 sceneArt.chapter2PropertyDutyRoom = sceneArt.dinnerTableScene;
 sceneArt.chapter3Entry = sceneArt.mainMenu;
 
+function isChapter2MedicineRoute() {
+  return state.flags.chapter2MedicineUsed;
+}
+
+function handleChapter2DivinationCall(source) {
+  const input = promptCode("Dial a number");
+  if (input === null) {
+    showMessage("You lower the receiver without dialing.");
+    return;
+  }
+
+  const dialed = input.replace(/\D/g, "");
+  if (!dialed) {
+    showMessage("No valid number entered.");
+    return;
+  }
+
+  if (dialed === "80044110726") {
+    const hasDevil = hasItem("Tarot - Devil");
+    const hasLovers = hasItem("Tarot - Lovers");
+    const isHallPhone = source === "Second-Floor Wall Phone";
+
+    if (!hasDevil && !hasLovers) {
+      if (!hasItem("Tarot - Justice")) acquireItem("Tarot - Justice");
+      collectDocument({
+        id: "chapter2-divination-call-record-justice-en",
+        title: "Call Record: Justice",
+        source,
+        body: [
+          "Mechanical voice: You haven't drawn the real question yet.",
+          "Card drawn: Justice.",
+          "Meaning: you carry unresolved guilt toward someone.",
+          isHallPhone ? "Mechanical voice: Don't think only about bringing her home. There was another one who was never carried home at all." : ""
+        ].filter(Boolean).join("\n")
+      });
+      addNote("The hotline drew Justice for you and called out your guilt.");
+      showMessage(
+        isHallPhone
+          ? "Static floods the line. A cold mechanical voice says: Justice. You are guilty toward someone. Don't think only about bringing her home. There was another one who was never carried home at all. When you hang up, a new card is in your pocket."
+          : "Static floods the line, then a cold mechanical voice says: Justice. You are guilty toward someone. When you hang up, a new card is in your pocket."
+      );
+      render();
+      return;
+    }
+
+    const opts = [];
+    if (hasDevil) opts.push("1=Ask Devil");
+    if (hasLovers) opts.push("2=Ask Lovers");
+    opts.push("0=Hang up");
+    const choice = promptCode(`Ask about a card (${opts.join(", ")})`);
+    if (choice === null || choice.replace(/\s+/g, "") === "0") {
+      showMessage("You hang up in silence.");
+      return;
+    }
+    const c = choice.replace(/\s+/g, "");
+    if (c === "1" && hasDevil) {
+      collectDocument({
+        id: "chapter2-divination-devil-meaning-en",
+        title: "Hotline Reading: Devil",
+        source,
+        body: ["Mechanical voice: Devil is not temptation.", "It is the chain you refuse to release."].join("\n")
+      });
+      showMessage("The mechanical voice says: Devil is the chain you keep choosing.");
+      return;
+    }
+    if (c === "2" && hasLovers) {
+      collectDocument({
+        id: "chapter2-divination-lovers-meaning-en",
+        title: "Hotline Reading: Lovers",
+        source,
+        body: ["Mechanical voice: Lovers is not comfort.", "It is a choice between a person and a truth."].join("\n")
+      });
+      showMessage("The mechanical voice says: Lovers is a choice, not forgiveness.");
+      return;
+    }
+    showMessage("The mechanical voice says: Look at what you're holding before you ask.");
+    return;
+  }
+
+  if (dialed === "110" || dialed === "119" || dialed === "120") {
+    showMessage("The line cuts out before connection.");
+    return;
+  }
+  showMessage("Continuous busy tone. No answer.");
+}
+
 scenes.chapter2Entry = {
   title: "Chapter 2 - Ward",
   hint: "You wake in the psychiatrist's ward.",
@@ -698,7 +784,7 @@ scenes.chapter2Entry = {
       { id: "wake", label: "Wake Up", x: 18, y: 34, w: 20, h: 28, visible: !state.flags.chapter2WokeInWard, pulse: true, action() { state.flags.chapter2WokeInWard = true; showMessage("You sit up hard. The doctor says: This time, you didn't wake in the car."); render(); } },
       { id: "doctor", label: "Doctor", x: 44, y: 24, w: 20, h: 40, visible: state.flags.chapter2WokeInWard, action() { state.flags.chapter2DoctorTalked = true; addNote("The doctor says you must face the memory instead of rewriting it."); showMessage("Face that day. If you keep rewriting it, you won't leave the loop."); render(); } },
       { id: "medicine", label: "Medicine Bottle", x: 24, y: 60, w: 16, h: 14, visible: state.flags.chapter2DoctorTalked && !state.flags.chapter2GotMedicine, pulse: true, action() { state.flags.chapter2GotMedicine = true; state.flags.chapter2InquiryFinished = true; acquireItem("Medicine Bottle"); collectDocument({ id: "chapter2-ptsd-casefile-en", title: "Case File Extract", source: "Psychiatry Ward", body: ["Diagnosis: PTSD", "", "Symptoms: looped dreams, reality avoidance, temporal displacement.", "Trigger Event: █████████", "", "Instruction: Take medicine daily. Do not stop on your own."].join("\n") }); showMessage("You pick up the bottle. The trigger event line is fully blacked out."); render(); } },
-      { id: "leave", label: "Leave Ward", x: 38, y: 72, w: 24, h: 14, visible: state.flags.chapter2InquiryFinished, action() { setScene("chapter2ParkingLot"); } }
+      { id: "leave", label: "Leave Ward", x: 38, y: 72, w: 24, h: 14, visible: state.flags.chapter2InquiryFinished, action() { if (hasItem("Medicine Bottle")) { const shouldUse = window.confirm("Take the medicine before leaving the hospital?"); if (shouldUse) { removeItem("Medicine Bottle"); state.flags.chapter2MedicineUsed = true; addNote("You took the medicine before leaving the hospital."); showMessage("You swallow the pill at the door. The bitterness clings to your tongue as something worse begins to settle into focus."); } else { removeItem("Medicine Bottle"); addNote("You left the hospital without taking the medicine."); showMessage("You hold the bottle for a second, then leave it untaken as you step out of the ward."); } } setScene("chapter2ParkingLot"); } }
     ];
   }
 };
@@ -742,10 +828,10 @@ scenes.chapter2Entrance = {
   title: "Chapter 2 - Entrance",
   hint: "Two newly delivered papers are inside the mailbox.",
   objective() { return state.flags.chapter2MailboxOpened ? "Enter the building." : "Read the mailbox documents first."; },
-  message() { return state.flags.chapter2MailboxOpened ? "Layoff subsidy. Medical accident. The words keep repeating in your head." : "A white paper edge sticks out from the mailbox slot."; },
+  message() { return state.flags.chapter2MailboxOpened ? "Layoff notice. Medical accident. The words keep repeating in your head." : "A white paper edge sticks out from the mailbox slot."; },
   hotspots() {
     return [
-      { id: "mailbox", label: "Mailbox", x: 10, y: 38, w: 18, h: 26, pulse: !state.flags.chapter2MailboxOpened, action() { if (!state.flags.chapter2MailboxOpened) { state.flags.chapter2MailboxOpened = true; collectDocument({ id: "chapter2-layoff-subsidy-en", title: "Layoff Subsidy Notice", source: "Entrance Mailbox", body: ["Your subsidy request has been approved.", "Recipient: John", "Issue date: 03/25"].join("\n") }); collectDocument({ id: "chapter2-medical-accident-news-en", title: "News Clipping: Medical Accident", source: "Entrance Mailbox", body: ["A disputed obstetrics operation has triggered a family complaint.", "Hospital says internal review is ongoing."].join("\n") }); showMessage("You pull out two papers. Layoff subsidy. Medical accident."); render(); return; } showMessage("The same two papers. Same words. Same tremor in your hand."); } },
+      { id: "mailbox", label: "Mailbox", x: 10, y: 38, w: 18, h: 26, pulse: !state.flags.chapter2MailboxOpened, action() { if (!state.flags.chapter2MailboxOpened) { state.flags.chapter2MailboxOpened = true; collectDocument({ id: "chapter2-layoff-notice-en", title: "Layoff Notice", source: "Entrance Mailbox", body: ["Human Resources Notice", "", "Due to organizational restructuring, your position has been eliminated.", "Your employment with the company will be terminated within the week.", "Recipient: John", "Issue date: 03/21", "", "Please appear within three business days to complete your exit paperwork and handover."].join("\n") }); collectDocument({ id: "chapter2-medical-accident-news-en", title: "News Clipping: Medical Accident", source: "Entrance Mailbox", body: ["A disputed obstetrics operation has triggered a family complaint.", "Hospital says internal review is ongoing."].join("\n") }); showMessage("You pull out two papers. Layoff notice. Medical accident."); render(); return; } showMessage("The same two papers. Same words. Same tremor in your hand."); } },
       { id: "door", label: "Building Door", x: 42, y: 18, w: 22, h: 56, locked: !state.flags.chapter2MailboxOpened, action() { if (!state.flags.chapter2MailboxOpened) { showMessage("Read the mailbox papers first."); return; } setScene("chapter2Hallway"); } }
     ];
   }
@@ -753,24 +839,126 @@ scenes.chapter2Entrance = {
 
 scenes.chapter2Hallway = {
   title: "Chapter 2 - First Floor Hall",
-  hint: "The ritual notice is gone. A normal property notice is back.",
-  objective() { return state.flags.chapter2FirstFloorFireExitUnlocked ? "Fire exit unlocked. Keep investigating upstairs." : "Check the notice and move deeper."; },
-  message() { return "The silence here feels staged."; },
+  hint() {
+    return isChapter2MedicineRoute()
+      ? "There should have been ritual notices here. Instead there are spilled groceries and a smeared wall notice."
+      : "The ritual notice is gone. A normal property notice is back.";
+  },
+  objective() {
+    if (isChapter2MedicineRoute()) {
+      if (!hasItem("Old Keyring")) return "Search the scattered grocery bags near the wall.";
+      return "Use what still belongs to your home and keep moving upward.";
+    }
+    return state.flags.chapter2FirstFloorFireExitUnlocked ? "Fire exit unlocked. Keep investigating upstairs." : "Check the notice and move deeper.";
+  },
+  message() {
+    return isChapter2MedicineRoute()
+      ? "The silence is thicker here. A burst ketchup bottle and dark smears have dried together near the wall."
+      : "The silence here feels staged.";
+  },
   hotspots() {
     return [
-      { id: "fire", label: "Fire Exit", x: 8, y: 22, w: 18, h: 48, action() { if (!state.flags.chapter2FirstFloorFireExitUnlocked) { showMessage("Locked. Duty room authorization required."); return; } setScene("chapter2FireExitStairwell"); } },
+      {
+        id: "fire",
+        label: "Fire Exit",
+        x: 8,
+        y: 22,
+        w: 18,
+        h: 48,
+        action() {
+          if (isChapter2MedicineRoute()) {
+            if (!hasItem("Old Keyring")) {
+              showMessage("A mechanical lock. Not a system lock. One of your own old keys might fit.");
+              return;
+            }
+            setScene("chapter2FireExitStairwell");
+            return;
+          }
+          if (!state.flags.chapter2FirstFloorFireExitUnlocked) {
+            showMessage("Locked. Duty room authorization required.");
+            return;
+          }
+          setScene("chapter2FireExitStairwell");
+        }
+      },
       { id: "stairs", label: "Upstairs", x: 42, y: 24, w: 18, h: 48, action() { setScene("chapter2StairwellNormal"); } },
-      { id: "notice", label: "Property Notice", x: 74, y: 18, w: 18, h: 42, pulse: true, action() { collectDocument({ id: "chapter2-normal-property-notice-en", title: "Property Maintenance Notice", source: "First Floor Wall", body: ["Elevator inspection Wednesday 10:00-12:00.", "Property Service Center"].join("\n") }); showMessage("A normal notice. That unsettles you more."); } }
+      {
+        id: "notice",
+        label: isChapter2MedicineRoute() ? "Smeared Wall Notice" : "Property Notice",
+        x: 74,
+        y: 18,
+        w: 18,
+        h: 42,
+        pulse: true,
+        action() {
+          if (isChapter2MedicineRoute()) {
+            collectDocument({
+              id: "chapter2-medicine-shopping-bags-en",
+              title: "Spilled Grocery Bags",
+              source: "First-Floor Hallway Wall",
+              body: [
+                "A burst ketchup bottle has soaked through the paper bag.",
+                "",
+                "Under the torn handles and receipt slips lies a worn keyring.",
+                "A faded door-number charm still hangs from it beside a small fabric toy.",
+                "",
+                "You know immediately: this was brought here on the way home."
+              ].join("\n")
+            });
+            if (!hasItem("Old Keyring")) {
+              acquireItem("Old Keyring");
+              addNote("You recovered the old household keyring from the spilled grocery bags.");
+              showMessage("Under the broken ketchup bottle and damp receipts, you find an old keyring from home.");
+              render();
+              return;
+            }
+            showMessage("The wall notice is unreadable under dried ketchup and darker stains. The old keyring is already in your pocket.");
+            return;
+          }
+          collectDocument({ id: "chapter2-normal-property-notice-en", title: "Temporary Lockdown Notice", source: "First Floor Wall", body: ["Property Lockdown Notice", "", "Following the incident on 03/27, the third-floor residential section remains sealed.", "Resident belongings will be processed only through property registration.", "Do not approach the third floor or remove any items from the site without authorization.", "If you need to verify the reason for the lockdown, report to the second-floor duty room.", "", "Southside Apartments Property Service Center"].join("\n") });
+          showMessage("For once, the notice finally matches what this building has really been hiding: the third floor has stayed sealed ever since 03/27.");
+        }
+      }
     ];
   }
 };
 
 scenes.chapter2FireExitStairwell = {
   title: "Chapter 2 - Fire Stairwell",
-  hint: "Emergency lights lead upward.",
-  objective() { return "Search the stairwell and continue to the third-floor exit."; },
-  message() { return "Concrete walls throw your footsteps back at you."; },
+  hint() {
+    return isChapter2MedicineRoute() ? "A family note has been crushed into the corner by someone's shoe." : "Emergency lights lead upward.";
+  },
+  objective() {
+    return isChapter2MedicineRoute() ? "Use the stairwell to reach the second-floor residential side." : "Search the stairwell and continue to the third-floor exit.";
+  },
+  message() {
+    return isChapter2MedicineRoute() ? "The concrete stairwell throws every step back at you. Something domestic feels misplaced here." : "Concrete walls throw your footsteps back at you.";
+  },
   hotspots() {
+    if (isChapter2MedicineRoute()) {
+      return [
+        {
+          id: "note",
+          label: "Crushed Family Note",
+          x: 8,
+          y: 74,
+          w: 18,
+          h: 14,
+          pulse: true,
+          action() {
+            collectDocument({
+              id: "chapter2-medicine-family-note-en",
+              title: "Crushed Family Note",
+              source: "Fire Stairwell Corner",
+              body: ["A note half-ground into the dust:", "", "\"Don't forget to bring hers back home.\"", "", "The rest has been smudged into the concrete."].join("\n")
+            });
+            showMessage("Only half the sentence is still legible: Don't forget to bring hers back home.");
+          }
+        },
+        { id: "to2", label: "To Second-Floor Residences", x: 62, y: 18, w: 24, h: 30, pulse: true, action() { setScene("chapter2SecondFloorResidential"); } },
+        { id: "back", label: "Back", x: 14, y: 70, w: 24, h: 14, action() { setScene("chapter2Hallway"); } }
+      ];
+    }
     return [
       { id: "photo", label: "Photo in Corner", x: 8, y: 74, w: 18, h: 14, pulse: true, action() { collectDocument({ id: "chapter2-marriage-photo-en", title: "Erased Wedding Photo", source: "First Floor Fire Stairwell", body: ["Your wife\'s face is smeared out again.", "Back side shows only one date: 1106."].join("\n") }); showMessage("Her face is erased. The back only reads: 1106."); } },
       { id: "sheet", label: "Inspection Sheet", x: 8, y: 28, w: 20, h: 26, pulse: true, action() { collectDocument({ id: "chapter2-fire-exit-inspection-sheet-en", title: "Fire Exit Inspection Sheet", source: "Fire Stairwell Wall", body: ["Inspector: David", "Property ID: WY-3A-017", "03/27: third-floor outlet switched to controlled mode."].join("\n") }); showMessage("Inspector name: David. Property ID: WY-3A-017."); } },
@@ -781,50 +969,172 @@ scenes.chapter2FireExitStairwell = {
 };
 
 scenes.chapter2StairwellNormal = { title: "Chapter 2 - Stairwell", hint: "First and second floors connect here.", objective() { return "Reach the second floor."; }, message() { return "Everything looks ordinary. Too ordinary."; }, hotspots() { return [{ id: "to2", label: "To Second Floor", x: 62, y: 18, w: 22, h: 28, action() { setScene("chapter2SecondFloorHall"); } }, { id: "to1", label: "Back to First Floor", x: 16, y: 54, w: 22, h: 18, action() { setScene("chapter2Hallway"); } }]; } };
-scenes.chapter2SecondFloorHall = { title: "Chapter 2 - Second Floor Hall", hint: "Residential entrance is on the right.", objective() { return "Check the duty room and continue upward."; }, message() { return "No marks. No noise. Just stale hallway air."; }, hotspots() { return [{ id: "resi", label: "Residential Entrance", x: 74, y: 18, w: 18, h: 48, action() { setScene("chapter2SecondFloorResidential"); } }, { id: "stairs", label: "Upstairs", x: 42, y: 24, w: 18, h: 48, action() { setScene("chapter2UpperStairwell"); } }, { id: "back", label: "Back", x: 40, y: 78, w: 20, h: 12, action() { setScene("chapter2StairwellNormal"); } }]; } };
-scenes.chapter2SecondFloorResidential = { title: "Chapter 2 - Second Floor Residences", hint: "A lit door says Duty Room.", objective() { return "Enter the duty room."; }, message() { return "No voices behind the door."; }, hotspots() { return [{ id: "duty", label: "Property Duty Room", x: 42, y: 18, w: 18, h: 48, pulse: true, action() { setScene("chapter2PropertyDutyRoom"); } }, { id: "back", label: "Back", x: 38, y: 78, w: 20, h: 12, action() { setScene("chapter2SecondFloorHall"); } }]; } };
+scenes.chapter2SecondFloorHall = {
+  title: "Chapter 2 - Second Floor Hall",
+  hint() {
+    return isChapter2MedicineRoute() ? "The right-side residential entrance looks swollen shut. If there is a way in, it is from the stairwell side." : "Residential entrance is on the right.";
+  },
+  objective() {
+    return isChapter2MedicineRoute() ? "Search the residential side and then continue upward." : "Check the duty room and continue upward.";
+  },
+  message() {
+    return isChapter2MedicineRoute() ? "The air is stale here, but not empty. It feels like someone hurriedly moved part of a life onto this floor." : "No marks. No noise. Just stale hallway air.";
+  },
+  hotspots() {
+    return [
+      {
+        id: "resi",
+        label: "Residential Entrance",
+        x: 74,
+        y: 18,
+        w: 18,
+        h: 48,
+        action() {
+          if (isChapter2MedicineRoute()) {
+            showMessage("This side is jammed shut. If there is a way into the residential side, it is through the fire stair.");
+            return;
+          }
+          setScene("chapter2SecondFloorResidential");
+        }
+      },
+      { id: "stairs", label: "Upstairs", x: 42, y: 24, w: 18, h: 48, action() { setScene("chapter2UpperStairwell"); } },
+      { id: "back", label: "Back", x: 40, y: 78, w: 20, h: 12, action() { setScene("chapter2StairwellNormal"); } }
+    ];
+  }
+};
+
+scenes.chapter2SecondFloorResidential = {
+  title: "Chapter 2 - Second Floor Residences",
+  hint() {
+    return isChapter2MedicineRoute() ? "Temporary moving boxes line the corridor. The side of each one is marked: THIRD FLOOR." : "A lit door says Duty Room.";
+  },
+  objective() {
+    if (isChapter2MedicineRoute()) {
+      return hasItem("Wedding Ring")
+        ? "You already recovered what was left on this floor. Go back and keep climbing."
+        : state.flags.chapter2MedicineSawRing
+          ? "The ring is still trapped under the moving boxes. Now you need something slender and hard enough to pry it free."
+          : "Search the temporary moving boxes stacked here.";
+    }
+    return "Enter the duty room.";
+  },
+  message() {
+    return isChapter2MedicineRoute() ? "Several temporary moving boxes are stacked here. Someone hurriedly carried part of the third floor down to this corridor." : "No voices behind the door.";
+  },
+  hotspots() {
+    return [
+      {
+        id: "duty",
+        label: isChapter2MedicineRoute() ? "Temporary Moving Boxes" : "Property Duty Room",
+        x: 42,
+        y: 18,
+        w: 18,
+        h: 48,
+        pulse: true,
+        action() {
+          if (isChapter2MedicineRoute()) {
+            if (!state.flags.chapter2MedicineSawRing) {
+              state.flags.chapter2MedicineSawRing = true;
+              collectDocument({
+                id: "chapter2-medicine-wedding-ring-trapped-en",
+                title: "Wedding Ring Trapped in the Boxes",
+                source: "Second-Floor Temporary Moving Boxes",
+                body: [
+                  "At the bottom of the boxes lie broken picture frames, sheets, and splintered wood.",
+                  "",
+                  "A wedding ring is wedged where your hand cannot reach, trapped between a fallen board and a piece of furniture.",
+                  "",
+                  "Your initials are engraved inside."
+                ].join("\n")
+              });
+              addNote("You spotted your wedding ring in the second-floor moving boxes, but it is trapped out of reach.");
+              showMessage("Beneath the top layer of boxes you spot a wedding ring. It is right there, trapped in the gap where your fingers cannot quite reach.");
+              render();
+              return;
+            }
+            if (!hasItem("Wedding Ring")) {
+              if (!hasItem("Mobile Charm Rod")) {
+                showMessage("The ring is still stuck. You need something thin and rigid enough to reach in and pry it loose.");
+                return;
+              }
+              acquireItem("Wedding Ring");
+              collectDocument({
+                id: "chapter2-medicine-wedding-ring-en",
+                title: "Wedding Ring Pryed Free",
+                source: "Second-Floor Temporary Moving Boxes",
+                body: [
+                  "You slide the thin metal rod into the gap and work the ring free a few millimeters at a time.",
+                  "",
+                  "When it finally drops into your palm, it is cold enough to feel wet."
+                ].join("\n")
+              });
+              addNote("You returned to the second floor and pried the trapped wedding ring free.");
+              showMessage("You ease the rod into the gap and pry carefully. The ring finally slips free into your hand.");
+              render();
+              return;
+            }
+            showMessage("Only an empty gap remains under the boxes. The ring is already with you.");
+            return;
+          }
+          setScene("chapter2PropertyDutyRoom");
+        }
+      },
+      {
+        id: "corridor-note",
+        label: isChapter2MedicineRoute() ? "Mirror at the End" : "Corridor Notice Board",
+        x: 8,
+        y: 22,
+        w: 18,
+        h: 44,
+        action() {
+          if (isChapter2MedicineRoute()) {
+            showMessage("In the mirror, it looks as if two people are standing behind you. When you turn, the corridor is empty again.");
+            return;
+          }
+          showMessage("The notice board is full of ordinary resident notices. Nothing explains the third-floor seal in detail.");
+        }
+      },
+      {
+        id: "hall-phone",
+        label: "Wall Phone",
+        x: 64,
+        y: 56,
+        w: 14,
+        h: 16,
+        visible: isChapter2MedicineRoute(),
+        action() {
+          handleChapter2DivinationCall("Second-Floor Wall Phone");
+        }
+      },
+      { id: "back", label: "Back", x: 38, y: 78, w: 20, h: 12, action() { setScene("chapter2SecondFloorHall"); } }
+    ];
+  }
+};
 
 scenes.chapter2PropertyDutyRoom = {
   title: "Chapter 2 - Duty Room",
   hint: "Ledger, monitor, desk phone, and duty terminal.",
-  objective() { return state.flags.chapter2ThirdFloorFireExitUnlocked ? "Return to the third floor." : "Use the phone and terminal to uncover access routes."; },
-  message() { return "No staff in sight. The fan is still spinning."; },
+  objective() {
+    if (isChapter2MedicineRoute()) return "After taking the medicine, this room has nothing you need.";
+    return state.flags.chapter2ThirdFloorFireExitUnlocked ? "Return to the third floor." : "Use the phone and terminal to uncover access routes.";
+  },
+  message() {
+    return isChapter2MedicineRoute()
+      ? "The monitors and terminal are still on, but you know at a glance that this room cannot open what needs opening now."
+      : "No staff in sight. The fan is still spinning.";
+  },
   hotspots() {
     return [
-      { id: "ledger", label: "Duty Ledger", x: 24, y: 56, w: 30, h: 16, pulse: true, action() { collectDocument({ id: "chapter2-duty-room-log-en", title: "Duty Log Extract", source: "Duty Room Desk", body: ["After that incident, third floor was sealed.", "Residents moved out. Access restricted."].join("\n") }); showMessage("The line repeats: after that incident, third floor was sealed."); } },
-      { id: "monitor", label: "Monitor", x: 10, y: 18, w: 16, h: 18, action() { showMessage("Snow noise only. No usable feed."); } },
+      { id: "ledger", label: "Duty Ledger", x: 24, y: 56, w: 30, h: 16, pulse: true, action() { if (isChapter2MedicineRoute()) { showMessage("The writing has run into a gray blur. This room feels like an empty shell now."); return; } collectDocument({ id: "chapter2-duty-room-log-en", title: "Duty Log Extract", source: "Duty Room Desk", body: ["After that incident, third floor was sealed.", "Residents moved out. Access restricted."].join("\n") }); showMessage("The line repeats: after that incident, third floor was sealed."); } },
+      { id: "monitor", label: "Monitor", x: 10, y: 18, w: 16, h: 18, action() { if (isChapter2MedicineRoute()) { showMessage("The snow on the monitor feels like it is trying to pull your attention away from the real locks in this building."); return; } showMessage("Snow noise only. No usable feed."); } },
       { id: "phone", label: "Desk Phone", x: 30, y: 18, w: 14, h: 18, action() {
-        const input = promptCode("Dial a number");
-        if (input === null) { showMessage("You lower the receiver without dialing."); return; }
-        const dialed = input.replace(/\D/g, "");
-        if (!dialed) { showMessage("No valid number entered."); return; }
-        if (dialed === "80044110726") {
-          const hasDevil = hasItem("Tarot - Devil");
-          const hasLovers = hasItem("Tarot - Lovers");
-          if (!hasDevil && !hasLovers) {
-            if (!hasItem("Tarot - Justice")) acquireItem("Tarot - Justice");
-            collectDocument({ id: "chapter2-divination-call-record-justice-en", title: "Call Record: Justice", source: "Duty Room Phone", body: ["Voice: You haven't drawn the real question yet.", "Card drawn: Justice.", "Meaning: you carry unresolved guilt toward someone."].join("\n") });
-            addNote("The hotline drew Justice for you and called out your guilt.");
-            showMessage("The voice says: Justice. You are guilty toward someone. When you hang up, a new card is in your pocket.");
-            render();
-            return;
-          }
-          const opts = [];
-          if (hasDevil) opts.push("1=Ask Devil");
-          if (hasLovers) opts.push("2=Ask Lovers");
-          opts.push("0=Hang up");
-          const choice = promptCode(`Ask about a card (${opts.join(", ")})`);
-          if (choice === null || choice.replace(/\s+/g, "") === "0") { showMessage("You hang up in silence."); return; }
-          const c = choice.replace(/\s+/g, "");
-          if (c === "1" && hasDevil) { collectDocument({ id: "chapter2-divination-devil-meaning-en", title: "Hotline Reading: Devil", source: "Duty Room Phone", body: ["Devil is not temptation.", "It is the chain you refuse to release."].join("\n") }); showMessage("Voice: Devil is the chain you keep choosing."); return; }
-          if (c === "2" && hasLovers) { collectDocument({ id: "chapter2-divination-lovers-meaning-en", title: "Hotline Reading: Lovers", source: "Duty Room Phone", body: ["Lovers is not comfort.", "It is a choice between a person and a truth."].join("\n") }); showMessage("Voice: Lovers is a choice, not forgiveness."); return; }
-          showMessage("Voice: Look at what you're holding before you ask.");
-          return;
-        }
-        if (dialed === "110" || dialed === "119" || dialed === "120") { showMessage("The line cuts out before connection."); return; }
-        showMessage("Continuous busy tone. No answer.");
+        handleChapter2DivinationCall("Duty Room Phone");
       } },
       { id: "computer", label: "Duty Terminal", x: 72, y: 22, w: 16, h: 18, pulse: !state.flags.chapter2ThirdFloorFireExitUnlocked, action() {
+        if (isChapter2MedicineRoute()) {
+          showMessage("The terminal is on, but you do not sit down. This time what needs opening does not belong to property management.");
+          return;
+        }
         if (!state.flags.chapter2DutyComputerUsed) {
           state.flags.chapter2DutyComputerUsed = true;
           state.flags.chapter2FirstFloorFireExitUnlocked = true;
@@ -851,14 +1161,100 @@ scenes.chapter2PropertyDutyRoom = {
   }
 };
 
-scenes.chapter2UpperStairwell = { title: "Chapter 2 - Upper Stairwell", hint: "Second and third floors connect here.", objective() { return "Go to the third floor."; }, message() { return "Silence thickens with each step."; }, hotspots() { return [{ id: "to3", label: "To Third Floor", x: 62, y: 18, w: 22, h: 28, action() { setScene("chapter2ThirdFloorHall"); } }, { id: "back", label: "Back", x: 18, y: 72, w: 22, h: 14, action() { setScene("chapter2SecondFloorHall"); } }]; } };
+scenes.chapter2UpperStairwell = {
+  title: "Chapter 2 - Upper Stairwell",
+  hint() {
+    return isChapter2MedicineRoute() ? "Something from a crib mobile is lying cracked on the landing." : "Second and third floors connect here.";
+  },
+  objective() {
+    return isChapter2MedicineRoute() ? "Check the landing and continue to the third floor." : "Go to the third floor.";
+  },
+  message() {
+    return isChapter2MedicineRoute() ? "The higher you climb, the more the silence starts to feel like aftershock." : "Silence thickens with each step.";
+  },
+  hotspots() {
+    return [
+      {
+        id: "mobile",
+        label: isChapter2MedicineRoute() ? "Broken Crib Mobile" : "Landing",
+        x: 8,
+        y: 28,
+        w: 20,
+        h: 26,
+        action() {
+          if (!isChapter2MedicineRoute()) {
+            showMessage("Only the landing and the next flight of stairs.");
+            return;
+          }
+          if (!hasItem("Mobile Charm Rod")) {
+            acquireItem("Mobile Charm Rod");
+            collectDocument({
+              id: "chapter2-medicine-mobile-rod-en",
+              title: "Metal Rod from the Crib Mobile",
+              source: "Upper Stairwell Landing",
+              body: [
+                "A broken crib mobile has shattered across the landing.",
+                "",
+                "Inside the cracked plastic housing is a thin metal rod, still straight enough to be useful."
+              ].join("\n")
+            });
+            addNote("You pulled a thin metal rod from the broken crib mobile on the landing.");
+            showMessage("Inside the broken crib mobile is a thin metal rod. You slide it free and keep it.");
+            render();
+            return;
+          }
+          showMessage("Only splintered plastic remains. You already took the thin metal rod.");
+        }
+      },
+      { id: "to3", label: "To Third Floor", x: 62, y: 18, w: 22, h: 28, action() { setScene("chapter2ThirdFloorHall"); } },
+      { id: "back", label: "Back", x: 18, y: 72, w: 22, h: 14, action() { setScene("chapter2SecondFloorHall"); } }
+    ];
+  }
+};
 
 scenes.chapter2ThirdFloorHall = {
   title: "Chapter 2 - Third Floor",
-  hint: "Residential gate is sealed with chain and tape.",
-  objective() { return state.flags.chapter2ThirdFloorFireExitUnlocked ? "Use fire outlet side entry." : "Read the seal and unlock outlet from duty room."; },
-  message() { return "The floor is quiet. The seal looks fresh."; },
+  hint() {
+    return isChapter2MedicineRoute() ? "A chained residential gate blocks the corridor ahead." : "Residential gate is sealed with chain and tape.";
+  },
+  objective() {
+    if (isChapter2MedicineRoute()) {
+      return state.flags.chapter2MedicineGateUnlocked ? "The outer chain is open. Go through to your door." : "Use the old household keyring to open the chained gate.";
+    }
+    return state.flags.chapter2ThirdFloorFireExitUnlocked ? "Use fire outlet side entry." : "Read the seal and unlock outlet from duty room.";
+  },
+  message() {
+    return isChapter2MedicineRoute() ? "The floor is still and airless. The chain across the residential gate looks improvised, not official." : "The floor is quiet. The seal looks fresh.";
+  },
   hotspots() {
+    if (isChapter2MedicineRoute()) {
+      return [
+        {
+          id: "sealed",
+          label: state.flags.chapter2MedicineGateUnlocked ? "Chained Gate (Open)" : "Chained Gate",
+          x: 74,
+          y: 18,
+          w: 18,
+          h: 48,
+          pulse: !state.flags.chapter2MedicineGateUnlocked,
+          action() {
+            if (!state.flags.chapter2MedicineGateUnlocked) {
+              if (!hasItem("Old Keyring")) {
+                showMessage("The chain uses an ordinary old padlock. It needs one of the keys you should already have.");
+                return;
+              }
+              state.flags.chapter2MedicineGateUnlocked = true;
+              addNote("You used the old household keyring to open the chained gate on the third floor.");
+              showMessage("One key from the old ring fits the padlock. The chain falls slack with a soft metallic slide.");
+              render();
+              return;
+            }
+            setScene("chapter2ThirdFloorResidential");
+          }
+        },
+        { id: "back", label: "Back to Stairwell", x: 42, y: 24, w: 18, h: 48, action() { setScene("chapter2UpperStairwell"); } }
+      ];
+    }
     return [
       { id: "sealed", label: "Sealed Residential Gate", x: 74, y: 18, w: 18, h: 48, pulse: true, action() { collectDocument({ id: "chapter2-sealed-notice-3f-en", title: "Third-Floor Seal Notice", source: "Third Floor Residential Gate", body: ["Temporary lockdown. Entry prohibited.", "Report anomalies at second-floor duty room."].join("\n") }); showMessage("Locked and sealed. Report anomalies at second-floor duty room."); } },
       { id: "fire", label: state.flags.chapter2ThirdFloorFireExitUnlocked ? "Fire Outlet (Unlocked)" : "Fire Outlet", x: 8, y: 18, w: 18, h: 48, pulse: !state.flags.chapter2ThirdFloorFireExitUnlocked, action() { if (!state.flags.chapter2FirstFloorFireExitUnlocked) { showMessage("No response. Unlock 1F fire control first."); return; } if (!state.flags.chapter2ThirdFloorFireExitUnlocked) { showMessage("Outlet asks for remote authorization from duty room."); return; } setScene("chapter2ThirdFloorResidential"); } },
@@ -867,32 +1263,149 @@ scenes.chapter2ThirdFloorHall = {
   }
 };
 
-scenes.chapter2ThirdFloorResidential = { title: "Chapter 2 - Third Floor Residences", hint: "Your door is still there.", objective() { return "Enter your apartment."; }, message() { return "Only your footsteps answer you."; }, hotspots() { return [{ id: "home", label: "Your Door", x: 42, y: 18, w: 18, h: 48, pulse: true, action() { setScene("chapter2HomeDusty"); } }, { id: "back", label: "Back", x: 38, y: 78, w: 20, h: 12, action() { setScene("chapter2ThirdFloorHall"); } }]; } };
+scenes.chapter2ThirdFloorResidential = {
+  title: "Chapter 2 - Third Floor Residences",
+  hint() {
+    return isChapter2MedicineRoute() ? "Your apartment door is here. The corridor is too quiet." : "Your door is still there.";
+  },
+  objective() {
+    if (isChapter2MedicineRoute()) {
+      return state.flags.chapter2MedicineHomeUnlocked
+        ? hasItem("Wedding Ring")
+          ? "Your door is open. Go inside."
+          : "The door is open. Go in first and see what the room is still missing."
+        : "At the door, use something thin enough to reach the chain lock inside.";
+    }
+    return "Enter your apartment.";
+  },
+  message() {
+    return isChapter2MedicineRoute() ? "A dark streak runs toward your doorway, as if someone tried to drag something inside and stopped halfway." : "Only your footsteps answer you.";
+  },
+  hotspots() {
+    return [
+      {
+        id: "home",
+        label: "Your Door",
+        x: 42,
+        y: 18,
+        w: 18,
+        h: 48,
+        pulse: true,
+        action() {
+          if (isChapter2MedicineRoute()) {
+            if (!state.flags.chapter2MedicineHomeUnlocked) {
+              if (!hasItem("Mobile Charm Rod")) {
+                showMessage("The door opens only a crack before the chain catches. You need something thin and hard enough to reach through the gap.");
+                return;
+              }
+              state.flags.chapter2MedicineHomeUnlocked = true;
+              addNote("You used the metal rod from the crib mobile to lift the chain inside your apartment door.");
+              showMessage("You slide the thin rod through the gap and feel blindly for the chain. When it finally slips free, your knees almost give out.");
+              render();
+              return;
+            }
+            setScene("chapter2HomeDusty");
+            return;
+          }
+          setScene("chapter2HomeDusty");
+        }
+      },
+      { id: "back", label: "Back", x: 38, y: 78, w: 20, h: 12, action() { setScene("chapter2ThirdFloorHall"); } }
+    ];
+  }
+};
 
 scenes.chapter2HomeDusty = {
   title: "Chapter 2 - Home",
   hint: "Dust everywhere. No one has cleaned in a long time.",
-  objective() { return state.flags.chapter2PendingEnding ? "Sit in the living room and face what comes next." : "Search the apartment for clues."; },
-  message() { return "Dry dust smell fills the room. Your finger leaves marks on every surface."; },
+  objective() {
+    if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+      if (!hasItem("Music Box Winding Key")) {
+        if (!state.flags.chapter2MedicineSawRing) return "Search the living room and work out what this home is still missing.";
+        if (!hasItem("Wedding Ring")) return "You know what is missing now. Go back to the second floor and bring the ring home.";
+        return "Find where the ring belongs in the living room, then return to the bedroom.";
+      }
+      return "You have the winding key. Take it into the bedroom and open the box you kept refusing to touch.";
+    }
+    return state.flags.chapter2PendingEnding ? "Let the black-and-white symbol appear and face what comes next." : "Search the apartment for clues.";
+  },
+  message() {
+    if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+      if (!state.flags.chapter2MedicineSawRing) {
+        return "The dust inside is worse than you imagined. The meal that was supposed to wait for you has already blackened and hardened. Blood and ketchup have dried together until they are nearly the same color.";
+      }
+      if (!hasItem("Wedding Ring")) {
+        return "You have already seen the empty ring slot on the vanity. The entire room feels like it is reminding you that you came back without one thing.";
+      }
+      return "The dust inside is worse than you imagined. The meal that was supposed to wait for you has already blackened and hardened. Blood and ketchup have dried together until they are nearly the same color.";
+    }
+    return "Dry dust smell fills the room. Your finger leaves marks on every surface.";
+  },
   hotspots() {
     return [
-      { id: "sofa", label: state.flags.chapter2PendingEnding ? "Old Sofa" : "Dusty Table", x: 22, y: 56, w: 34, h: 16, action() {
+      { id: "sofa", label: state.flags.chapter2PendingEnding ? "Black-and-White Symbol" : "Dusty Table", x: 22, y: 56, w: 34, h: 16, pulse: !!state.flags.chapter2PendingEnding, action() {
+        if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+          showMessage("The food has gone black and hard. The dark crust around the plate edges looks like someone was determined to keep this meal waiting for your return.");
+          return;
+        }
         if (hasItem("Handgun")) {
-          const sitGun = window.confirm("Sit down?");
-          if (!sitGun) { showMessage("You stay standing with your hand still near your pocket."); return; }
+          const sitGun = window.confirm("Let the black-and-white symbol appear?");
+          if (!sitGun) { showMessage("You stare at the blank wall near the sofa but cannot make yourself step closer."); return; }
           setScene("chapter2GunEnding");
           return;
         }
         if (state.flags.chapter2PendingEnding) {
-          const sit = window.confirm("Sit down?");
-          if (!sit) { showMessage("You remain standing. The room keeps listening."); return; }
+          const sit = window.confirm("Let the black-and-white symbol appear?");
+          if (!sit) { showMessage("You remain standing in the middle of the room, unable to look directly at the wall."); return; }
           setScene("chapter2EchoJudgment");
           return;
         }
         showMessage("You drag one finger through the dust. Raw wood appears beneath.");
       } },
-      { id: "cabinet", label: "Cabinet", x: 70, y: 20, w: 18, h: 36, action() { collectDocument({ id: "chapter2-home-cleaning-note-en", title: "Unfinished Cleaning Note", source: "Living Room Cabinet", body: ["A curled sticky note under dust:", "", "Full-apartment cleaning this weekend.", "", "No date. No signature."].join("\n") }); showMessage("A half-written cleaning note sits under dust."); } },
-      { id: "bedroom", label: "Bedroom Door", x: 70, y: 18, w: 18, h: 36, pulse: true, action() { setScene("chapter2Bedroom"); } },
+      { id: "surgery-slip", label: "Surgery Receipt", x: 12, y: 24, w: 16, h: 22, pulse: true, action() { collectDocument({ id: "chapter2-surgery-appointment-slip-en", title: "Surgery Appointment Slip", source: "Living Room Floor", body: ["Hospital Surgery Appointment Slip", "", "Patient: M", "Scheduled date: 03/27", "Department: Obstetrics Operating Theatre", "Arrival time: 21:30", "", "Note: Family member signature required on arrival."].join("\n") }); addNote("You found a surgery appointment slip dated 03/27 inside your own home."); showMessage("A crumpled appointment slip is trapped under the coffee table. The first thing you see is the date: 03/27."); render(); } },
+      {
+        id: "cabinet",
+        label: isChapter2MedicineRoute() ? "Vanity" : "Cabinet",
+        x: 66,
+        y: 18,
+        w: 14,
+        h: 30,
+        action() {
+          if (isChapter2MedicineRoute()) {
+            if (!hasItem("Wedding Ring")) {
+              showMessage("An empty ring slot waits in the jewelry tray. You know instantly which ring is missing. You just have not brought it back yet.");
+              return;
+            }
+            if (!hasItem("Music Box Winding Key")) {
+              removeItem("Wedding Ring");
+              acquireItem("Music Box Winding Key");
+              collectDocument({
+                id: "chapter2-medicine-vanity-key-en",
+                title: "Winding Key Hidden Beneath the Vanity Tray",
+                source: "Living Room Vanity",
+                body: [
+                  "When you place the wedding ring back into the empty slot, the jewelry tray sinks by a fraction.",
+                  "",
+                  "A hidden compartment opens beneath it.",
+                  "Inside lies a tiny winding key and a note:",
+                  "\"1106 J&M\"",
+                  "",
+                  "That was your wedding anniversary, the day the music box was given, and the day she told you she was pregnant."
+                ].join("\n")
+              });
+              addNote("You returned the wedding ring to the vanity and found a music box winding key hidden underneath.");
+              showMessage("The moment the ring settles into place, the tray clicks and opens. Inside is a tiny winding key and a note marked 1106.");
+              render();
+              return;
+            }
+            showMessage("The ring is gone from your hand now. The hidden compartment under the vanity tray is empty.");
+            return;
+          }
+          collectDocument({ id: "chapter2-home-cleaning-note-en", title: "Unfinished Cleaning Note", source: "Living Room Cabinet", body: ["A curled sticky note under dust:", "", "Full-apartment cleaning this weekend.", "", "No date. No signature."].join("\n") });
+          showMessage("A half-written cleaning note sits under dust.");
+        }
+      },
+      { id: "bedroom", label: "Bedroom Door", x: 82, y: 16, w: 12, h: 40, pulse: true, action() { setScene("chapter2Bedroom"); } },
       { id: "back", label: "Back to Corridor", x: 42, y: 78, w: 18, h: 12, action() { setScene("chapter2ThirdFloorResidential"); } }
     ];
   }
@@ -901,12 +1414,64 @@ scenes.chapter2HomeDusty = {
 scenes.chapter2Bedroom = {
   title: "Chapter 2 - Bedroom",
   hint: "A crib. A lockbox. A carved line: The most important date.",
-  objective() { return state.flags.chapter2TarotChoice ? "You already made your card choice." : "Enter a 4-digit date on the lockbox."; },
-  message() { return "The lockbox rests in the center of the crib mattress."; },
+  objective() {
+    if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+      return hasItem("Music Box Winding Key") ? "Use the winding key to open the keepsake box." : "Go back to the living room and put the ring where it belongs.";
+    }
+    return state.flags.chapter2TarotChoice ? "You already made your card choice." : "Enter a 4-digit date on the lockbox.";
+  },
+  message() {
+    if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+      return "Beside the crib sits a music-box keepsake case you kept pretending not to see. It has no keypad, only a tiny winding keyhole.";
+    }
+    return "The lockbox rests in the center of the crib mattress.";
+  },
   hotspots() {
     return [
       { id: "crib", label: "Crib", x: 20, y: 42, w: 30, h: 26, action() { showMessage("Dust circles the crib rails. The lockbox waits in the middle."); } },
+      {
+        id: "memory-box",
+        label: "Keepsake Box",
+        x: 18,
+        y: 18,
+        w: 18,
+        h: 24,
+        visible: isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened,
+        pulse: isChapter2MedicineRoute(),
+        action() {
+          if (!hasItem("Music Box Winding Key")) {
+            showMessage("The lock is tiny. The key is not in this room. It is in the part of the house that still tries to pretend everything was normal.");
+            return;
+          }
+          removeItem("Music Box Winding Key");
+          state.flags.chapter2MemoryBoxOpened = true;
+          collectDocument({
+            id: "chapter2-medicine-memory-box-en",
+            title: "Keepsakes Inside the Box",
+            source: "Keepsake Box Beside the Crib",
+            body: [
+              "Inside the box are three things:",
+              "1) An ultrasound print never placed into an album",
+              "2) A softened photocopy of the surgery consent form",
+              "3) A blank baby ankle tag",
+              "",
+              "At the bottom edge of the consent copy, one printed line is still legible:",
+              "\"03/27 22:06, sudden intraoperative complication.\"",
+              "",
+              "You do not need another explanation now.",
+              "The child was never born, and your wife died in that medical accident."
+            ].join("\n")
+          });
+          addNote("The keepsake box fixes the truth in place: the child was never born, and your wife died in the medical accident.");
+          showMessage("The winding key unlocks not music, but a box of the things you kept refusing to face. Ultrasound print. Blank ankle tag. Surgery form. Nothing in it leaves you room to hide.");
+          render();
+        }
+      },
       { id: "lockbox", label: "Lockbox", x: 56, y: 38, w: 22, h: 24, pulse: !state.flags.chapter2TarotChoice, action() {
+        if (isChapter2MedicineRoute() && !state.flags.chapter2MemoryBoxOpened) {
+          showMessage("You stare at the lockbox for a long time, but you know you are still missing the key that matters first. Open the keepsake box before this one.");
+          return;
+        }
         const hasJustice = hasItem("Tarot - Justice");
         const hasGun = hasItem("Handgun");
         if (state.flags.chapter2TarotChoice && !(hasJustice && !hasGun)) {
@@ -970,10 +1535,10 @@ scenes.chapter2EchoJudgment = {
   title: "Chapter 2 - Echo in the Living Room",
   hint() {
     const p = state.flags.chapter2PendingEnding;
-    if (p === "chapter2UneasyReunionEnding") return "She stands at the end of the hall, smiling at you.";
-    if (p === "chapter2BloodCradleEnding") return "A blood-stained version of her waits in the doorway.";
-    if (p === "chapter2MonsterReturnEnding") return "The twisted creature is in the bedroom doorway.";
-    return "The room is hollow and listening.";
+    if (p === "chapter2UneasyReunionEnding") return "After the black-and-white symbol appears, she stands at the end of the hall, smiling at you.";
+    if (p === "chapter2BloodCradleEnding") return "After the black-and-white symbol appears, a blood-stained version of her waits in the doorway.";
+    if (p === "chapter2MonsterReturnEnding") return "After the black-and-white symbol appears, the twisted creature is in the bedroom doorway.";
+    return "The black-and-white symbol appears, and the room turns hollow and listening.";
   },
   onEnter() {
     if (hasItem("Handgun")) { state.flags.chapter2PendingEnding = ""; setScene("chapter2GunEnding"); return true; }
@@ -988,10 +1553,10 @@ scenes.chapter2EchoJudgment = {
   },
   message() {
     const p = state.flags.chapter2PendingEnding;
-    if (p === "chapter2UneasyReunionEnding") return "She appears at the end of the hall and reaches toward you.";
-    if (p === "chapter2BloodCradleEnding") return "A dripping sound from the bedroom. She steps out with blood on her sleeves.";
-    if (p === "chapter2MonsterReturnEnding") return "The bedroom door shakes. The same twisted thing from Chapter 1 pushes through.";
-    return "You sit and wait.";
+    if (p === "chapter2UneasyReunionEnding") return "The black-and-white symbol slowly forms on the wall. She appears at the end of the hall and reaches toward you.";
+    if (p === "chapter2BloodCradleEnding") return "The black-and-white symbol slowly forms on the wall. A dripping sound comes from the bedroom. She steps out with blood on her sleeves.";
+    if (p === "chapter2MonsterReturnEnding") return "The black-and-white symbol slowly forms on the wall. The bedroom door shakes. The same twisted thing from Chapter 1 pushes through.";
+    return "The black-and-white symbol appears on the wall, and the air hardens around you.";
   },
   hotspots() {
     const p = state.flags.chapter2PendingEnding;
@@ -1011,8 +1576,8 @@ scenes.chapter3Entry = {
   hotspots() { return [{ id: "back", label: "Back to Main Menu", x: 38, y: 72, w: 24, h: 14, action() { openMainMenu(); } }]; }
 };
 
-scenes.chapter2UneasyReunionEnding = { endingId: "chapter2UneasyReunionEnding", title: "Ending - Uneasy Reunion", hint: "She returns, but the calm feels wrong.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "After you sit down, she walks in and holds you without a word. Her warmth is real. The calm is too perfect."; }, overlay() { return buildEndingOverlay({ order: 6, variant: "good", name: "Uneasy Reunion", summary: "No medicine. Lovers card. Reunion arrives exactly as desired, and that is what makes it frightening." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
-scenes.chapter2WaitWifeEnding = { endingId: "chapter2WaitWifeEnding", title: "Ending - Waiting Room", hint: "Medicine strips color from the world.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "You sit and finally see the house as a ruined shell with peeling walls. Still, you wait for her to come home."; }, overlay() { return buildEndingOverlay({ order: 7, variant: "normal", name: "Waiting Room", summary: "Medicine plus Lovers card reveals decay, but you choose to stay and wait." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
+scenes.chapter2UneasyReunionEnding = { endingId: "chapter2UneasyReunionEnding", title: "Ending - Uneasy Reunion", hint: "She returns, but the calm feels wrong.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "After the black-and-white symbol appears, she walks in and holds you without a word. Her warmth is real. The calm is too perfect."; }, overlay() { return buildEndingOverlay({ order: 6, variant: "good", name: "Uneasy Reunion", summary: "No medicine. Lovers card. Reunion arrives exactly as desired, and that is what makes it frightening." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
+scenes.chapter2WaitWifeEnding = { endingId: "chapter2WaitWifeEnding", title: "Ending - Waiting Room", hint: "Medicine strips color from the world.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "After the black-and-white symbol appears, the house reveals itself as a ruined shell with peeling walls. Still, you wait for her to come home."; }, overlay() { return buildEndingOverlay({ order: 7, variant: "normal", name: "Waiting Room", summary: "Medicine plus Lovers card reveals decay, but you choose to stay and wait." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
 scenes.chapter2BloodCradleEnding = { endingId: "chapter2BloodCradleEnding", title: "Ending - Blood Cradle", hint: "No medicine. No barrier left.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "The crib bleeds through the rails. She returns with blood on her sleeves and embraces you as if this is ordinary."; }, overlay() { return buildEndingOverlay({ order: 8, variant: "bad", name: "Blood Cradle", summary: "No medicine plus Devil card lets blood and memory flood back in together." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
 scenes.chapter2MonsterReturnEnding = { endingId: "chapter2MonsterReturnEnding", title: "Ending - Old Shadow", hint: "Medicine steadies you just enough to watch it return.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "The same twisted creature from Chapter 1 crashes in and lunges without slowing."; }, overlay() { return buildEndingOverlay({ order: 9, variant: "bad", name: "Old Shadow", summary: "Medicine plus Devil card reopens the original nightmare entry point." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
-scenes.chapter2GunEnding = { endingId: "chapter2GunEnding", title: "Ending - Swallow the Gun", hint: "You leave the last choice to the trigger.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "You sit with the handgun and stop waiting for footsteps. Steel against your teeth. One muffled shot, and the room falls silent."; }, overlay() { return buildEndingOverlay({ order: 10, variant: "bad", name: "Swallow the Gun", summary: "With the hidden handgun in hand, you choose an ending that leaves no witness." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };
+scenes.chapter2GunEnding = { endingId: "chapter2GunEnding", title: "Ending - Swallow the Gun", hint: "You leave the last choice to the trigger.", objective() { return `Unlocked endings ${getUnlockedEndingCount()}/${TOTAL_ENDINGS}. Texts collected ${state.documents.length}/${TOTAL_DOCUMENTS}.`; }, message() { return "The black-and-white symbol appears on the wall. You stop waiting for footsteps, raise the handgun, and let one muffled shot silence the room."; }, overlay() { return buildEndingOverlay({ order: 10, variant: "bad", name: "Swallow the Gun", summary: "With the hidden handgun in hand, you choose an ending that leaves no witness." }); }, hotspots() { return [{ id: "to-menu", label: "Main Menu", x: 38, y: 68, w: 24, h: 14, action() { openMainMenu(); } }]; } };

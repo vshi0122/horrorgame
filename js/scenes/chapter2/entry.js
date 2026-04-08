@@ -93,6 +93,19 @@ window.scenes.chapter2Entry = {
         h: 14,
         visible: state.flags.chapter2InquiryFinished,
         action() {
+          if (hasItem("药瓶")) {
+            const shouldUse = window.confirm("离开医院前要现在服药吗？");
+            if (shouldUse) {
+              removeItem("药瓶");
+              state.flags.chapter2MedicineUsed = true;
+              addNote("你在离开医院前服用了医生开的药。");
+              showMessage("你在推门离开前拧开药瓶吞下一片药。苦味在舌根化开，像把某种更糟的现实也一起咽了下去。");
+            } else {
+              removeItem("药瓶");
+              addNote("你离开医院时没有服药。");
+              showMessage("你把药瓶攥了一会儿，最后还是没有吃，直接推门离开了病房。");
+            }
+          }
           setScene("chapter2ParkingLot");
         }
       }

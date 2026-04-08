@@ -107,19 +107,7 @@ inventoryEl.addEventListener("click", (event) => {
 
   const item = itemButton.dataset.item;
   if (item !== "Medicine Bottle") return;
-
-  const shouldUse = window.confirm("Take the medicine now?");
-  if (!shouldUse) {
-    incrementDecisionCounter("inventory:medicine-bottle:defer");
-    showMessage("You put the bottle back in your pocket for now.");
-    return;
-  }
-
-  incrementDecisionCounter("inventory:medicine-bottle:use");
-  removeItem("Medicine Bottle");
-  state.flags.chapter2MedicineUsed = true;
-  addNote("You took the medicine from the doctor. Your pulse steadied for a moment.");
-  showMessage("You swallow one pill. The bitterness lingers, but your breathing slows.");
+  showMessage("The doctor's medicine can only be taken at the moment you leave the hospital. That choice has already passed.");
 });
 
 sceneEl.addEventListener("click", (event) => {

@@ -107,19 +107,7 @@ inventoryEl.addEventListener("click", (event) => {
 
   const item = itemButton.dataset.item;
   if (item !== "药瓶") return;
-
-  const shouldUse = window.confirm("要现在服用医生给的药吗？");
-  if (!shouldUse) {
-    incrementDecisionCounter("inventory:medicine-bottle:defer");
-    showMessage("你把药瓶又放回口袋，决定再等等。");
-    return;
-  }
-
-  incrementDecisionCounter("inventory:medicine-bottle:use");
-  removeItem("药瓶");
-  state.flags.chapter2MedicineUsed = true;
-  addNote("你在探索过程中服用了医生开的药。情绪短暂平稳了一些。");
-  showMessage("你拧开药瓶吞下一片药。喉咙发苦，但心跳慢慢稳了下来。");
+  showMessage("医生给的药只能在离开医院时决定要不要服用。现在已经没有再吃一次的机会了。");
 });
 
 sceneEl.addEventListener("click", (event) => {

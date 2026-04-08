@@ -71,9 +71,6 @@ function renderInventory() {
 
   inventoryEl.innerHTML = state.inventory
     .map((item) => {
-      if (item === "药瓶") {
-        return `<button class="inventory-item inventory-item-usable" data-item="${item}" type="button">${item}（可使用）</button>`;
-      }
       return `<span class="inventory-item">${item}</span>`;
     })
     .join("");
