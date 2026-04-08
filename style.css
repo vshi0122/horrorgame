@@ -43,7 +43,7 @@ button {
 }
 
 .app {
-  width: min(1220px, calc(100% - 32px));
+  width: min(1800px, calc(100% - 12px));
   margin: 0 auto;
   padding: 28px 0 36px;
 }
@@ -152,8 +152,18 @@ h3 {
 }
 
 .game-layout {
-  grid-template-columns: 1.8fr 0.9fr;
+  grid-template-columns: minmax(340px, 0.85fr) minmax(0, 1.55fr) minmax(430px, 1.25fr);
   align-items: start;
+}
+
+.left-rail {
+  display: grid;
+  gap: 18px;
+}
+
+.left-rail .notes-panel {
+  position: sticky;
+  top: 20px;
 }
 
 .panel,
@@ -213,6 +223,7 @@ h3 {
 .scene-hint {
   margin: 0;
   color: var(--muted);
+  line-height: 1.7;
 }
 
 .scene {
@@ -565,6 +576,7 @@ h3 {
 /* ── Main menu mode — full-page takeover ───────────────────────────── */
 .main-menu-mode .hud,
 .main-menu-mode .side-panel,
+.main-menu-mode .left-rail,
 .main-menu-mode .scene-header,
 .main-menu-mode .dialogue-bar,
 .main-menu-mode .topbar {

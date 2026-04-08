@@ -77,7 +77,7 @@ function renderInventory() {
 }
 
 function renderNotes() {
-  notesListEl.innerHTML = state.notes.map((note) => `<li>${note}</li>`).join("");
+  notesListEl.innerHTML = [...state.notes].reverse().map((note) => `<li>${note}</li>`).join("");
 }
 
 function renderDocuments() {
