@@ -131,6 +131,7 @@ window.scenes.entranceMailbox = {
       {
         id: "open-mailbox",
         label: state.flags.mailboxOpened ? "查看已取出的通知" : "打开并取件",
+        x: 27.74, y: 26.75, w: 47.82, h: 23.04,
         action() {
           if (!hasItem("信箱钥匙")) {
             showMessage("信箱锁着。你得先找到钥匙。");
@@ -174,7 +175,7 @@ window.scenes.entranceMailbox = {
           showMessage("你又看了一遍通知，上面的数字仍是 0327。");
         }
       },
-      { id: "back-entrance", label: "返回入口", action() { setScene("entrance"); } }
+      { id: "back-entrance", label: "返回入口", x: 38.56, y: 85.98, w: 21.94, h: 13.57, action() { setScene("entrance"); } }
     ];
   }
 };
