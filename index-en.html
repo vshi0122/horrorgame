@@ -35,63 +35,60 @@
     <section class="hud">
       <div class="panel objective-panel">
         <p class="panel-label">Objective</p>
-        <p id="objectiveText">Find the keys in the car, then bring the ketchup upstairs.</p>
+        <meta name="description" content="A text-adventure horror game. Wake up in your car, return to the apartment, and search for a way out between nightmare and normalcy.">
       </div>
       <div class="panel inventory-panel">
-        <p class="panel-label">Items</p>
+        <meta property="og:description" content="A text-adventure horror game. Wake up in your car, return to the apartment, and search for a way out between nightmare and normalcy.">
         <div id="inventory" class="inventory"></div>
       </div>
     </section>
-
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500&display=swap" rel="stylesheet">
     <section class="game-layout">
       <aside class="left-rail">
         <div class="panel notes-panel">
-          <p class="panel-label">Clues</p>
-          <ul id="notesList" class="notes-list"></ul>
-        </div>
-      </aside>
-
-      <div id="sceneFrame" class="scene-frame">
-        <div class="scene-header">
-          <div>
-            <p class="panel-label">Location</p>
-            <h2 id="sceneTitle">Inside the Car</h2>
+        <div class="t-app">
+          <header class="t-header">
+            <span class="t-brand">Day of Arrival</span>
+            <div class="t-header-right">
+              <nav class="t-lang">
+                <a class="t-lang-link" href="index.html">中文</a>
+                <span class="t-lang-sep">·</span>
+                <a class="t-lang-link t-lang-active" href="index-en.html">EN</a>
+              </nav>
+              <button id="menuButton" class="t-btn" type="button">Menu</button>
+              <button id="restartButton" class="t-btn" type="button">Restart</button>
+            </div>
+          </header>
+          <div class="t-body">
+            <div class="t-main">
+              <div class="t-output" id="terminalOutput" aria-live="polite" aria-relevant="additions"></div>
+              <div class="t-prompt-area">
+                <div class="t-choices" id="terminalChoices"></div>
+              </div>
+            </div>
+            <aside class="t-sidebar">
+              <div class="t-sb-block">
+                <p class="t-sb-label">Location</p>
+                <p class="t-sb-value" id="sceneTitle">—</p>
+              </div>
+              <div class="t-sb-block">
+                <p class="t-sb-label">Objective</p>
+                <p class="t-sb-value" id="objectiveText">—</p>
+              </div>
+              <div class="t-sb-block">
+                <p class="t-sb-label">Items</p>
+                <div class="t-sb-value" id="inventory"></div>
+              </div>
+              <div class="t-sb-block">
+                <p class="t-sb-label">Clues</p>
+                <ul class="t-notes" id="notesList"></ul>
+              </div>
+              <div class="t-sb-block">
+                <p class="t-sb-label">Texts</p>
+                <div class="t-sb-value" id="documentsList"></div>
+              </div>
+            </aside>
           </div>
-          <p id="sceneHint" class="scene-hint">The rain has just stopped. Water still clings to the windshield.</p>
         </div>
-
-        <div id="scene" class="scene" aria-live="polite"></div>
-
-        <div class="dialogue-bar">
-          <p class="panel-label">Observation</p>
-          <p id="messageText">You jolt awake in the driver's seat. The apartment building stands silently ahead.</p>
-        </div>
-      </div>
-
-      <aside class="side-panel">
-        <div class="panel documents-panel">
-          <p class="panel-label">Collected Texts</p>
-          <div id="documentsList" class="documents-list"></div>
-          <article id="documentViewer" class="document-viewer document-empty">
-            <h3 id="documentTitle">No text collected yet</h3>
-            <p id="documentMeta">Discovered notes and documents will appear here.</p>
-            <div id="documentBody" class="document-body"></div>
-          </article>
-        </div>
-
-        <div class="panel controls-panel">
-          <p class="panel-label">How to Play</p>
-          <p>Click highlighted areas to inspect the scene, collect items, read documents, and push the story forward.</p>
-        </div>
-      </aside>
-    </section>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-  <script src="js/hotspot-editor.js"></script>
-  <script src="js/en/state.js"></script>
-  <script src="js/en/scenes.js"></script>
-  <script src="js/en/ui.js"></script>
-  <script src="js/en/main.js"></script>
-</body>
-</html>
+        <p id="messageText" hidden aria-hidden="true"></p>
+        <div id="overlayContainer" class="t-overlay-container" hidden></div>
