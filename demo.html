@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>密室逃脱 Demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: #08080a;
+    font-family: "Noto Sans SC", system-ui, sans-serif;
+    color: #ddd;
+    overflow: hidden;
+  }
+
+  /* ── 背景图区 ──────────────────────────────────────── */
+  #scene-view {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* CSS 绘制的密室场景 */
+  .room {
+    position: absolute;
+    inset: 0;
+    background:
+      /* 窗口光束 */
+      radial-gradient(ellipse 120px 200px at 72% 0%, rgba(80,90,120,0.28) 0%, transparent 80%),
+      /* 地板 */
+      linear-gradient(180deg, transparent 62%, rgba(30,20,14,0.8) 100%),
+      /* 总体氛围 */
+      linear-gradient(160deg, #14100d 0%, #0c0e18 50%, #100d0a 100%);
+  }
+
+  /* 墙壁纹理线 */
+  .room::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 79px,
+        rgba(255,255,255,0.018) 80px
+      ),
+      repeating-linear-gradient(
+        180deg,
+        transparent,
+        transparent 59px,
+        rgba(255,255,255,0.013) 60px
+      );
+  }
+
+  /* 木门 */
+  .room-door {
+    position: absolute;
+    left: 10%;
+    bottom: 0;
+    width: 11%;
+    height: 58%;
+    background: linear-gradient(180deg, #2a1a0e, #1a0f06);
+    border: 2px solid #3a2510;
+    border-bottom: none;
+    border-radius: 2px 2px 0 0;
+  }
+  .room-door::after {
+    content: "";
+    position: absolute;
+    right: 16%;
+    top: 42%;
+    width: 10%;
+    height: 6%;
+    border-radius: 50%;
+    background: #8a6a30;
+    box-shadow: 0 0 6px rgba(200,160,80,0.3);
+  }
+
+  /* 窗户 */
+  .room-window {
+    position: absolute;
+    right: 14%;
+    top: 8%;
+    width: 13%;
+    height: 22%;
+    background: linear-gradient(180deg, rgba(60,70,100,0.5), rgba(30,40,70,0.3));
+    border: 2px solid #333;
+    box-shadow:
+      inset 0 0 30px rgba(80,100,160,0.2),
+      0 0 40px rgba(80,100,160,0.1);
+  }
+  .room-window::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, transparent 48%, rgba(255,255,255,0.06) 50%, transparent 52%),
+      linear-gradient(180deg, transparent 48%, rgba(255,255,255,0.06) 50%, transparent 52%);
+  }
+
+  /* 桌子 */
+  .room-desk {
+    position: absolute;
+    left: 32%;
+    bottom: 0;
+    width: 30%;
+    height: 35%;
+    background: linear-gradient(180deg, #2c1c0e, #1e1008);
+    border-top: 3px solid #4a2e14;
+    border-left: 2px solid #3a2510;
+    border-right: 2px solid #201008;
+  }
+  .room-desk::before {
+    content: "";
+    position: absolute;
+    top: -3px;
+    left: -2px;
+    right: -2px;
+    height: 6px;
+    background: #5a3820;
+    border-radius: 1px;
+  }
+
+  /* 桌上物品 */
+  .room-lamp {
+    position: absolute;
+    left: 44%;
+    bottom: 35%;
+    width: 3%;
+    height: 14%;
+  }
+  .room-lamp::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 40%;
+    width: 20%;
+    height: 100%;
+    background: #555;
+    border-radius: 2px;
+  }
+  .room-lamp::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 300%;
+    height: 35%;
+    background: linear-gradient(180deg, #c8a060, #a07040);
+    clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+    box-shadow: 0 4px 30px rgba(200,160,60,0.5);
+  }
+
+  /* 灯光晕 */
+  .room-light {
+    position: absolute;
+    left: 38%;
+    bottom: 34%;
+    width: 24%;
+    height: 50%;
+    background: radial-gradient(ellipse at 50% 100%, rgba(200,160,60,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* 地板 */
+  .room-floor {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8%;
+    background: linear-gradient(180deg, #1a1008, #100c06);
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  /* 场景标题 */
+  #scene-label {
+    position: absolute;
+    top: 16px;
+    left: 20px;
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(200,164,112,0.7);
+    pointer-events: none;
+  }
+
+
+
+  /* ── 对话面板 ──────────────────────────────────────── */
+  #panel {
+    flex-shrink: 0;
+    background: rgba(8,8,10,0.97);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 18px 24px 20px;
+    max-height: 42dvh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  #description {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: #ccc;
+    min-height: 2.5em;
+    transition: opacity 200ms;
+  }
+
+  #description.fading { opacity: 0; }
+
+  #input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+  }
+
+  #command-input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 6px;
+    background: rgba(0,0,0,0.35);
+    color: #ddd;
+    font: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+
+  #command-input:focus {
+    border-color: rgba(200,164,112,0.55);
+    box-shadow: 0 0 0 2px rgba(200,164,112,0.15);
+  }
+
+  #submit-btn {
+    padding: 10px 14px;
+    border: 1px solid rgba(200,164,112,0.45);
+    border-radius: 6px;
+    background: rgba(200,164,112,0.12);
+    color: #e8d4a8;
+    font: inherit;
+    font-size: 0.84rem;
+    letter-spacing: 0.06em;
+  }
+
+  #submit-btn:hover {
+    background: rgba(200,164,112,0.2);
+  }
+
+  #input-hint {
+    font-size: 0.74rem;
+    color: rgba(255,255,255,0.4);
+  }
+
+  /* 物品栏 */
+  #inventory-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.35);
+    padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    min-height: 28px;
+  }
+
+  #inventory-bar span.label {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.65rem;
+    color: rgba(200,164,112,0.55);
+  }
+
+  .inv-item {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border: 1px solid rgba(200,164,112,0.35);
+    border-radius: 4px;
+    color: rgba(200,164,112,0.85);
+    font-size: 0.75rem;
+    background: rgba(200,164,112,0.06);
+  }
+
+  /* 胜利遮罩 */
+  #win-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    place-items: center;
+    z-index: 10;
+    flex-direction: column;
+    gap: 16px;
+  }
+  #win-overlay.show { display: flex; }
+  #win-overlay h2 {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    background: linear-gradient(180deg, #fff 0%, #c8a470 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.12em;
+  }
+  #win-overlay p { color: rgba(255,255,255,0.5); letter-spacing: 0.06em; }
+  #restart-btn {
+    margin-top: 16px;
+    padding: 12px 28px;
+    border: 1px solid rgba(200,164,112,0.5);
+    border-radius: 6px;
+    background: rgba(200,164,112,0.12);
+    color: #e8d4a8;
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: background 160ms;
+  }
+  #restart-btn:hover { background: rgba(200,164,112,0.22); }
+</style>
+</head>
+<body>
+
+<!-- ── 场景视图 ─────────────────────────────────────── -->
+<div id="scene-view">
+  <div class="room">
+    <div class="room-door"></div>
+    <div class="room-window"></div>
+    <div class="room-desk"></div>
+    <div class="room-lamp"></div>
+    <div class="room-light"></div>
+    <div class="room-floor"></div>
+  </div>
+
+  <p id="scene-label">神秘密室</p>
+
+  <!-- 胜利 -->
+  <div id="win-overlay">
+    <h2>逃脱成功</h2>
+    <p>你推开了门，走进了深夜的街道。</p>
+    <button id="restart-btn">重新开始</button>
+  </div>
+</div>
+
+<!-- ── 对话面板 ─────────────────────────────────────── -->
+<div id="panel">
+  <div id="description">你从混沌中醒来，身处一间昏暗的密室。台灯的橘黄光晕是这里唯一的暖意。门在你左边，桌子在中间，窗户在右侧透进一丝夜色。</div>
+  <div id="input-row">
+    <input id="command-input" type="text" autocomplete="off" placeholder="输入命令，例如：看向 门 / 走向 桌子 / 使用 钥匙 门">
+    <button id="submit-btn" type="button">确认</button>
+  </div>
+  <div id="input-hint">可用基础操作：看向 / 走向 / 使用。你也可以输入：帮助。</div>
+  <div id="inventory-bar">
+    <span class="label">物品</span>
+    <span id="inv-list" style="color:rgba(255,255,255,0.25);font-size:0.75rem;">（空）</span>
+  </div>
+</div>
+
+<script>
+// ── 游戏状态 ──────────────────────────────────────────
+const G = {
+  inventory: [],
+  flags: {},
+  location: "center",
+};
+
+function has(item) { return G.inventory.includes(item); }
+function give(item) {
+  if (!has(item)) {
+    G.inventory.push(item);
+    updateInv();
+  }
+}
+
+// ── 渲染/输入 ─────────────────────────────────────────
+const descEl = document.getElementById("description");
+const invListEl = document.getElementById("inv-list");
+const winOverlay = document.getElementById("win-overlay");
+const commandInputEl = document.getElementById("command-input");
+const submitBtnEl = document.getElementById("submit-btn");
+
+const TARGETS = {
+  door: ["门", "房门", "门锁", "锁"],
+  desk: ["桌子", "桌", "书桌", "抽屉", "托盘"],
+  window: ["窗", "窗户", "玻璃"],
+  center: ["中间", "中央", "房间", "房间中央"],
+  key: ["钥匙", "生锈钥匙"],
+};
+
+function normalizeText(input) {
+  return String(input || "").replace(/\s+/g, "").toLowerCase();
+}
+
+function resolveTarget(raw) {
+  const text = normalizeText(raw);
+  if (!text) return null;
+  for (const [key, aliases] of Object.entries(TARGETS)) {
+    if (aliases.some((a) => text.includes(normalizeText(a)))) {
+      return key;
+    }
+  }
+  return null;
+}
+
+function setDescription(text) {
+  descEl.classList.add("fading");
+  setTimeout(() => {
+    descEl.innerHTML = text;
+    descEl.classList.remove("fading");
+  }, 150);
+}
+
+function describeCurrentLocation() {
+  if (G.location === "door") {
+    return "你站在门前。门把手冰凉，锁孔很小。看起来需要一把钥匙才能离开。";
+  }
+  if (G.location === "desk") {
+    if (!G.flags.drawer_mid_opened) {
+      return "你来到桌前。桌面有托盘和台灯，中间抽屉似乎能拉开，也许里面有东西。";
+    }
+    return "你在桌边。中间抽屉已经被你打开过，桌上的纸条还摊在那里。";
+  }
+  if (G.location === "window") {
+    return "你靠近窗户。玻璃冰冷，外面是夜街。窗户从外侧上了锁，几乎无法强行打开。";
+  }
+  return "你站在房间中央。左边是门，中间是桌子，右边是窗户。";
+}
+
+function handleLook(targetRaw) {
+  const target = resolveTarget(targetRaw) || G.location;
+  if (target === "door") {
+    setDescription("你看向门锁。锁芯有些老旧，但还能转动。门缝里透着一点点走廊的光。");
+    return;
+  }
+  if (target === "desk") {
+    if (!G.flags.drawer_mid_opened) {
+      setDescription("你看向桌面。托盘里是杂乱文件，中间抽屉缝里露出一角折叠纸。你也许该试着“使用 抽屉”。");
+    } else {
+      setDescription("你看向桌面。抽屉已经空了，纸条写着：『如果你在看这张纸，你已经来不及了。』");
+    }
+    return;
+  }
+  if (target === "window") {
+    setDescription("你看向窗外。路灯昏黄，偶尔有车灯划过。远处似乎有人影，但一眨眼又不见了。");
+    return;
+  }
+  setDescription(describeCurrentLocation());
+}
+
+function handleMove(targetRaw) {
+  const target = resolveTarget(targetRaw);
+  if (!target || !["door", "desk", "window", "center"].includes(target)) {
+    flash("你不知道要走向哪里。可试试：走向 门 / 桌子 / 窗户。");
+    return;
+  }
+  G.location = target;
+  setDescription(describeCurrentLocation());
+}
+
+function openDoorSuccess() {
+  setDescription("钥匙插入锁孔，轻轻一转。门闩松开，冷空气涌了进来。你推开门，终于离开了这间密室。");
+  setTimeout(() => {
+    winOverlay.classList.add("show");
+  }, 450);
+}
+
+function handleUse(targetRaw) {
+  const target = resolveTarget(targetRaw);
+  const raw = normalizeText(targetRaw);
+
+  if (raw.includes("抽屉") || (target === "desk" && G.location === "desk")) {
+    if (G.location !== "desk") {
+      flash("你离桌子太远了。先输入：走向 桌子。");
+      return;
+    }
+    if (!G.flags.drawer_mid_opened) {
+      G.flags.drawer_mid_opened = true;
+      give("生锈钥匙");
+      setDescription("你拉开中间抽屉，拿到一把生锈钥匙。旁边纸条写着：『钥匙还在。』");
+      return;
+    }
+    setDescription("抽屉已经空了，只有木头摩擦声。你已经拿走了钥匙。");
+    return;
+  }
+
+  if ((raw.includes("钥匙") && (raw.includes("门") || raw.includes("锁"))) || target === "door") {
+    if (G.location !== "door") {
+      flash("你离门太远了。先输入：走向 门。");
+      return;
+    }
+    if (!has("生锈钥匙")) {
+      flash("你摸了摸口袋，没有钥匙。也许桌子的抽屉里有线索。");
+      return;
+    }
+    openDoorSuccess();
+    return;
+  }
+
+  if (target === "window") {
+    setDescription("你尝试对窗户做点什么，但它从外侧上锁，纹丝不动。");
+    return;
+  }
+
+  flash("这个用法不太对。试试：使用 抽屉，或 使用 钥匙 门。");
+}
+
+function handleHelp() {
+  setDescription(
+    "可用命令：<br>1. 看向 [目标]（如：看向 门）<br>2. 走向 [目标]（如：走向 桌子）<br>3. 使用 [对象] [目标]（如：使用 钥匙 门）<br><br>目标建议：门 / 桌子 / 窗户 / 抽屉"
+  );
+}
+
+function runCommand(inputRaw) {
+  const input = String(inputRaw || "").trim();
+  if (!input) {
+    flash("请输入命令。可先输入：帮助");
+    return;
+  }
+
+  const normalized = normalizeText(input);
+  if (normalized === "帮助" || normalized === "help") {
+    handleHelp();
+    return;
+  }
+
+  if (normalized.startsWith("看向") || normalized.startsWith("看")) {
+    const targetRaw = input.replace(/^看向?\s*/, "");
+    handleLook(targetRaw);
+    return;
+  }
+
+  if (normalized.startsWith("走向") || normalized.startsWith("走") || normalized.startsWith("去")) {
+    const targetRaw = input.replace(/^(走向|走|去)\s*/, "");
+    handleMove(targetRaw);
+    return;
+  }
+
+  if (normalized.startsWith("使用") || normalized.startsWith("用")) {
+    const targetRaw = input.replace(/^(使用|用)\s*/, "");
+    handleUse(targetRaw);
+    return;
+  }
+
+  flash("无法识别该命令。可输入：帮助");
+}
+
+function flash(msg) {
+  const old = descEl.innerHTML;
+  descEl.classList.add("fading");
+  setTimeout(() => {
+    descEl.innerHTML = `<span style="color:#d07070">${msg}</span>`;
+    descEl.classList.remove("fading");
+    setTimeout(() => {
+      descEl.innerHTML = old;
+    }, 1800);
+  }, 180);
+}
+
+function updateInv() {
+  if (!G.inventory.length) {
+    invListEl.textContent = "（空）";
+    invListEl.innerHTML = "<span style='color:rgba(255,255,255,0.25);font-size:0.75rem'>（空）</span>";
+    return;
+  }
+  invListEl.innerHTML = G.inventory.map(i => `<span class="inv-item">${i}</span>`).join(" ");
+}
+
+// ── 重新开始 ─────────────────────────────────────────
+document.getElementById("restart-btn").addEventListener("click", () => {
+  G.inventory = [];
+  G.flags = {};
+  G.location = "center";
+  updateInv();
+  winOverlay.classList.remove("show");
+  setDescription("你从混沌中醒来，身处一间昏暗的密室。门在左边，桌子在中间，窗户在右侧。输入“帮助”查看操作。");
+});
+
+submitBtnEl.addEventListener("click", () => {
+  runCommand(commandInputEl.value);
+  commandInputEl.value = "";
+  commandInputEl.focus();
+});
+
+commandInputEl.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    runCommand(commandInputEl.value);
+    commandInputEl.value = "";
+  }
+});
+
+// 初始化
+updateInv();
+setDescription("你从混沌中醒来，身处一间昏暗的密室。门在左边，桌子在中间，窗户在右侧。输入“帮助”查看操作。");
+commandInputEl.focus();
+</script>
+</body>
+</html>

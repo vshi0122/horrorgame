@@ -23,12 +23,15 @@ function render() {
   const title = typeof scene.title === "function" ? scene.title() : scene.title;
   const hint = typeof scene.hint === "function" ? scene.hint() : scene.hint;
   const overlay = typeof scene.overlay === "function" ? scene.overlay() : (scene.overlay || "");
+  const sceneMarkup = typeof sceneArt[state.currentScene] === "function"
+    ? sceneArt[state.currentScene]()
+    : (sceneArt[state.currentScene] || "");
   document.body.classList.toggle("main-menu-mode", isMainMenu);
   restartButton.textContent = isMainMenu ? "Wake Again" : "Restart";
   sceneTitleEl.textContent = title;
   sceneHintEl.innerHTML = hint;
   objectiveTextEl.innerHTML = scene.objective();
-  sceneEl.innerHTML = sceneArt[state.currentScene] + buildHotspots(scene.hotspots(), shouldGuideHotspots) + overlay;
+  sceneEl.innerHTML = sceneMarkup + buildHotspots(scene.hotspots(), shouldGuideHotspots) + overlay;
   if (typeof window.HotspotEditor?.afterRender === "function") {
     window.HotspotEditor.afterRender(state.currentScene, sceneEl);
   }

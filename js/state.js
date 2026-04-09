@@ -21,6 +21,7 @@ const initialState = () => ({
     wokeUp: false,
     trunkOpened: false,
     mailboxOpened: false,
+    entranceView: "main",
     codeDiscovered: false,
     buildingEntered: false,
     thirdFloorVisited: false,

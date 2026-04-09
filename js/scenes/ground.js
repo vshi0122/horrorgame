@@ -5,7 +5,7 @@ window.scenes.carInterior = {
   title: "车里",
   hint: "雨刚停，挡风玻璃上还残着水痕。",
   objective() {
-    return hasItem("番茄酱") ? "下车，去公寓门口。" : "先在驾驶座拿钥匙串，再用车钥匙打开后备箱取出番茄酱。";
+    return hasItem("番茄酱") ? "下车，穿过停车场去公寓门口。" : "先在驾驶座拿钥匙串，然后下车去停车场打开后备箱取出番茄酱。";
   },
   message() {
     return state.flags.wokeUp ? "潮湿的车厢里只剩你急促的呼吸声。你得把妻子要的番茄酱带上楼。" : "你在驾驶座上猛地惊醒，公寓楼正静静立在挡风玻璃前。";
@@ -29,26 +29,7 @@ window.scenes.carInterior = {
           showMessage("仪表盘早就熄火了，车里安静得只剩你自己的呼吸。");
         }
       },
-      {
-        id: "trunk",
-        label: state.flags.trunkOpened ? "后备箱" : "打开后备箱",
-        x: 6, y: 56, w: 22, h: 18,
-        action() {
-          if (!hasItem("车钥匙")) {
-            showMessage("后备箱锁着。你得先找到车钥匙。");
-            return;
-          }
-          if (!state.flags.trunkOpened) {
-            state.flags.trunkOpened = true;
-            acquireItem("番茄酱");
-            addNote("你从后备箱拿到了妻子要的番茄酱。");
-            showMessage("你打开后备箱，从杂物袋里翻出那瓶番茄酱。");
-            return;
-          }
-          showMessage("后备箱里只剩空购物袋和潮湿的纸箱。");
-        }
-      },
-      { id: "exit-car", label: "下车", x: 78, y: 28, w: 14, h: 34, action() { setScene("entrance"); } },
+      { id: "exit-car", label: "下车", x: 78, y: 28, w: 14, h: 34, action() { setScene("parkingLot"); } },
       {
         id: "flee-engine",
         label: "发动引擎逃离",
@@ -82,6 +63,41 @@ window.scenes.carInterior = {
   }
 };
 
+window.scenes.parkingLot = {
+  title: "停车场",
+  hint: "雨后的地面泛着冷光，车就停在你身后，公寓入口在前方。",
+  objective() {
+    return hasItem("番茄酱") ? "去公寓门口。" : "用车钥匙打开后备箱，取出番茄酱。";
+  },
+  message() {
+    return state.flags.trunkOpened ? "后备箱还敞着，冷雨气和杂物的味道混在一起。" : "你站在湿冷的停车场里，后备箱和公寓入口都在视线范围内。";
+  },
+  hotspots() {
+    return [
+      {
+        id: "trunk",
+        label: state.flags.trunkOpened ? "查看后备箱" : "打开后备箱",
+        action() {
+          if (!hasItem("车钥匙")) {
+            showMessage("后备箱锁着。你得先找到车钥匙。");
+            return;
+          }
+          if (!state.flags.trunkOpened) {
+            state.flags.trunkOpened = true;
+            acquireItem("番茄酱");
+            addNote("你从后备箱拿到了妻子要的番茄酱。");
+            showMessage("你打开后备箱，从杂物袋里翻出那瓶番茄酱。");
+            return;
+          }
+          showMessage("后备箱里只剩空购物袋和潮湿的纸箱。");
+        }
+      },
+      { id: "to-entrance", label: "前往公寓门口", action() { setScene("entrance"); } },
+      { id: "back-car", label: "回车里", action() { setScene("carInterior"); } }
+    ];
+  }
+};
+
 window.scenes.entrance = {
   title: "公寓门口",
   hint: "公寓门上栓了密码锁，面板在夜里泛着冷光。",
@@ -93,10 +109,27 @@ window.scenes.entrance = {
   },
   hotspots() {
     return [
+      { id: "mailbox", label: "查看信箱", x: 10, y: 38, w: 18, h: 26, action() { setScene("entranceMailbox"); } },
+      { id: "door", label: state.flags.codeDiscovered ? "查看密码锁" : "查看大门密码锁", x: 42, y: 18, w: 22, h: 56, action() { setScene("entranceKeypad"); } },
+      { id: "back-parking", label: "回停车场", x: 76, y: 40, w: 16, h: 22, action() { setScene("parkingLot"); } }
+    ];
+  }
+};
+
+window.scenes.entranceMailbox = {
+  title: "信箱前",
+  hint: "一排老旧信箱挂在潮湿的墙边。",
+  objective() {
+    return state.flags.mailboxOpened ? "你已经拿到通知，可以返回入口或继续查看。" : "打开信箱，找到新的门禁密码。";
+  },
+  message() {
+    return state.flags.mailboxOpened ? "信箱门半开着，里面只剩几张被雨气泡软的宣传单。" : "其中一个信箱的锁孔已经锈得发暗。";
+  },
+  hotspots() {
+    return [
       {
-        id: "mailbox",
-        label: "信箱",
-        x: 10, y: 38, w: 18, h: 26,
+        id: "open-mailbox",
+        label: state.flags.mailboxOpened ? "查看已取出的通知" : "打开并取件",
         action() {
           if (!hasItem("信箱钥匙")) {
             showMessage("信箱锁着。你得先找到钥匙。");
@@ -140,10 +173,25 @@ window.scenes.entrance = {
           showMessage("你又看了一遍通知，上面的数字仍是 0327。");
         }
       },
+      { id: "back-entrance", label: "返回入口", action() { setScene("entrance"); } }
+    ];
+  }
+};
+
+window.scenes.entranceKeypad = {
+  title: "密码锁前",
+  hint: "金属按键磨损得很严重，冷光照在门框边。",
+  objective() {
+    return state.flags.codeDiscovered ? "输入正确密码进入大楼。" : "你得先弄清楚门禁密码。";
+  },
+  message() {
+    return state.flags.codeDiscovered ? "你已经知道密码，面板正安静地等你输入。" : "数字面板亮着，但你还不知道该输入什么。";
+  },
+  hotspots() {
+    return [
       {
-        id: "door",
-        label: state.flags.codeDiscovered ? "输入密码" : "密码锁大门",
-        x: 42, y: 18, w: 22, h: 56,
+        id: "use-keypad",
+        label: state.flags.codeDiscovered ? "输入密码" : "尝试输入密码",
         locked: !state.flags.codeDiscovered,
         action() {
           if (!state.flags.codeDiscovered) {
@@ -163,7 +211,7 @@ window.scenes.entrance = {
           showMessage("密码错误。面板上的冷光闪了一下，又恢复沉默。");
         }
       },
-      { id: "back-car", label: "回车里", x: 76, y: 40, w: 16, h: 22, action() { setScene("carInterior"); } }
+      { id: "back-entrance", label: "返回入口", action() { setScene("entrance"); } }
     ];
   }
 };
