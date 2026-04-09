@@ -1,81 +1,162 @@
-// Ground-level scenes: carInterior, entrance
+﻿// Ground-level scenes: carInterior, entrance
 window.scenes = window.scenes || {};
 
-window.scenes.carInterior = {
+function getCarInteriorSceneId() {
+  return state.flags.trunkOpened ? "carInteriorNoBag" : "carInterior";
+}
+
+function createCarInteriorScene() {
+  return {
+    title: "车里",
+    hint: "雨刚停，挡风玻璃上还残着水痕。",
+    objective() {
+      return hasItem("番茄酱") ? "下车，去公寓门口。" : "检查车前方拿钥匙，或者直接翻副驾驶的包，把番茄酱拿到手。";
+    },
+    message() {
+      return state.flags.wokeUp ? "潮湿的车厢里只剩你急促的呼吸声。你得把妻子要的番茄酱带上楼。" : "你在驾驶座上猛地惊醒，公寓楼正静静立在挡风玻璃前。";
+    },
+    hotspots() {
+      return [
+        {
+          id: "front-view",
+          label: "查看车前方",
+          x: 0, y: 24, w: 60, h: 46,
+          action() {
+            state.flags.wokeUp = true;
+            setScene(hasItem("钥匙串") ? "carInteriorCloseupEmpty" : "carInteriorCloseupKeys");
+          }
+        },
+        {
+          id: "bag",
+          label: state.flags.trunkOpened ? "副驾驶座" : "副驾驶的包",
+          x: 42, y: 66, w: 26, h: 24,
+          action() {
+            if (!state.flags.trunkOpened) {
+              state.flags.trunkOpened = true;
+              acquireItem("番茄酱");
+              addNote("你从副驾驶的包里拿到了妻子要的番茄酱。");
+              setScene("carInteriorNoBag");
+              showMessage("你把副驾驶的包拽过来，拉开拉链，从里面翻出那瓶番茄酱。再抬眼时，副驾驶已经空了。");
+              return;
+            }
+            showMessage("副驾驶已经空了，包也不在那儿了。");
+          }
+        },
+        { id: "exit-car", label: "下车", x: 67, y: 34, w: 25, h: 36, action() { setScene("entrance"); } },
+        {
+          id: "flee-engine",
+          label: "发动引擎逃离",
+          x: 22, y: 72, w: 34, h: 14,
+          visible: state.flags.wokeUp && !state.flags.fleePromptShown,
+          action() {
+            state.flags.fleePromptShown = true;
+            showMessage("自动挑灯闪了一下。你真的要现在就开车走吗？你的妻子还在那栋楼里。");
+            render();
+          }
+        },
+        {
+          id: "flee-confirm",
+          label: "确认，立刻开走",
+          x: 14, y: 74, w: 33, h: 12,
+          visible: state.flags.fleePromptShown,
+          action() { setScene("fleeEnding"); }
+        },
+        {
+          id: "flee-cancel",
+          label: "不，我得进去",
+          x: 53, y: 74, w: 33, h: 12,
+          visible: state.flags.fleePromptShown,
+          action() {
+            state.flags.fleePromptShown = false;
+            showMessage("你重新关掉引擎。不管那栋楼里有什么，你还是得上去。");
+            render();
+          }
+        }
+      ];
+    }
+  };
+}
+
+window.scenes.carInterior = createCarInteriorScene();
+window.scenes.carInteriorNoBag = createCarInteriorScene();
+
+window.scenes.carInteriorCloseupKeys = {
   title: "车里",
-  hint: "雨刚停，挡风玻璃上还残着水痕。",
+  hint: "你把视线压低，盯住方向盘旁边的点火口。",
   objective() {
-    return hasItem("番茄酱") ? "下车，去公寓门口。" : "先在驾驶座拿钥匙串，再用车钥匙打开后备箱取出番茄酱。";
+    return "点击钥匙，把钥匙串取下来。";
   },
   message() {
-    return state.flags.wokeUp ? "潮湿的车厢里只剩你急促的呼吸声。你得把妻子要的番茄酱带上楼。" : "你在驾驶座上猛地惊醒，公寓楼正静静立在挡风玻璃前。";
+    return "钥匙就插在点火口上，黑暗里只反出一点冷光。";
   },
   hotspots() {
     return [
       {
-        id: "seat",
-        label: hasItem("钥匙串") ? "驾驶座" : "钥匙串",
-        x: 22, y: 48, w: 26, h: 20,
+        id: "take-keys",
+        label: "取下钥匙",
+        x: 38,
+        y: 22,
+        w: 34,
+        h: 52,
+        pulse: true,
         action() {
           state.flags.wokeUp = true;
           if (!hasItem("钥匙串")) {
             acquireItem("钥匙串");
             acquireItem("车钥匙");
             acquireItem("信箱钥匙");
-            addNote("你在驾驶座找到钥匙串，里面挂着车钥匙和信箱钥匙。");
-            showMessage("你从驾驶座缝隙里摸出钥匙串，金属冷得有些不正常。");
-            return;
+            addNote("你在车前方的点火口上取下钥匙串，里面挂着车钥匙和信箱钥匙。");
           }
-          showMessage("仪表盘早就熄火了，车里安静得只剩你自己的呼吸。");
+          setScene("carInteriorCloseupEmpty");
+          showMessage("你把钥匙串从点火口上拔了下来，金属冷得有些不正常。");
         }
       },
       {
-        id: "trunk",
-        label: state.flags.trunkOpened ? "后备箱" : "打开后备箱",
-        x: 6, y: 56, w: 22, h: 18,
+        id: "back-to-car",
+        label: "抬头",
+        x: 6,
+        y: 78,
+        w: 16,
+        h: 10,
         action() {
-          if (!hasItem("车钥匙")) {
-            showMessage("后备箱锁着。你得先找到车钥匙。");
-            return;
-          }
-          if (!state.flags.trunkOpened) {
-            state.flags.trunkOpened = true;
-            acquireItem("番茄酱");
-            addNote("你从后备箱拿到了妻子要的番茄酱。");
-            showMessage("你打开后备箱，从杂物袋里翻出那瓶番茄酱。");
-            return;
-          }
-          showMessage("后备箱里只剩空购物袋和潮湿的纸箱。");
+          setScene(getCarInteriorSceneId());
+        }
+      }
+    ];
+  }
+};
+
+window.scenes.carInteriorCloseupEmpty = {
+  title: "车里",
+  hint: "点火口已经空了，周围只剩一圈暗淡反光。",
+  objective() {
+    return hasItem("番茄酱") ? "抬头，准备下车。" : "抬头回到车里，再去翻副驾驶的包。";
+  },
+  message() {
+    return "钥匙已经不在这里了。";
+  },
+  hotspots() {
+    return [
+      {
+        id: "ignition-empty",
+        label: "空着的点火口",
+        x: 36,
+        y: 22,
+        w: 24,
+        h: 42,
+        action() {
+          showMessage("点火口空着，钥匙已经在你手里。");
         }
       },
-      { id: "exit-car", label: "下车", x: 78, y: 28, w: 14, h: 34, action() { setScene("entrance"); } },
       {
-        id: "flee-engine",
-        label: "发动引擎逃离",
-        x: 28, y: 74, w: 44, h: 12,
-        visible: state.flags.wokeUp && !state.flags.fleePromptShown,
+        id: "back-to-car",
+        label: "抬头",
+        x: 6,
+        y: 78,
+        w: 16,
+        h: 10,
         action() {
-          state.flags.fleePromptShown = true;
-          showMessage("自动挑灯闪了一下。你真的要现在就开车走吗？你的妻子还在那栋楼里。");
-          render();
-        }
-      },
-      {
-        id: "flee-confirm",
-        label: "确认，立刻开走",
-        x: 14, y: 74, w: 33, h: 12,
-        visible: state.flags.fleePromptShown,
-        action() { setScene("fleeEnding"); }
-      },
-      {
-        id: "flee-cancel",
-        label: "不，我得进去",
-        x: 53, y: 74, w: 33, h: 12,
-        visible: state.flags.fleePromptShown,
-        action() {
-          state.flags.fleePromptShown = false;
-          showMessage("你重新关掉引擎。不管那栋楼里有什么，你还是得上去。");
-          render();
+          setScene(getCarInteriorSceneId());
         }
       }
     ];
@@ -163,7 +244,7 @@ window.scenes.entrance = {
           showMessage("密码错误。面板上的冷光闪了一下，又恢复沉默。");
         }
       },
-      { id: "back-car", label: "回车里", x: 76, y: 40, w: 16, h: 22, action() { setScene("carInterior"); } }
+      { id: "back-car", label: "回车里", x: 76, y: 40, w: 16, h: 22, action() { setScene(getCarInteriorSceneId()); } }
     ];
   }
 };

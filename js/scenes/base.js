@@ -63,11 +63,28 @@ window.sceneArt = {
   `,
   carInterior: `
     <div class="room-art">
-      <div class="art-layer" style="left:0;right:0;top:0;height:54%;background:linear-gradient(180deg,#161f29 0%,#0e141b 100%);"></div>
-      <div class="art-layer" style="left:0;right:0;bottom:0;height:46%;background:linear-gradient(180deg,#0d0f13 0%,#07080b 100%);"></div>
-      <div class="art-layer" style="left:10%;bottom:14%;width:56%;height:26%;background:linear-gradient(180deg,#2d333a,#15181d);border-radius:30px;"></div>
-      <div class="art-layer" style="right:9%;top:16%;width:18%;height:52%;background:linear-gradient(180deg,#2d2926,#12100f);border-radius:10px;"></div>
-      <div class="art-layer" style="right:11%;top:20%;width:14%;height:14%;background:radial-gradient(circle,rgba(255,223,168,0.6),rgba(255,223,168,0.05));border-radius:999px;"></div>
+      <div class="art-layer" style="inset:0;background:url('assets/car-interior-night.png') center center / cover no-repeat;"></div>
+      <div class="art-layer" style="inset:0;background:linear-gradient(180deg,rgba(6,8,12,0.14),rgba(3,4,6,0.34));"></div>
+      <div class="art-layer" style="inset:0;background:radial-gradient(circle at 50% 28%,rgba(255,255,255,0.06),transparent 28%),radial-gradient(circle at 50% 120%,rgba(0,0,0,0.36),transparent 42%);"></div>
+    </div>
+  `,
+  carInteriorNoBag: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background:url('assets/car-interior-no-bag.png') center center / cover no-repeat;"></div>
+      <div class="art-layer" style="inset:0;background:linear-gradient(180deg,rgba(6,8,12,0.14),rgba(3,4,6,0.34));"></div>
+      <div class="art-layer" style="inset:0;background:radial-gradient(circle at 50% 28%,rgba(255,255,255,0.06),transparent 28%),radial-gradient(circle at 50% 120%,rgba(0,0,0,0.36),transparent 42%);"></div>
+    </div>
+  `,
+  carInteriorCloseupKeys: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background:url('assets/car-ignition-with-keys.png') center center / cover no-repeat;"></div>
+      <div class="art-layer" style="inset:0;background:linear-gradient(180deg,rgba(4,5,8,0.1),rgba(2,3,5,0.28));"></div>
+    </div>
+  `,
+  carInteriorCloseupEmpty: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background:url('assets/car-ignition-empty.png') center center / cover no-repeat;"></div>
+      <div class="art-layer" style="inset:0;background:linear-gradient(180deg,rgba(4,5,8,0.1),rgba(2,3,5,0.28));"></div>
     </div>
   `,
   entrance: `

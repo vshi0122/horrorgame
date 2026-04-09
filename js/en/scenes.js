@@ -41,11 +41,28 @@ const sceneArt = {
   `,
   carInterior: `
     <div class="room-art">
-      <div class="art-layer" style="left:0;right:0;top:0;height:54%;background:linear-gradient(180deg,#161f29 0%,#0e141b 100%);"></div>
-      <div class="art-layer" style="left:0;right:0;bottom:0;height:46%;background:linear-gradient(180deg,#0d0f13 0%,#07080b 100%);"></div>
-      <div class="art-layer" style="left:10%;bottom:14%;width:56%;height:26%;background:linear-gradient(180deg,#2d333a,#15181d);border-radius:30px;"></div>
-      <div class="art-layer" style="right:9%;top:16%;width:18%;height:52%;background:linear-gradient(180deg,#2d2926,#12100f);border-radius:10px;"></div>
-      <div class="art-layer" style="right:11%;top:20%;width:14%;height:14%;background:radial-gradient(circle,rgba(255,223,168,0.6),rgba(255,223,168,0.05));border-radius:999px;"></div>
+      <div class="art-layer" style="inset:0;background:url('assets/car-interior-night.png') center center / cover no-repeat;"></div>
+      <div class="art-layer" style="inset:0;background:linear-gradient(180deg,rgba(6,8,12,0.14),rgba(3,4,6,0.34));"></div>
+      <div class="art-layer" style="inset:0;background:radial-gradient(circle at 50% 28%,rgba(255,255,255,0.06),transparent 28%),radial-gradient(circle at 50% 120%,rgba(0,0,0,0.36),transparent 42%);"></div>
+    </div>
+  `,
+  carInteriorNoBag: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background:url('assets/car-interior-no-bag.png') center center / cover no-repeat;"></div>
+      <div class="art-layer" style="inset:0;background:linear-gradient(180deg,rgba(6,8,12,0.14),rgba(3,4,6,0.34));"></div>
+      <div class="art-layer" style="inset:0;background:radial-gradient(circle at 50% 28%,rgba(255,255,255,0.06),transparent 28%),radial-gradient(circle at 50% 120%,rgba(0,0,0,0.36),transparent 42%);"></div>
+    </div>
+  `,
+  carInteriorCloseupKeys: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background:url('assets/car-ignition-with-keys.png') center center / cover no-repeat;"></div>
+      <div class="art-layer" style="inset:0;background:linear-gradient(180deg,rgba(4,5,8,0.1),rgba(2,3,5,0.28));"></div>
+    </div>
+  `,
+  carInteriorCloseupEmpty: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background:url('assets/car-ignition-empty.png') center center / cover no-repeat;"></div>
+      <div class="art-layer" style="inset:0;background:linear-gradient(180deg,rgba(4,5,8,0.1),rgba(2,3,5,0.28));"></div>
     </div>
   `,
   entrance: `
@@ -423,18 +440,49 @@ const scenes = {
       return buildMainMenuHome();
     }
   },
-  carInterior: {
+  carInterior: (() => {
+    function getCarInteriorSceneId() {
+      return state.flags.trunkOpened ? "carInteriorNoBag" : "carInterior";
+    }
+    function createCarInteriorScene() {
+      return {
+        title: "Inside the Car",
+        hint: "The rain has just stopped. Water still clings to the windshield.",
+        objective() { return hasItem("Ketchup") ? "Get out of the car and head to the apartment entrance." : "Inspect the front for the keys, or search the bag on the passenger side and take the ketchup."; },
+        message() { return state.flags.wokeUp ? "The car is damp and close. You still have to bring the ketchup upstairs." : "You jolt awake in the driver's seat. The apartment building stands silently ahead."; },
+        hotspots() { return [
+          { id: "front-view", label: "Inspect Front", x: 0, y: 24, w: 60, h: 46, action() { state.flags.wokeUp = true; setScene(hasItem("Keyring") ? "carInteriorCloseupEmpty" : "carInteriorCloseupKeys"); } },
+          { id: "bag", label: state.flags.trunkOpened ? "Passenger Seat" : "Passenger Bag", x: 42, y: 66, w: 26, h: 24, action() { if (!state.flags.trunkOpened) { state.flags.trunkOpened = true; acquireItem("Ketchup"); addNote("You took the ketchup your wife asked for from the bag on the passenger side."); setScene("carInteriorNoBag"); showMessage("You drag the passenger-side bag closer, unzip it, and pull the ketchup bottle out. When you look up again, the passenger side is empty."); return; } showMessage("The passenger side is empty now. The bag is gone."); } },
+          { id: "exit-car", label: "Get Out", x: 67, y: 34, w: 25, h: 36, action() { setScene("entrance"); } },
+          { id: "flee-engine", label: "Start the Car and Leave", x: 22, y: 72, w: 34, h: 14, visible: state.flags.wokeUp && !state.flags.fleePromptShown, action() { state.flags.fleePromptShown = true; showMessage("The dashboard flickers once. Do you really want to drive away now? Your wife is still inside that building."); render(); } },
+          { id: "flee-confirm", label: "Yes. Leave Now", x: 14, y: 74, w: 33, h: 12, visible: state.flags.fleePromptShown, action() { setScene("fleeEnding"); } },
+          { id: "flee-cancel", label: "No. I Have to Go In", x: 53, y: 74, w: 33, h: 12, visible: state.flags.fleePromptShown, action() { state.flags.fleePromptShown = false; showMessage("You switch the engine back off. Whatever waits in that building, you still have to go inside."); render(); } }
+        ]; }
+      };
+    }
+    const scene = createCarInteriorScene();
+    scenes.carInteriorNoBag = createCarInteriorScene();
+    scenes.__getCarInteriorSceneId = getCarInteriorSceneId;
+    return scene;
+  })(),
+  carInteriorCloseupKeys: {
     title: "Inside the Car",
-    hint: "The rain has just stopped. Water still clings to the windshield.",
-    objective() { return hasItem("Ketchup") ? "Get out of the car and head to the apartment entrance." : "Find the keyring in the driver's seat, then use the car key to open the trunk and take the ketchup."; },
-    message() { return state.flags.wokeUp ? "The car is damp and close. You still have to bring the ketchup upstairs." : "You jolt awake in the driver's seat. The apartment building stands silently ahead."; },
+    hint: "You lean in toward the ignition beside the steering column.",
+    objective() { return "Click the keys and take them."; },
+    message() { return "The keyring is still hanging from the ignition."; },
     hotspots() { return [
-      { id: "seat", label: hasItem("Keyring") ? "Driver's Seat" : "Keyring", x: 22, y: 48, w: 26, h: 20, action() { state.flags.wokeUp = true; if (!hasItem("Keyring")) { acquireItem("Keyring"); acquireItem("Car Key"); acquireItem("Mailbox Key"); addNote("You found a keyring in the driver's seat. It holds the car key and the mailbox key."); showMessage("You pull a keyring from the gap beside the driver's seat. The metal is unnaturally cold."); return; } showMessage("The dashboard has been dead for a long time. The only sound left is your own breathing."); } },
-      { id: "trunk", label: state.flags.trunkOpened ? "Trunk" : "Open Trunk", x: 6, y: 56, w: 22, h: 18, action() { if (!hasItem("Car Key")) { showMessage("The trunk is locked. You need the car key first."); return; } if (!state.flags.trunkOpened) { state.flags.trunkOpened = true; acquireItem("Ketchup"); addNote("You took the ketchup your wife asked for from the trunk."); showMessage("You open the trunk and find the bottle of ketchup inside a bag of groceries."); return; } showMessage("Only an empty shopping bag and a damp cardboard box remain in the trunk."); } },
-      { id: "exit-car", label: "Get Out", x: 78, y: 28, w: 14, h: 34, action() { setScene("entrance"); } },
-      { id: "flee-engine", label: "Start the Car and Leave", x: 28, y: 74, w: 44, h: 12, visible: state.flags.wokeUp && !state.flags.fleePromptShown, action() { state.flags.fleePromptShown = true; showMessage("The dashboard flickers once. Do you really want to drive away now? Your wife is still inside that building."); render(); } },
-      { id: "flee-confirm", label: "Yes. Leave Now", x: 14, y: 74, w: 33, h: 12, visible: state.flags.fleePromptShown, action() { setScene("fleeEnding"); } },
-      { id: "flee-cancel", label: "No. I Have to Go In", x: 53, y: 74, w: 33, h: 12, visible: state.flags.fleePromptShown, action() { state.flags.fleePromptShown = false; showMessage("You switch the engine back off. Whatever waits in that building, you still have to go inside."); render(); } }
+      { id: "take-keys", label: "Take Keys", x: 38, y: 22, w: 34, h: 52, pulse: true, action() { state.flags.wokeUp = true; if (!hasItem("Keyring")) { acquireItem("Keyring"); acquireItem("Car Key"); acquireItem("Mailbox Key"); addNote("You took the keyring from the ignition. It holds the car key and the mailbox key."); } setScene("carInteriorCloseupEmpty"); showMessage("You pull the keyring free from the ignition. The metal is unnaturally cold."); } },
+      { id: "back-to-car", label: "Look Up", x: 6, y: 78, w: 16, h: 10, action() { setScene(scenes.__getCarInteriorSceneId()); } }
+    ]; }
+  },
+  carInteriorCloseupEmpty: {
+    title: "Inside the Car",
+    hint: "The ignition is empty now.",
+    objective() { return hasItem("Ketchup") ? "Look up and get ready to leave the car." : "Look up and search the passenger-side bag."; },
+    message() { return "The keys are already in your hand."; },
+    hotspots() { return [
+      { id: "ignition-empty", label: "Empty Ignition", x: 36, y: 22, w: 24, h: 42, action() { showMessage("The ignition is empty. The keys are already with you."); } },
+      { id: "back-to-car", label: "Look Up", x: 6, y: 78, w: 16, h: 10, action() { setScene(scenes.__getCarInteriorSceneId()); } }
     ]; }
   },
   entrance: {
@@ -445,7 +493,7 @@ const scenes = {
     hotspots() { return [
       { id: "mailbox", label: "Mailbox", x: 10, y: 38, w: 18, h: 26, action() { if (!hasItem("Mailbox Key")) { showMessage("The mailbox is locked. You need the key first."); return; } if (!state.flags.mailboxOpened) { state.flags.mailboxOpened = true; state.flags.codeDiscovered = true; addNote("The property notice says the building code was changed to 0327."); addNote("During a blackout, the entry lock will reset to 0000."); collectDocument({ id: "notice-door-code", title: "Property Entry Notice", source: "Mailbox, Building 1", body: ["Residents,", "", "The entry code for Building 1 has been changed to <span class=\"signal-text\">0327</span>.", "In the event of a blackout, the entry lock will temporarily reset to <span class=\"signal-text\">0000</span> for evacuation.", "", "Property Management"].join("\n") }); collectDocument({ id: "newspaper-clipping", title: "Old Newspaper Clipping", source: "Mailbox, Building 1", body: ["Riverbank Evening Post - Local News", "", "A string of resident disappearances has recently struck the old district. Witnesses claim that unusual knocking could often be heard in apartment hallways beforehand.", "At the bottom of the article, one odd advertisement is circled:", "", "<span class=\"void-text\">When you see the black-and-white symbol, remember to wake up.</span>"].join("\n") }); showMessage("You open the mailbox and pull out a property notice and an old folded newspaper page from under a stack of flyers."); return; } selectDocument("notice-door-code"); showMessage("You read the notice again. The number is still 0327."); } },
       { id: "door", label: state.flags.codeDiscovered ? "Enter Code" : "Locked Front Door", x: 42, y: 18, w: 22, h: 56, locked: !state.flags.codeDiscovered, action() { if (!state.flags.codeDiscovered) { showMessage("You still don't know the new code."); return; } const input = promptCode("Enter the building entry code"); if (input === null) { showMessage("Your hand lingers over the keypad, but you do not type anything."); return; } if (input.replace(/\s+/g, "") === "0327") { state.flags.buildingEntered = true; setScene("hallway"); return; } showMessage("Wrong code. The keypad flashes once, then falls silent again."); } },
-      { id: "back-car", label: "Back to Car", x: 76, y: 40, w: 16, h: 22, action() { setScene("carInterior"); } }
+      { id: "back-car", label: "Back to Car", x: 76, y: 40, w: 16, h: 22, action() { setScene(scenes.__getCarInteriorSceneId()); } }
     ]; }
   },
   hallway: {
