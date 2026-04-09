@@ -15,28 +15,80 @@ const restartButton = document.querySelector("#restartButton");
 const sceneFrame = document.querySelector("#sceneFrame");
 const dialogueBarEl = document.querySelector(".dialogue-bar");
 const guidedScenes = new Set();
+const sceneAssetPromises = new Map();
+let latestSceneRenderToken = 0;
 
-function render() {
-  const scene = scenes[state.currentScene];
-  const isMainMenu = state.currentScene === "mainMenu";
-  const shouldGuideHotspots = !isMainMenu && !guidedScenes.has(state.currentScene);
+function extractSceneAssetUrls(markup) {
+  const matches = [...markup.matchAll(/url\((['"]?)([^'")]+)\1\)/g)];
+  return [...new Set(matches.map((match) => match[2]).filter(Boolean))];
+}
+
+function preloadSceneAsset(url) {
+  if (sceneAssetPromises.has(url)) {
+    return sceneAssetPromises.get(url);
+  }
+
+  const assetPromise = new Promise((resolve) => {
+    const image = new Image();
+    const finish = () => resolve();
+    image.onload = finish;
+    image.onerror = finish;
+    image.src = url;
+    if (image.complete) {
+      finish();
+    }
+  });
+
+  sceneAssetPromises.set(url, assetPromise);
+  return assetPromise;
+}
+
+function preloadSceneAssets(markup) {
+  const urls = extractSceneAssetUrls(markup);
+  if (!urls.length) {
+    return Promise.resolve();
+  }
+  return Promise.all(urls.map(preloadSceneAsset));
+}
+
+[
+  "js/images/car.jpg",
+  "js/images/gate.jpg",
+  "js/images/letterbox.jpg",
+  "js/images/pin.jpg",
+  "js/images/parkinglot.jpg"
+].forEach(preloadSceneAsset);
+
+async function render() {
+  const sceneId = state.currentScene;
+  const renderToken = ++latestSceneRenderToken;
+  const scene = scenes[sceneId];
+  const isMainMenu = sceneId === "mainMenu";
+  const shouldGuideHotspots = !isMainMenu && !guidedScenes.has(sceneId);
   const title = typeof scene.title === "function" ? scene.title() : scene.title;
   const hint = typeof scene.hint === "function" ? scene.hint() : scene.hint;
   const overlay = typeof scene.overlay === "function" ? scene.overlay() : (scene.overlay || "");
-  const sceneMarkup = typeof sceneArt[state.currentScene] === "function"
-    ? sceneArt[state.currentScene]()
-    : (sceneArt[state.currentScene] || "");
+  const sceneMarkup = typeof sceneArt[sceneId] === "function"
+    ? sceneArt[sceneId]()
+    : (sceneArt[sceneId] || "");
+  const nextSceneMarkup = sceneMarkup + buildHotspots(scene.hotspots(), shouldGuideHotspots) + overlay;
   document.body.classList.toggle("main-menu-mode", isMainMenu);
   restartButton.textContent = isMainMenu ? "再次醒来" : "重新开始";
   sceneTitleEl.textContent = title;
   sceneHintEl.innerHTML = hint;
   objectiveTextEl.innerHTML = scene.objective();
-  sceneEl.innerHTML = sceneMarkup + buildHotspots(scene.hotspots(), shouldGuideHotspots) + overlay;
+  sceneEl.setAttribute("aria-busy", "true");
+  await preloadSceneAssets(nextSceneMarkup);
+  if (renderToken !== latestSceneRenderToken || state.currentScene !== sceneId) {
+    return;
+  }
+  sceneEl.innerHTML = nextSceneMarkup;
+  sceneEl.setAttribute("aria-busy", "false");
   if (typeof window.HotspotEditor?.afterRender === "function") {
-    window.HotspotEditor.afterRender(state.currentScene, sceneEl);
+    window.HotspotEditor.afterRender(sceneId, sceneEl);
   }
   if (shouldGuideHotspots) {
-    guidedScenes.add(state.currentScene);
+    guidedScenes.add(sceneId);
   }
   dialogueBarEl.classList.remove("dialogue-bar-attention");
   void dialogueBarEl.offsetWidth;

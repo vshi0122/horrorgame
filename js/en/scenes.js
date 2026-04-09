@@ -41,20 +41,27 @@ const sceneArt = {
   `,
   carInterior: `
     <div class="room-art">
-      <div class="art-layer" style="left:0;right:0;top:0;height:54%;background:linear-gradient(180deg,#161f29 0%,#0e141b 100%);"></div>
-      <div class="art-layer" style="left:0;right:0;bottom:0;height:46%;background:linear-gradient(180deg,#0d0f13 0%,#07080b 100%);"></div>
-      <div class="art-layer" style="left:10%;bottom:14%;width:56%;height:26%;background:linear-gradient(180deg,#2d333a,#15181d);border-radius:30px;"></div>
-      <div class="art-layer" style="right:9%;top:16%;width:18%;height:52%;background:linear-gradient(180deg,#2d2926,#12100f);border-radius:10px;"></div>
-      <div class="art-layer" style="right:11%;top:20%;width:14%;height:14%;background:radial-gradient(circle,rgba(255,223,168,0.6),rgba(255,223,168,0.05));border-radius:999px;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/car.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  parkingLot: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/parkinglot.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   entrance: `
     <div class="room-art">
-      <div class="art-layer" style="left:0;right:0;top:0;height:52%;background:linear-gradient(180deg,#171c24 0%,#0f1319 100%);"></div>
-      <div class="art-layer" style="left:0;right:0;bottom:0;height:48%;background:linear-gradient(180deg,#121212 0%,#08090b 100%);"></div>
-      <div class="art-layer" style="left:8%;top:28%;width:18%;height:28%;background:linear-gradient(180deg,#30363e,#171a1f);"></div>
-      <div class="art-layer" style="left:36%;top:16%;width:28%;height:56%;background:linear-gradient(180deg,#2b2522,#100d0c);border-radius:12px;"></div>
-      <div class="art-layer" style="left:67%;top:18%;width:18%;height:48%;background:linear-gradient(180deg,#2f353d,#12161b);border-radius:12px;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/gate.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  entranceMailbox: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/letterbox.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  entranceKeypad: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/pin.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   hallway: `

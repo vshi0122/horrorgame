@@ -73,27 +73,27 @@ window.sceneArt = {
 
   carInterior: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/car.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/car.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   entrance: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/gate.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/gate.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   entranceMailbox: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/letterbox.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/letterbox.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   entranceKeypad: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/pin.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/pin.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   parkingLot: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/parkinglot.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/parkinglot.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   hallway: `
