@@ -15,7 +15,7 @@ window.scenes.carInterior = {
       {
         id: "seat",
         label: hasItem("钥匙串") ? "驾驶座" : "钥匙串",
-        x: 22, y: 48, w: 26, h: 20,
+        x: 2.44, y: 64.8, w: 41.89, h: 34.82,
         action() {
           state.flags.wokeUp = true;
           if (!hasItem("钥匙串")) {
@@ -29,7 +29,7 @@ window.scenes.carInterior = {
           showMessage("仪表盘早就熄火了，车里安静得只剩你自己的呼吸。");
         }
       },
-      { id: "exit-car", label: "下车", x: 78, y: 28, w: 14, h: 34, action() { setScene("parkingLot"); } },
+      { id: "exit-car", label: "下车", x: 56.68, y: 6.87, w: 41.41, h: 89.53, action() { setScene("parkingLot"); } },
       {
         id: "flee-engine",
         label: "发动引擎逃离",
@@ -77,6 +77,7 @@ window.scenes.parkingLot = {
       {
         id: "trunk",
         label: state.flags.trunkOpened ? "查看后备箱" : "打开后备箱",
+        x: 0, y: 53.03, w: 32.63, h: 22.5,
         action() {
           if (!hasItem("车钥匙")) {
             showMessage("后备箱锁着。你得先找到车钥匙。");
@@ -92,8 +93,8 @@ window.scenes.parkingLot = {
           showMessage("后备箱里只剩空购物袋和潮湿的纸箱。");
         }
       },
-      { id: "to-entrance", label: "前往公寓门口", action() { setScene("entrance"); } },
-      { id: "back-car", label: "回车里", action() { setScene("carInterior"); } }
+      { id: "to-entrance", label: "前往公寓门口", x: 57.65, y: 8.15, w: 31.51, h: 38.21, action() { setScene("entrance"); } },
+      { id: "back-car", label: "回车里", x: 37.48, y: 47.97, w: 23.33, h: 43.56, action() { setScene("carInterior"); } }
     ];
   }
 };
@@ -109,9 +110,9 @@ window.scenes.entrance = {
   },
   hotspots() {
     return [
-      { id: "mailbox", label: "查看信箱", x: 10, y: 38, w: 18, h: 26, action() { setScene("entranceMailbox"); } },
-      { id: "door", label: state.flags.codeDiscovered ? "查看密码锁" : "查看大门密码锁", x: 42, y: 18, w: 22, h: 56, action() { setScene("entranceKeypad"); } },
-      { id: "back-parking", label: "回停车场", x: 76, y: 40, w: 16, h: 22, action() { setScene("parkingLot"); } }
+      { id: "mailbox", label: "查看信箱", x: 1.46, y: 30.44, w: 18, h: 26, action() { setScene("entranceMailbox"); } },
+      { id: "door", label: state.flags.codeDiscovered ? "查看密码锁" : "查看大门密码锁", x: 47.09, y: 12.42, w: 22, h: 56, action() { setScene("entranceKeypad"); } },
+      { id: "back-parking", label: "回停车场", x: 23.02, y: 78.36, w: 60.85, h: 21.1, action() { setScene("parkingLot"); } }
     ];
   }
 };
@@ -192,6 +193,7 @@ window.scenes.entranceKeypad = {
       {
         id: "use-keypad",
         label: state.flags.codeDiscovered ? "输入密码" : "尝试输入密码",
+        x: 49.9, y: 15.18, w: 17.1, h: 46.61,
         locked: !state.flags.codeDiscovered,
         action() {
           if (!state.flags.codeDiscovered) {
@@ -211,7 +213,7 @@ window.scenes.entranceKeypad = {
           showMessage("密码错误。面板上的冷光闪了一下，又恢复沉默。");
         }
       },
-      { id: "back-entrance", label: "返回入口", action() { setScene("entrance"); } }
+      { id: "back-entrance", label: "返回入口", x: 81.16, y: 44.38, w: 18.7, h: 54.64, action() { setScene("entrance"); } }
     ];
   }
 };

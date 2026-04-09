@@ -1,6 +1,57 @@
 (function () {
   const STORAGE_KEY = "horrorgame-hotspot-overrides-v1";
   const RECENT_DRAG_MS = 320;
+  const CHINESE_SCENE_FILE_MAP = {
+    carInterior: "js/scenes/ground.js",
+    parkingLot: "js/scenes/ground.js",
+    entrance: "js/scenes/ground.js",
+    entranceMailbox: "js/scenes/ground.js",
+    entranceKeypad: "js/scenes/ground.js",
+    hallway: "js/scenes/lobby.js",
+    stairwell: "js/scenes/lobby.js",
+    secondFloorHall: "js/scenes/lobby.js",
+    upperStairwell: "js/scenes/upper.js",
+    thirdFloorHall: "js/scenes/upper.js",
+    thirdFloorResidential: "js/scenes/upper.js",
+    escapeStairwell: "js/scenes/escape_normal.js",
+    hallwayNormal: "js/scenes/escape_normal.js",
+    stairwellNormal: "js/scenes/escape_normal.js",
+    secondFloorHallNormal: "js/scenes/escape_normal.js",
+    upperStairwellNormal: "js/scenes/escape_normal.js",
+    thirdFloorHallNormal: "js/scenes/escape_normal.js",
+    thirdFloorResidentialNormal: "js/scenes/escape_normal.js",
+    dinnerTableScene: "js/scenes/escape_normal.js",
+    mainMenu: "js/scenes/menu.js",
+    chapter3Entry: "js/scenes/menu.js",
+    fleeEnding: "js/scenes/endings.js",
+    badEnding: "js/scenes/endings.js",
+    failedEscapeEnding: "js/scenes/endings.js",
+    normalEnding: "js/scenes/endings.js",
+    goodEndingQuestion: "js/scenes/endings.js",
+    chapter2UneasyReunionEnding: "js/scenes/endings.js",
+    chapter2WaitWifeEnding: "js/scenes/endings.js",
+    chapter2BloodCradleEnding: "js/scenes/endings.js",
+    chapter2MonsterReturnEnding: "js/scenes/endings.js",
+    chapter2GunEnding: "js/scenes/endings.js",
+    chapter2Entry: "js/scenes/chapter2/entry.js",
+    chapter2WardHallway: "js/scenes/chapter2/entry.js",
+    chapter2ParkingLot: "js/scenes/chapter2/entry.js",
+    chapter2DriveHome: "js/scenes/chapter2/entry.js",
+    chapter2CarAtApartment: "js/scenes/chapter2/apartment.js",
+    chapter2Entrance: "js/scenes/chapter2/apartment.js",
+    chapter2Hallway: "js/scenes/chapter2/apartment.js",
+    chapter2FireExitStairwell: "js/scenes/chapter2/apartment.js",
+    chapter2StairwellNormal: "js/scenes/chapter2/apartment.js",
+    chapter2SecondFloorHall: "js/scenes/chapter2/apartment.js",
+    chapter2UpperStairwell: "js/scenes/chapter2/apartment.js",
+    chapter2ThirdFloorHall: "js/scenes/chapter2/apartment.js",
+    chapter2SecondFloorResidential: "js/scenes/chapter2/apartment.js",
+    chapter2PropertyDutyRoom: "js/scenes/chapter2/apartment.js",
+    chapter2ThirdFloorResidential: "js/scenes/chapter2/apartment.js",
+    chapter2HomeDusty: "js/scenes/chapter2/apartment.js",
+    chapter2Bedroom: "js/scenes/chapter2/apartment.js",
+    chapter2EchoJudgment: "js/scenes/chapter2/apartment.js"
+  };
 
   const editorState = {
     enabled: false,
@@ -10,8 +61,10 @@
     panelEl: null,
     statusEl: null,
     detailEl: null,
+    feedbackEl: null,
     dragRecords: new Map(),
-    overrides: {}
+    overrides: {},
+    projectDirHandle: null
   };
 
   function readOverrides() {
@@ -85,6 +138,321 @@
     saveOverrides();
   }
 
+  function clearOverridesForScene(sceneId) {
+    readOverrides();
+    Object.keys(editorState.overrides).forEach((key) => {
+      if (key.startsWith(`${sceneId}::`)) {
+        delete editorState.overrides[key];
+      }
+    });
+    saveOverrides();
+  }
+
+  function getCurrentSceneId() {
+    return window.state?.currentScene || "";
+  }
+
+  function getSceneOverrides(sceneId) {
+    readOverrides();
+    const overrides = {};
+    Object.entries(editorState.overrides).forEach(([key, rect]) => {
+      if (!key.startsWith(`${sceneId}::`)) return;
+      const hotspotId = key.slice(sceneId.length + 2);
+      overrides[hotspotId] = rect;
+    });
+    return overrides;
+  }
+
+  function getLocale() {
+    return document.documentElement.lang?.toLowerCase().startsWith("en") ? "en" : "zh";
+  }
+
+  function getSceneSourcePath(sceneId) {
+    if (getLocale() === "en") return "js/en/scenes.js";
+    return CHINESE_SCENE_FILE_MAP[sceneId] || "";
+  }
+
+  function setFeedback(message, isError = false) {
+    if (!editorState.feedbackEl) return;
+    editorState.feedbackEl.textContent = message;
+    editorState.feedbackEl.classList.toggle("is-error", isError);
+  }
+
+  function formatRectNumber(value) {
+    const rounded = round2(value);
+    return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+  }
+
+  async function ensureProjectDirectoryHandle() {
+    if (editorState.projectDirHandle) return editorState.projectDirHandle;
+    if (typeof window.showDirectoryPicker !== "function") {
+      throw new Error("当前浏览器不支持目录写入，请使用 Chromium 浏览器并通过 localhost 打开。");
+    }
+
+    editorState.projectDirHandle = await window.showDirectoryPicker({
+      mode: "readwrite",
+      startIn: "documents"
+    });
+    setFeedback("已连接项目目录，可以保存当前场景到源码。");
+    return editorState.projectDirHandle;
+  }
+
+  async function getFileHandleByRelativePath(rootHandle, relativePath) {
+    const segments = relativePath.split("/");
+    let currentHandle = rootHandle;
+
+    for (let i = 0; i < segments.length - 1; i += 1) {
+      currentHandle = await currentHandle.getDirectoryHandle(segments[i]);
+    }
+
+    return currentHandle.getFileHandle(segments[segments.length - 1], { create: false });
+  }
+
+  function findMatchingBracket(text, startIndex, openChar, closeChar) {
+    let depth = 0;
+    let quote = "";
+    let escaping = false;
+    let lineComment = false;
+    let blockComment = false;
+
+    for (let i = startIndex; i < text.length; i += 1) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+
+      if (lineComment) {
+        if (char === "\n") lineComment = false;
+        continue;
+      }
+
+      if (blockComment) {
+        if (char === "*" && nextChar === "/") {
+          blockComment = false;
+          i += 1;
+        }
+        continue;
+      }
+
+      if (quote) {
+        if (escaping) {
+          escaping = false;
+          continue;
+        }
+        if (char === "\\") {
+          escaping = true;
+          continue;
+        }
+        if (char === quote) {
+          quote = "";
+        }
+        continue;
+      }
+
+      if (char === "/" && nextChar === "/") {
+        lineComment = true;
+        i += 1;
+        continue;
+      }
+
+      if (char === "/" && nextChar === "*") {
+        blockComment = true;
+        i += 1;
+        continue;
+      }
+
+      if (char === "'" || char === "\"" || char === "`") {
+        quote = char;
+        continue;
+      }
+
+      if (char === openChar) depth += 1;
+      if (char === closeChar) {
+        depth -= 1;
+        if (depth === 0) return i;
+      }
+    }
+
+    return -1;
+  }
+
+  function findObjectRangeContaining(text, blockStart, targetIndex) {
+    const stack = [];
+    let quote = "";
+    let escaping = false;
+    let lineComment = false;
+    let blockComment = false;
+
+    for (let i = blockStart; i <= targetIndex; i += 1) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+
+      if (lineComment) {
+        if (char === "\n") lineComment = false;
+        continue;
+      }
+
+      if (blockComment) {
+        if (char === "*" && nextChar === "/") {
+          blockComment = false;
+          i += 1;
+        }
+        continue;
+      }
+
+      if (quote) {
+        if (escaping) {
+          escaping = false;
+          continue;
+        }
+        if (char === "\\") {
+          escaping = true;
+          continue;
+        }
+        if (char === quote) {
+          quote = "";
+        }
+        continue;
+      }
+
+      if (char === "/" && nextChar === "/") {
+        lineComment = true;
+        i += 1;
+        continue;
+      }
+
+      if (char === "/" && nextChar === "*") {
+        blockComment = true;
+        i += 1;
+        continue;
+      }
+
+      if (char === "'" || char === "\"" || char === "`") {
+        quote = char;
+        continue;
+      }
+
+      if (char === "{") stack.push(i);
+      if (char === "}") stack.pop();
+    }
+
+    const objectStart = stack[stack.length - 1];
+    if (typeof objectStart !== "number") return null;
+
+    const objectEnd = findMatchingBracket(text, objectStart, "{", "}");
+    if (objectEnd === -1) return null;
+
+    return { start: objectStart, end: objectEnd };
+  }
+
+  function updateHotspotObjectText(objectText, rect, newline) {
+    const lines = objectText.split(newline);
+    const filteredLines = lines.filter((line) => !/^\s*[xywh]\s*:/.test(line));
+    const anchorIndex = filteredLines.findIndex((line) => /\blabel\s*:/.test(line));
+    const fallbackIndex = filteredLines.findIndex((line) => /\bid\s*:/.test(line));
+    const insertAt = Math.max(anchorIndex === -1 ? fallbackIndex + 1 : anchorIndex + 1, 1);
+    const indentMatch = filteredLines[Math.max(insertAt - 1, 0)]?.match(/^(\s*)/);
+    const indent = indentMatch ? indentMatch[1] : "        ";
+    const coordLine = `${indent}x: ${formatRectNumber(rect.x)}, y: ${formatRectNumber(rect.y)}, w: ${formatRectNumber(rect.w)}, h: ${formatRectNumber(rect.h)},`;
+    filteredLines.splice(insertAt, 0, coordLine);
+    return filteredLines.join(newline);
+  }
+
+  function writeOverridesIntoSceneSource(sourceText, sceneId, overrides) {
+    const sceneMarker = `window.scenes.${sceneId} = {`;
+    const sceneStart = sourceText.indexOf(sceneMarker);
+    if (sceneStart === -1) {
+      throw new Error(`没有在源码里找到场景 ${sceneId}。`);
+    }
+
+    const sceneObjectStart = sourceText.indexOf("{", sceneStart);
+    const sceneObjectEnd = findMatchingBracket(sourceText, sceneObjectStart, "{", "}");
+    if (sceneObjectEnd === -1) {
+      throw new Error(`场景 ${sceneId} 的源码结构无法解析。`);
+    }
+
+    const sceneText = sourceText.slice(sceneStart, sceneObjectEnd + 1);
+    const hotspotsIndex = sceneText.indexOf("hotspots()");
+    if (hotspotsIndex === -1) {
+      throw new Error(`场景 ${sceneId} 没有 hotspots()。`);
+    }
+
+    const arrayStart = sceneText.indexOf("[", hotspotsIndex);
+    if (arrayStart === -1) {
+      throw new Error(`场景 ${sceneId} 的热点数组无法解析。`);
+    }
+
+    const arrayEnd = findMatchingBracket(sceneText, arrayStart, "[", "]");
+    if (arrayEnd === -1) {
+      throw new Error(`场景 ${sceneId} 的热点数组没有正常闭合。`);
+    }
+
+    const newline = sourceText.includes("\r\n") ? "\r\n" : "\n";
+    let hotspotsText = sceneText.slice(arrayStart, arrayEnd + 1);
+
+    Object.entries(overrides).forEach(([hotspotId, rect]) => {
+      const idNeedle = `id: "${hotspotId}"`;
+      const idIndex = hotspotsText.indexOf(idNeedle);
+      if (idIndex === -1) {
+        throw new Error(`场景 ${sceneId} 里没有找到热点 ${hotspotId}。`);
+      }
+
+      const objectRange = findObjectRangeContaining(hotspotsText, 0, idIndex);
+      if (!objectRange) {
+        throw new Error(`热点 ${hotspotId} 的对象边界无法解析。`);
+      }
+
+      const objectText = hotspotsText.slice(objectRange.start, objectRange.end + 1);
+      const nextObjectText = updateHotspotObjectText(objectText, rect, newline);
+      hotspotsText =
+        hotspotsText.slice(0, objectRange.start) +
+        nextObjectText +
+        hotspotsText.slice(objectRange.end + 1);
+    });
+
+    const nextSceneText =
+      sceneText.slice(0, arrayStart) +
+      hotspotsText +
+      sceneText.slice(arrayEnd + 1);
+
+    return sourceText.slice(0, sceneStart) + nextSceneText + sourceText.slice(sceneObjectEnd + 1);
+  }
+
+  async function saveCurrentSceneToSource() {
+    const sceneId = getCurrentSceneId();
+    if (!sceneId) {
+      setFeedback("当前没有可保存的场景。", true);
+      return;
+    }
+
+    const overrides = getSceneOverrides(sceneId);
+    const overrideCount = Object.keys(overrides).length;
+    if (!overrideCount) {
+      setFeedback("当前场景没有待保存的热点改动。", true);
+      return;
+    }
+
+    const relativePath = getSceneSourcePath(sceneId);
+    if (!relativePath) {
+      setFeedback(`还没有给场景 ${sceneId} 配置源码文件映射。`, true);
+      return;
+    }
+
+    try {
+      const rootHandle = await ensureProjectDirectoryHandle();
+      const fileHandle = await getFileHandleByRelativePath(rootHandle, relativePath);
+      const file = await fileHandle.getFile();
+      const sourceText = await file.text();
+      const nextSourceText = writeOverridesIntoSceneSource(sourceText, sceneId, overrides);
+      const writable = await fileHandle.createWritable();
+      await writable.write(nextSourceText);
+      await writable.close();
+      clearOverridesForScene(sceneId);
+      window.render?.();
+      setFeedback(`已把 ${sceneId} 的 ${overrideCount} 个热点写回 ${relativePath}。`);
+    } catch (error) {
+      setFeedback(error?.message || "保存到源码失败。", true);
+    }
+  }
+
   function updatePanelDetails() {
     if (!editorState.panelEl || !editorState.statusEl || !editorState.detailEl) return;
 
@@ -128,7 +496,10 @@
       <p class="hotspot-edit-status">编辑模式: 关闭</p>
       <p class="hotspot-edit-hint">快捷键 Ctrl + Shift + H 切换。编辑模式可拖动和拉伸热点框。</p>
       <pre class="hotspot-edit-detail">未选择热点</pre>
+      <p class="hotspot-edit-feedback">尚未连接项目目录。</p>
       <div class="hotspot-edit-actions">
+        <button type="button" class="hotspot-edit-btn" data-action="choose-project">选择项目目录</button>
+        <button type="button" class="hotspot-edit-btn" data-action="save-scene">保存当前场景到源码</button>
         <button type="button" class="hotspot-edit-btn" data-action="clear-scene">清空当前场景</button>
         <button type="button" class="hotspot-edit-btn" data-action="clear-all">清空全部</button>
       </div>
@@ -139,22 +510,31 @@
       if (!button) return;
 
       const action = button.dataset.action;
-      if (action === "clear-scene") {
-        const sceneId = window.state?.currentScene;
-        if (!sceneId) return;
-        readOverrides();
-        Object.keys(editorState.overrides).forEach((key) => {
-          if (key.startsWith(`${sceneId}::`)) {
-            delete editorState.overrides[key];
-          }
+      if (action === "choose-project") {
+        ensureProjectDirectoryHandle().catch((error) => {
+          setFeedback(error?.message || "选择项目目录失败。", true);
         });
-        saveOverrides();
+        return;
+      }
+
+      if (action === "save-scene") {
+        saveCurrentSceneToSource();
+        return;
+      }
+
+      if (action === "clear-scene") {
+        const sceneId = getCurrentSceneId();
+        if (!sceneId) return;
+        clearOverridesForScene(sceneId);
+        setFeedback(`已清空 ${sceneId} 的本地热点覆盖。`);
         window.render?.();
+        return;
       }
 
       if (action === "clear-all") {
         editorState.overrides = {};
         saveOverrides();
+        setFeedback("已清空全部本地热点覆盖。");
         window.render?.();
       }
     });
@@ -163,6 +543,7 @@
     editorState.panelEl = panel;
     editorState.statusEl = panel.querySelector(".hotspot-edit-status");
     editorState.detailEl = panel.querySelector(".hotspot-edit-detail");
+    editorState.feedbackEl = panel.querySelector(".hotspot-edit-feedback");
     updatePanelDetails();
   }
 
@@ -209,6 +590,7 @@
           setOverride(sceneId, hotspotId, rect);
           markRecentlyDragged(spotEl);
           selectSpot(spotEl);
+          setFeedback(`已记录 ${sceneId}/${hotspotId} 的新位置，记得保存到源码。`);
         }
       }
     }).resizable({
@@ -247,6 +629,7 @@
           setOverride(sceneId, hotspotId, rect);
           markRecentlyDragged(spotEl);
           selectSpot(spotEl);
+          setFeedback(`已记录 ${sceneId}/${hotspotId} 的新尺寸，记得保存到源码。`);
         }
       }
     });

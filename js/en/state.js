@@ -52,6 +52,13 @@ const initialState = () => ({
 
 let state = initialState();
 
+Object.defineProperty(window, "state", {
+  configurable: true,
+  get() {
+    return state;
+  }
+});
+
 function readUnlockedEndings() {
   try {
     const raw = window.localStorage.getItem(ENDING_STORAGE_KEY);

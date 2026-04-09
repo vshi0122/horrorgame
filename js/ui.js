@@ -155,3 +155,5 @@ function flashScene() {
   void sceneFrame.offsetWidth;
   sceneFrame.classList.add("screen-flash");
 }
+
+window.render = render;
