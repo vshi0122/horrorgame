@@ -29,6 +29,9 @@ function render() {
   sceneHintEl.innerHTML = hint;
   objectiveTextEl.innerHTML = scene.objective();
   sceneEl.innerHTML = sceneArt[state.currentScene] + buildHotspots(scene.hotspots(), shouldGuideHotspots) + overlay;
+  if (typeof window.HotspotEditor?.afterRender === "function") {
+    window.HotspotEditor.afterRender(state.currentScene, sceneEl);
+  }
   if (shouldGuideHotspots) {
     guidedScenes.add(state.currentScene);
   }
@@ -41,9 +44,13 @@ function render() {
 }
 
 function buildHotspots(hotspots, shouldGuideHotspots = false) {
+  const sceneId = state.currentScene;
   return hotspots
     .filter((spot) => spot.visible !== false)
     .map((spot) => {
+      const resolvedSpot = typeof window.HotspotEditor?.getSpotRect === "function"
+        ? window.HotspotEditor.getSpotRect(sceneId, spot)
+        : spot;
       const classes = ["hotspot"];
       if (spot.locked) classes.push("locked");
       if (spot.pulse) classes.push("pulse");
@@ -53,8 +60,9 @@ function buildHotspots(hotspots, shouldGuideHotspots = false) {
         <button
           class="${classes.join(" ")}"
           data-id="${spot.id}"
+          data-scene-id="${sceneId}"
           type="button"
-          style="left:${spot.x}%;top:${spot.y}%;width:${spot.w}%;height:${spot.h}%"
+          style="left:${resolvedSpot.x}%;top:${resolvedSpot.y}%;width:${resolvedSpot.w}%;height:${resolvedSpot.h}%"
         >
           <span class="hotspot-label">${spot.label}</span>
         </button>

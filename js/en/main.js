@@ -156,6 +156,10 @@ sceneEl.addEventListener("click", (event) => {
   const hotspotButton = event.target.closest(".hotspot");
   if (!hotspotButton) return;
 
+  if (typeof window.HotspotEditor?.shouldSuppressClick === "function" && window.HotspotEditor.shouldSuppressClick(event)) {
+    return;
+  }
+
   const scene = scenes[state.currentScene];
   const hotspot = scene.hotspots().find((spot) => spot.id === hotspotButton.dataset.id);
   if (hotspot) {
