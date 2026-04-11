@@ -214,6 +214,7 @@ h3 {
   padding: 18px;
   width: min(100%, calc(var(--scene-width) + 36px));
   justify-self: center;
+  position: relative;
 }
 
 .scene-header {
@@ -241,6 +242,8 @@ h3 {
   background:
     radial-gradient(circle at 50% 25%, rgba(202, 219, 255, 0.08), transparent 24%),
     linear-gradient(180deg, rgba(21, 29, 40, 0.95), rgba(7, 10, 14, 0.98));
+  transform-origin: center center;
+  transition: opacity 180ms ease, filter 180ms ease;
 }
 
 .scene::after {
@@ -248,6 +251,21 @@ h3 {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.38) 100%);
+  pointer-events: none;
+}
+
+.scene-frame.scene-transition-out .scene {
+  opacity: 0.08;
+  filter: brightness(0.92);
+}
+
+.scene-frame.scene-transition-in .scene {
+  animation: scene-transition-in 180ms ease-out;
+}
+
+.scene-input-locked .hotspot,
+.scene-input-locked .menu-action,
+.scene-input-locked .ghost-button {
   pointer-events: none;
 }
 
@@ -1182,6 +1200,21 @@ h3 {
   100% { filter: brightness(1); }
 }
 
+@keyframes scene-transition-in {
+  0% {
+    opacity: 0.58;
+    filter: brightness(0.94);
+  }
+  58% {
+    opacity: 0.9;
+    filter: brightness(0.985);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
 @keyframes dialogue-bar-attention {
   0% {
     transform: translateY(5px);
@@ -1290,5 +1323,22 @@ h3 {
 
   .main-menu-mode .scene {
     min-height: 100dvh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene,
+  .scene-frame::before,
+  .ghost-button,
+  .inventory-item,
+  .document-entry,
+  .hotspot,
+  .lang-link,
+  .menu-action,
+  .archive-document-entry,
+  .archive-card {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

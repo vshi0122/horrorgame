@@ -1,4 +1,102 @@
 const TUTORIAL_STORAGE_KEY = "horrorgame-tutorial-seen";
+const SCENE_TRANSITION_OUT_MS = 420;
+const SCENE_TRANSITION_IN_MS = 420;
+const bgmAudio = new Audio("js/sounds/bgm.wav");
+const carAudioSrc = "js/sounds/car.mp3";
+const correctPasswordAudioSrc = "js/sounds/correct password.m4a";
+const wrongPasswordAudioSrc = "js/sounds/wrong.m4a";
+const sceneTransitionAudioSrc = "js/sounds/footstep.wav";
+let sceneTransitionChain = Promise.resolve();
+let bgmStarted = false;
+
+bgmAudio.preload = "auto";
+bgmAudio.loop = true;
+bgmAudio.volume = 0.4;
+
+function wait(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function ensureBgmPlaying() {
+  if (bgmStarted) return;
+  bgmStarted = true;
+
+  try {
+    const playback = bgmAudio.play();
+    if (playback?.catch) {
+      playback.catch(() => {
+        bgmStarted = false;
+      });
+    }
+  } catch {
+    bgmStarted = false;
+  }
+}
+
+function playSingleTransitionSound(audioSrc, volume = 0.45, waitForCompletion = false, waitMs = 6000) {
+  return new Promise((resolve) => {
+    try {
+      const audio = new Audio(audioSrc);
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+
+      audio.preload = "auto";
+      audio.volume = volume;
+
+      if (waitForCompletion) {
+        audio.addEventListener("ended", finish, { once: true });
+        audio.addEventListener("error", finish, { once: true });
+        window.setTimeout(finish, waitMs);
+      }
+
+      const playback = audio.play();
+      if (playback?.catch) {
+        playback.catch(finish);
+      }
+
+      if (!waitForCompletion) {
+        finish();
+      }
+    } catch {
+      // Ignore autoplay or decode failures so scene changes still work.
+      resolve();
+    }
+  });
+}
+
+function playSceneTransitionSound(audioSrc = sceneTransitionAudioSrc, waitMsOverride = null) {
+  if (audioSrc !== sceneTransitionAudioSrc) {
+    const waitMs = waitMsOverride ?? (audioSrc === correctPasswordAudioSrc ? 4000 : 6000);
+    if (waitMs <= 0) {
+      playSingleTransitionSound(audioSrc, 0.42);
+      return Promise.resolve();
+    }
+    return playSingleTransitionSound(audioSrc, 0.42, true, waitMs);
+  }
+
+  const stepOffsets = [0, 260, 520];
+
+  stepOffsets.forEach((offset) => {
+    window.setTimeout(() => {
+      playSingleTransitionSound(sceneTransitionAudioSrc, 0.38);
+    }, offset);
+  });
+
+  return Promise.resolve();
+}
+
+function swallowTransitionError(error) {
+  if (error) {
+    console.error(error);
+  }
+}
+
+document.addEventListener("pointerdown", ensureBgmPlaying, { passive: true });
+document.addEventListener("keydown", ensureBgmPlaying);
 
 function hasSeenTutorial() {
   try {
@@ -185,7 +283,7 @@ sceneEl.addEventListener("click", (event) => {
   }
 });
 
-function setScene(sceneId) {
+function applyScene(sceneId) {
   state.currentScene = sceneId;
   const scene = scenes[sceneId];
   if (scene.endingId) {
@@ -197,8 +295,48 @@ function setScene(sceneId) {
     if (handled) return;
   }
   messageTextEl.innerHTML = scene.message();
-  render();
+  return render();
 }
+
+function setScene(sceneId, options = {}) {
+  sceneTransitionChain = sceneTransitionChain.then(async () => {
+    if (state.currentScene === sceneId) {
+      return;
+    }
+
+    if (options.lockInputDuringTransition) {
+      document.body.classList.add("scene-input-locked");
+    }
+
+    await playSceneTransitionSound(
+      options.transitionAudioSrc || sceneTransitionAudioSrc,
+      options.transitionAudioWaitMs ?? null
+    );
+    sceneFrame.classList.remove("scene-transition-in");
+    void sceneFrame.offsetWidth;
+    sceneFrame.classList.add("scene-transition-out");
+    await wait(SCENE_TRANSITION_OUT_MS);
+    await applyScene(sceneId);
+    sceneFrame.classList.remove("scene-transition-out");
+    void sceneFrame.offsetWidth;
+    sceneFrame.classList.add("scene-transition-in");
+    await wait(SCENE_TRANSITION_IN_MS);
+    sceneFrame.classList.remove("scene-transition-in");
+    document.body.classList.remove("scene-input-locked");
+  }).catch((error) => {
+    document.body.classList.remove("scene-input-locked");
+    swallowTransitionError(error);
+  }).catch(swallowTransitionError);
+
+  return sceneTransitionChain;
+}
+
+window.carAudioSrc = carAudioSrc;
+window.correctPasswordAudioSrc = correctPasswordAudioSrc;
+window.wrongPasswordAudioSrc = wrongPasswordAudioSrc;
+window.playFeedbackSound = (audioSrc, volume = 0.42) => {
+  playSingleTransitionSound(audioSrc, volume);
+};
 
 function showMessage(message) {
   messageTextEl.innerHTML = message;

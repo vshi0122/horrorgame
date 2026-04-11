@@ -1,4 +1,4 @@
-// Ground-level scenes: carInterior, entrance
+﻿// Ground-level scenes: carInterior, entrance
 window.scenes = window.scenes || {};
 
 window.scenes.carInterior = {
@@ -29,7 +29,7 @@ window.scenes.carInterior = {
           showMessage("仪表盘早就熄火了，车里安静得只剩你自己的呼吸。");
         }
       },
-      { id: "exit-car", label: "下车", x: 56.68, y: 6.87, w: 41.41, h: 89.53, action() { setScene("parkingLot"); } },
+      { id: "exit-car", label: "下车", x: 56.68, y: 6.87, w: 41.41, h: 89.53, action() { setScene("parkingLot", { transitionAudioSrc: window.carAudioSrc, transitionAudioWaitMs: 0 }); } },
       {
         id: "flee-engine",
         label: "发动引擎逃离",
@@ -94,7 +94,7 @@ window.scenes.parkingLot = {
         }
       },
       { id: "to-entrance", label: "前往公寓门口", x: 57.65, y: 8.15, w: 31.51, h: 38.21, action() { setScene("entrance"); } },
-      { id: "back-car", label: "回车里", x: 37.48, y: 47.97, w: 23.33, h: 43.56, action() { setScene("carInterior"); } }
+      { id: "back-car", label: "回车里", x: 37.48, y: 47.97, w: 23.33, h: 43.56, action() { setScene("carInterior", { transitionAudioSrc: window.carAudioSrc, transitionAudioWaitMs: 0 }); } }
     ];
   }
 };
@@ -208,8 +208,14 @@ window.scenes.entranceKeypad = {
           }
           if (input.replace(/\s+/g, "") === "0327") {
             state.flags.buildingEntered = true;
-            setScene("hallway");
+            setScene("hallway", {
+              transitionAudioSrc: window.correctPasswordAudioSrc,
+              lockInputDuringTransition: true
+            });
             return;
+          }
+          if (typeof window.playFeedbackSound === "function") {
+            window.playFeedbackSound(window.wrongPasswordAudioSrc, 0.42);
           }
           showMessage("密码错误。面板上的冷光闪了一下，又恢复沉默。");
         }

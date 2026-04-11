@@ -1,4 +1,4 @@
-// Chapter 2 apartment revisit flow (reuses chapter 1 visual layout)
+﻿// Chapter 2 apartment revisit flow (reuses chapter 1 visual layout)
 window.scenes = window.scenes || {};
 
 // Reuse chapter 1 room art to keep layout continuity.
@@ -252,7 +252,7 @@ window.scenes.chapter2Entrance = {
         w: 16,
         h: 22,
         action() {
-          setScene("chapter2CarAtApartment");
+          setScene("chapter2CarAtApartment", { transitionAudioSrc: window.carAudioSrc, transitionAudioWaitMs: 0 });
         }
       }
     ];

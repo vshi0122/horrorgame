@@ -419,7 +419,7 @@ const scenes = {
     message() { return state.flags.wokeUp ? "The car is damp and close. You still have to bring the ketchup upstairs." : "You jolt awake in the driver's seat. The apartment building stands silently ahead."; },
     hotspots() { return [
       { id: "seat", label: hasItem("Keyring") ? "Driver's Seat" : "Keyring", x: 2.44, y: 64.8, w: 41.89, h: 34.82, action() { state.flags.wokeUp = true; if (!hasItem("Keyring")) { acquireItem("Keyring"); acquireItem("Car Key"); acquireItem("Mailbox Key"); addNote("You found a keyring in the driver's seat. It holds the car key and the mailbox key."); showMessage("You pull a keyring from the gap beside the driver's seat. The metal is unnaturally cold."); return; } showMessage("The dashboard has been dead for a long time. The only sound left is your own breathing."); } },
-      { id: "exit-car", label: "Get Out", x: 56.68, y: 6.87, w: 41.41, h: 89.53, action() { setScene("parkingLot"); } },
+      { id: "exit-car", label: "Get Out", x: 56.68, y: 6.87, w: 41.41, h: 89.53, action() { setScene("parkingLot", { transitionAudioSrc: window.carAudioSrc, transitionAudioWaitMs: 0 }); } },
       { id: "flee-engine", label: "Start the Car and Leave", x: 28, y: 74, w: 44, h: 12, visible: state.flags.wokeUp && !state.flags.fleePromptShown, action() { state.flags.fleePromptShown = true; showMessage("The dashboard flickers once. Do you really want to drive away now? Your wife is still inside that building."); render(); } },
       { id: "flee-confirm", label: "Yes. Leave Now", x: 14, y: 74, w: 33, h: 12, visible: state.flags.fleePromptShown, action() { setScene("fleeEnding"); } },
       { id: "flee-cancel", label: "No. I Have to Go In", x: 53, y: 74, w: 33, h: 12, visible: state.flags.fleePromptShown, action() { state.flags.fleePromptShown = false; showMessage("You switch the engine back off. Whatever waits in that building, you still have to go inside."); render(); } }
@@ -433,7 +433,7 @@ const scenes = {
     hotspots() { return [
       { id: "trunk", label: state.flags.trunkOpened ? "Check Trunk" : "Open Trunk", x: 0, y: 53.03, w: 32.63, h: 22.5, action() { if (!hasItem("Car Key")) { showMessage("The trunk is locked. You need the car key first."); return; } if (!state.flags.trunkOpened) { state.flags.trunkOpened = true; acquireItem("Ketchup"); addNote("You took the ketchup your wife asked for from the trunk."); showMessage("You open the trunk and find the bottle of ketchup inside a bag of groceries."); return; } showMessage("Only an empty shopping bag and a damp cardboard box remain in the trunk."); } },
       { id: "to-entrance", label: "Go to Apartment Entrance", x: 57.65, y: 8.15, w: 31.51, h: 38.21, action() { setScene("entrance"); } },
-      { id: "back-car", label: "Back to Car", x: 37.48, y: 47.97, w: 23.33, h: 43.56, action() { setScene("carInterior"); } }
+      { id: "back-car", label: "Back to Car", x: 37.48, y: 47.97, w: 23.33, h: 43.56, action() { setScene("carInterior", { transitionAudioSrc: window.carAudioSrc, transitionAudioWaitMs: 0 }); } }
     ]; }
   },
   entrance: {
@@ -463,7 +463,7 @@ const scenes = {
     objective() { return state.flags.codeDiscovered ? "Enter the correct code and get inside the building." : "You need to find the code first."; },
     message() { return state.flags.codeDiscovered ? "You know the code now. The keypad waits in silence." : "The keypad is lit, but you do not yet know what to enter."; },
     hotspots() { return [
-      { id: "use-keypad", label: state.flags.codeDiscovered ? "Enter Code" : "Try the Keypad", x: 49.9, y: 15.18, w: 17.1, h: 46.61, locked: !state.flags.codeDiscovered, action() { if (!state.flags.codeDiscovered) { showMessage("You still don't know the new code."); return; } const input = promptCode("Enter the building entry code"); if (input === null) { showMessage("Your hand lingers over the keypad, but you do not type anything."); return; } if (input.replace(/\s+/g, "") === "0327") { state.flags.buildingEntered = true; setScene("hallway"); return; } showMessage("Wrong code. The keypad flashes once, then falls silent again."); } },
+      { id: "use-keypad", label: state.flags.codeDiscovered ? "Enter Code" : "Try the Keypad", x: 49.9, y: 15.18, w: 17.1, h: 46.61, locked: !state.flags.codeDiscovered, action() { if (!state.flags.codeDiscovered) { showMessage("You still don't know the new code."); return; } const input = promptCode("Enter the building entry code"); if (input === null) { showMessage("Your hand lingers over the keypad, but you do not type anything."); return; } if (input.replace(/\s+/g, "") === "0327") { state.flags.buildingEntered = true; setScene("hallway", { transitionAudioSrc: window.correctPasswordAudioSrc, lockInputDuringTransition: true }); return; } if (typeof window.playFeedbackSound === "function") { window.playFeedbackSound(window.wrongPasswordAudioSrc, 0.42); } showMessage("Wrong code. The keypad flashes once, then falls silent again."); } },
       { id: "back-entrance", label: "Back to Entrance", x: 81.16, y: 44.38, w: 18.7, h: 54.64, action() { setScene("entrance"); } }
     ]; }
   },
@@ -849,7 +849,7 @@ scenes.chapter2CarAtApartment = {
   hint: "You park exactly where you parked that night.",
   objective() { return "Get out and check the entrance mailbox."; },
   message() { return "Home is only a few steps away, and still hard to approach."; },
-  hotspots() { return [{ id: "exit", label: "Get Out", x: 78, y: 28, w: 14, h: 34, pulse: true, action() { setScene("chapter2Entrance"); } }]; }
+  hotspots() { return [{ id: "exit", label: "Get Out", x: 78, y: 28, w: 14, h: 34, pulse: true, action() { setScene("chapter2Entrance", { transitionAudioSrc: window.carAudioSrc, transitionAudioWaitMs: 0 }); } }]; }
 };
 
 scenes.chapter2Entrance = {
