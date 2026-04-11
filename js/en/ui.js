@@ -33,8 +33,9 @@ const BUILTIN_HOTSPOT_RECTS = {
   "upperStairwell::back": { x: 22.38, y: 16.1, w: 22.22, h: 52.43 },
   "upperStairwell::landing": { x: 18.47, y: 72.13, w: 66.58, h: 26.74 },
   "upperStairwell::to-3f": { x: 55.06, y: 15.48, w: 23.42, h: 52.62 },
-  "upperStairwell::photo": { x: 7.88, y: 65.94, w: 18, h: 14 },
-  "upperStairwell::wall": { x: 13.97, y: 10.85, w: 72.59, h: 54.6 },
+  "upperStairwellBlocked::photo": { x: 7.88, y: 65.94, w: 18, h: 14 },
+  "upperStairwellBlocked::to-3f": { x: 43.86, y: 77, w: 30.09, h: 16.65 },
+  "upperStairwellBlocked::wall": { x: 13.97, y: 10.85, w: 72.59, h: 54.6 },
   "thirdFloorHall::notice": { x: 2.85, y: 65.36, w: 15.24, h: 24 },
   "thirdFloorHall::back-stairwell": { x: 24.83, y: 17.43, w: 19.65, h: 50.87 },
   "thirdFloorHall::residential": { x: 73.83, y: 22.68, w: 22.36, h: 51.47 }
@@ -125,10 +126,13 @@ async function render() {
 
 function buildHotspots(hotspots, shouldGuideHotspots = false) {
   const sceneId = state.currentScene;
+  const hotspotSceneId = sceneId === "upperStairwell" && state.flags.stairwellBlocked
+    ? "upperStairwellBlocked"
+    : sceneId;
   return hotspots
     .filter((spot) => spot.visible !== false)
     .map((spot) => {
-      const builtinRect = BUILTIN_HOTSPOT_RECTS[`${sceneId}::${spot.id}`];
+      const builtinRect = BUILTIN_HOTSPOT_RECTS[`${hotspotSceneId}::${spot.id}`];
       const resolvedSpot = typeof window.HotspotEditor?.getSpotRect === "function"
         ? window.HotspotEditor.getSpotRect(sceneId, spot)
         : (builtinRect ? { ...spot, ...builtinRect } : spot);
