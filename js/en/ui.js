@@ -17,6 +17,28 @@ const dialogueBarEl = document.querySelector(".dialogue-bar");
 const guidedScenes = new Set();
 const sceneAssetPromises = new Map();
 let latestSceneRenderToken = 0;
+const BUILTIN_HOTSPOT_RECTS = {
+  "hallway::fire-exit": { x: 16.33, y: 26.05, w: 20.4, h: 43.33 },
+  "hallway::stairs": { x: 43.19, y: 11.25, w: 18.98, h: 55.94 },
+  "hallway::notice": { x: 67.25, y: 22.84, w: 17.24, h: 21.64 },
+  "hallway::back-outside": { x: 26.31, y: 76.82, w: 51.31, h: 18.21 },
+  "stairwell::to-1f": { x: 22.44, y: 15.42, w: 22, h: 52.7 },
+  "stairwell::to-2f": { x: 55.25, y: 15.86, w: 27.29, h: 53.63 },
+  "stairwell::landing": { x: 18.32, y: 71.8, w: 66.66, h: 26.68 },
+  "secondFloorHall::notice": { x: 0.61, y: 24.77, w: 15.55, h: 29.72 },
+  "secondFloorHall::stairs": { x: 54.91, y: 15.3, w: 28.28, h: 54.07 },
+  "secondFloorHall::back": { x: 22.03, y: 16.91, w: 22.05, h: 51.17 },
+  "secondFloorHall::residential": { x: 89.55, y: 23.63, w: 9.54, h: 55.14 },
+  "upperStairwell::symbols": { x: 2.7, y: 21.72, w: 18, h: 24 },
+  "upperStairwell::back": { x: 22.38, y: 16.1, w: 22.22, h: 52.43 },
+  "upperStairwell::landing": { x: 18.47, y: 72.13, w: 66.58, h: 26.74 },
+  "upperStairwell::to-3f": { x: 55.06, y: 15.48, w: 23.42, h: 52.62 },
+  "upperStairwell::photo": { x: 7.88, y: 65.94, w: 18, h: 14 },
+  "upperStairwell::wall": { x: 13.97, y: 10.85, w: 72.59, h: 54.6 },
+  "thirdFloorHall::notice": { x: 2.85, y: 65.36, w: 15.24, h: 24 },
+  "thirdFloorHall::back-stairwell": { x: 24.83, y: 17.43, w: 19.65, h: 50.87 },
+  "thirdFloorHall::residential": { x: 73.83, y: 22.68, w: 22.36, h: 51.47 }
+};
 
 function extractSceneAssetUrls(markup) {
   const matches = [...markup.matchAll(/url\((['"]?)([^'")]+)\1\)/g)];
@@ -65,12 +87,15 @@ async function render() {
   const scene = scenes[sceneId];
   const isMainMenu = sceneId === "mainMenu";
   const shouldGuideHotspots = !isMainMenu && !guidedScenes.has(sceneId);
+  const artSceneId = sceneId === "upperStairwell" && state.flags.stairwellBlocked
+    ? "upperStairwellBlocked"
+    : sceneId;
   const title = typeof scene.title === "function" ? scene.title() : scene.title;
   const hint = typeof scene.hint === "function" ? scene.hint() : scene.hint;
   const overlay = typeof scene.overlay === "function" ? scene.overlay() : (scene.overlay || "");
-  const sceneMarkup = typeof sceneArt[sceneId] === "function"
-    ? sceneArt[sceneId]()
-    : (sceneArt[sceneId] || "");
+  const sceneMarkup = typeof sceneArt[artSceneId] === "function"
+    ? sceneArt[artSceneId]()
+    : (sceneArt[artSceneId] || "");
   const nextSceneMarkup = sceneMarkup + buildHotspots(scene.hotspots(), shouldGuideHotspots) + overlay;
   document.body.classList.toggle("main-menu-mode", isMainMenu);
   restartButton.textContent = isMainMenu ? "Wake Again" : "Restart";
@@ -103,9 +128,11 @@ function buildHotspots(hotspots, shouldGuideHotspots = false) {
   return hotspots
     .filter((spot) => spot.visible !== false)
     .map((spot) => {
+      const builtinRect = BUILTIN_HOTSPOT_RECTS[`${sceneId}::${spot.id}`];
       const resolvedSpot = typeof window.HotspotEditor?.getSpotRect === "function"
         ? window.HotspotEditor.getSpotRect(sceneId, spot)
-        : spot;
+        : (builtinRect ? { ...spot, ...builtinRect } : spot);
+      const finalSpot = builtinRect ? { ...resolvedSpot, ...builtinRect } : resolvedSpot;
       const classes = ["hotspot"];
       if (spot.locked) classes.push("locked");
       if (spot.pulse) classes.push("pulse");
@@ -117,7 +144,7 @@ function buildHotspots(hotspots, shouldGuideHotspots = false) {
           data-id="${spot.id}"
           data-scene-id="${sceneId}"
           type="button"
-          style="left:${resolvedSpot.x}%;top:${resolvedSpot.y}%;width:${resolvedSpot.w}%;height:${resolvedSpot.h}%"
+          style="left:${finalSpot.x}%;top:${finalSpot.y}%;width:${finalSpot.w}%;height:${finalSpot.h}%"
         >
           <span class="hotspot-label">${spot.label}</span>
         </button>

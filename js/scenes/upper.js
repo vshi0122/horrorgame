@@ -47,6 +47,22 @@ window.scenes.upperStairwell = {
   }
 };
 
+window.scenes.blockedStairwellPhoto = {
+  title: "Photo",
+  hint: "Your face is still visible. Her face has been blacked out.",
+  objective() {
+    return "Return to the blocked stairwell.";
+  },
+  message() {
+    return 'The back of the photo only says <span class="signal-text">J &amp; M</span>.';
+  },
+  hotspots() {
+    return [
+      { id: "back", label: "Back", x: 34, y: 78, w: 32, h: 12, action() { setScene("upperStairwell"); } }
+    ];
+  }
+};
+
 window.scenes.thirdFloorHall = {
   title: "三楼",
   hint: "完全没有灯，只有出口的刺眼红灯一直亮着。",

@@ -9,6 +9,8 @@
   --accent-soft: rgba(180, 44, 44, 0.16);
   --gold: #d8c39a;
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  --scene-width: 1536px;
+  --scene-height: 1024px;
 }
 
 * {
@@ -43,7 +45,7 @@ button {
 }
 
 .app {
-  width: min(1800px, calc(100% - 12px));
+  width: min(2500px, calc(100% - 12px));
   margin: 0 auto;
   padding: 28px 0 36px;
 }
@@ -152,7 +154,7 @@ h3 {
 }
 
 .game-layout {
-  grid-template-columns: minmax(340px, 0.85fr) minmax(0, 1.55fr) minmax(430px, 1.25fr);
+  grid-template-columns: minmax(280px, 0.55fr) minmax(900px, var(--scene-width)) minmax(320px, 0.7fr);
   align-items: start;
 }
 
@@ -210,6 +212,8 @@ h3 {
 
 .scene-frame {
   padding: 18px;
+  width: min(100%, calc(var(--scene-width) + 36px));
+  justify-self: center;
 }
 
 .scene-header {
@@ -228,7 +232,10 @@ h3 {
 
 .scene {
   position: relative;
+  width: 100%;
+  aspect-ratio: 1536 / 1024;
   min-height: 560px;
+  max-height: var(--scene-height);
   border-radius: 22px;
   overflow: hidden;
   background:
@@ -1276,6 +1283,8 @@ h3 {
 
   .scene {
     min-height: 440px;
+    aspect-ratio: auto;
+    max-height: none;
   }
 
   .main-menu-mode .scene {

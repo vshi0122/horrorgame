@@ -168,6 +168,19 @@ sceneEl.addEventListener("click", (event) => {
   const hotspot = scene.hotspots().find((spot) => spot.id === hotspotButton.dataset.id);
   if (hotspot) {
     incrementDecisionCounter(`hotspot:${state.currentScene}:${hotspot.id}`);
+    if (state.currentScene === "upperStairwell" && state.flags.stairwellBlocked && hotspot.id === "photo") {
+      collectDocument({
+        id: "jm-photo",
+        title: "J & M Photo",
+        source: "Corner of the blocked stairwell",
+        body: [
+          'On the back are the letters <span class="signal-text">J &amp; M</span>.',
+          "Your face is still visible. Your wife's face has been deliberately blacked out."
+        ].join("\n")
+      });
+      setScene("blockedStairwellPhoto");
+      return;
+    }
     hotspot.action();
   }
 });
