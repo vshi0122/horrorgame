@@ -1,4 +1,5 @@
 (function () {
+  const EDITOR_AVAILABLE = false;
   const STORAGE_KEY = "horrorgame-hotspot-overrides-v1";
   const RECENT_DRAG_MS = 320;
   const CHINESE_SCENE_FILE_MAP = {
@@ -664,6 +665,27 @@
       toggleEditor();
     }
   });
+
+  if (!EDITOR_AVAILABLE) {
+    window.HotspotEditor = {
+      isEnabled() {
+        return false;
+      },
+      getSpotRect(sceneId, spot) {
+        void sceneId;
+        return spot;
+      },
+      afterRender(sceneId, sceneEl) {
+        void sceneId;
+        void sceneEl;
+      },
+      shouldSuppressClick(event) {
+        void event;
+        return false;
+      }
+    };
+    return;
+  }
 
   mountPanel();
   installInteractBindings();
