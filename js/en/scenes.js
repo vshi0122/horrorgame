@@ -645,11 +645,11 @@ const scenes = {
   },
   monsterStare: {
     title: "...",
-    hint() { return "The moment your light rises, it catches something that should not be there."; },
-    objective() { return "Do not freeze."; },
+    hint() { return "The beam only catches part of it. You do not have time to tell what it really is."; },
+    objective() { return "Hold yourself together."; },
     onEnter() {
       document.body.classList.add("scene-input-locked");
-      messageTextEl.innerHTML = "A humanoid thing with a gaping, blood-soaked mouth is staring right at you. Then, in a single jerk, it snaps back into the dark.";
+      messageTextEl.innerHTML = "At the very edge of your light, you catch a pale hand resting inside a deeper patch of darkness. Before you can make out what it belongs to, it pulls back and vanishes.";
       render();
       window.setTimeout(() => {
         setScene("thirdFloorHallFlashlight", {
@@ -662,7 +662,7 @@ const scenes = {
       }, 1200);
       return true;
     },
-    message() { return "A humanoid thing with a gaping, blood-soaked mouth is staring right at you. Then, in a single jerk, it snaps back into the dark."; },
+    message() { return "At the very edge of your light, you catch a pale hand resting inside a deeper patch of darkness. Before you can make out what it belongs to, it pulls back and vanishes."; },
     hotspots() { return []; }
   },
   thirdFloorHallFlashlight: {

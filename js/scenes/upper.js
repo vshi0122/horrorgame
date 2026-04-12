@@ -307,14 +307,14 @@ window.scenes.fourthFloorQuestion = {
 window.scenes.monsterStare = {
   title: "……",
   hint() {
-    return "你刚把光抬起来，就照见了不该存在的东西。";
+    return "手电光只照见了它的一部分，你根本来不及确认那到底是什么。";
   },
   objective() {
     return "稳住自己。";
   },
   onEnter() {
     document.body.classList.add("scene-input-locked");
-    messageTextEl.innerHTML = "一个张着血盆大口的类人生物正死死盯着你。可下一秒，它又猛地缩回了黑暗里。";
+    messageTextEl.innerHTML = "光圈边缘忽然照见一只苍白得不像活物的手，正静静搭在更深的黑暗里。你还没看清那东西的全貌，它就已经缩了回去。";
     render();
 
     window.setTimeout(() => {
@@ -330,7 +330,7 @@ window.scenes.monsterStare = {
     return true;
   },
   message() {
-    return "一个张着血盆大口的类人生物正死死盯着你。可下一秒，它又猛地缩回了黑暗里。";
+    return "光圈边缘忽然照见一只苍白得不像活物的手，正静静搭在更深的黑暗里。你还没看清那东西的全貌，它就已经缩了回去。";
   },
   hotspots() {
     return [];
