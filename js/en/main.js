@@ -7,10 +7,14 @@ const correctPasswordAudioSrc = "js/sounds/correct password.m4a";
 const wrongPasswordAudioSrc = "js/sounds/wrong.m4a";
 const keyAudioSrc = "js/sounds/key.mp3";
 const docAudioSrc = "js/sounds/doc.m4a";
+const cryAudioSrc = "js/sounds/cry.m4a";
+const jumpscareAudioSrc = "js/sounds/jumpscare.m4a";
+const screamAudioSrc = "js/sounds/scream.m4a";
 const openSomethingAudioSrc = "js/sounds/open something.mp3";
 const sceneTransitionAudioSrc = "js/sounds/footstep.wav";
 let sceneTransitionChain = Promise.resolve();
 let bgmStarted = false;
+let activeJumpscarePromise = null;
 
 bgmAudio.preload = "auto";
 bgmAudio.loop = true;
@@ -91,6 +95,88 @@ function playSceneTransitionSound(audioSrc = sceneTransitionAudioSrc, waitMsOver
   });
 
   return Promise.resolve();
+}
+
+function ensureJumpscareOverlay() {
+  let overlay = document.querySelector("#jumpscareOverlay");
+  if (overlay) return overlay;
+
+  overlay = document.createElement("div");
+  overlay.id = "jumpscareOverlay";
+  overlay.className = "jumpscare-overlay";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.innerHTML = `
+    <div class="jumpscare-blackout"></div>
+    <div class="jumpscare-flash"></div>
+    <div class="jumpscare-monster">
+      <div class="jumpscare-monster-card"></div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function runJumpscare({
+  imageUrl = "js/images/js.jpg",
+  delayMs = 220,
+  blackoutMs = 130,
+  flashMs = 120,
+  repeatCount = 2,
+  gapMs = 90
+} = {}) {
+  if (activeJumpscarePromise) {
+    return activeJumpscarePromise;
+  }
+
+  const overlay = ensureJumpscareOverlay();
+  const blackoutEl = overlay.querySelector(".jumpscare-blackout");
+  const flashEl = overlay.querySelector(".jumpscare-flash");
+  const monsterEl = overlay.querySelector(".jumpscare-monster");
+  const monsterCardEl = overlay.querySelector(".jumpscare-monster-card");
+  const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+  activeJumpscarePromise = (async () => {
+    document.body.classList.add("scene-input-locked");
+    overlay.classList.add("is-visible");
+    overlay.setAttribute("aria-hidden", "false");
+    monsterCardEl.style.backgroundImage = `linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01)), url("${imageUrl}")`;
+
+    await sleep(delayMs);
+    playSingleTransitionSound(jumpscareAudioSrc, 0.95);
+    blackoutEl.classList.add("is-visible");
+    await sleep(blackoutMs);
+    blackoutEl.classList.remove("is-visible");
+
+    for (let index = 0; index < repeatCount; index += 1) {
+      flashEl.style.setProperty("--jumpscare-flash-ms", `${flashMs}ms`);
+      blackoutEl.classList.remove("is-visible");
+      flashEl.classList.remove("is-active");
+      monsterEl.classList.remove("is-visible");
+      sceneFrame.classList.remove("jumpscare-shake");
+      void flashEl.offsetWidth;
+      flashEl.classList.add("is-active");
+      monsterEl.classList.add("is-visible");
+      sceneFrame.classList.add("jumpscare-shake");
+      await sleep(flashMs);
+      monsterEl.classList.remove("is-visible");
+      flashEl.classList.remove("is-active");
+      sceneFrame.classList.remove("jumpscare-shake");
+
+      if (index < repeatCount - 1) {
+        await sleep(gapMs);
+      }
+    }
+
+    overlay.classList.remove("is-visible");
+    overlay.setAttribute("aria-hidden", "true");
+    blackoutEl.classList.remove("is-visible");
+  })().finally(() => {
+    document.body.classList.remove("scene-input-locked");
+    activeJumpscarePromise = null;
+  });
+
+  return activeJumpscarePromise;
 }
 
 function swallowTransitionError(error) {
@@ -212,7 +298,7 @@ inventoryEl.addEventListener("click", (event) => {
   showMessage("The doctor's medicine can only be taken at the moment you leave the hospital. That choice has already passed.");
 });
 
-sceneEl.addEventListener("click", (event) => {
+sceneEl.addEventListener("click", async (event) => {
   const menuActionButton = event.target.closest(".menu-action");
   if (menuActionButton) {
     const action = menuActionButton.dataset.action;
@@ -276,10 +362,16 @@ sceneEl.addEventListener("click", (event) => {
           "Your face is still visible. Your wife's face has been deliberately blacked out."
         ].join("\n")
       });
+      const shouldPlayPhotoJumpscare = !state.flags.stairwellPhotoJumpscarePlayed;
+      state.flags.stairwellPhotoJumpscarePlayed = true;
+      if (shouldPlayPhotoJumpscare) {
+        await runJumpscare({ imageUrl: "js/images/js.jpg" });
+        state.flags.stairwellPhotoReactionPending = true;
+      }
       setScene("blockedStairwellPhoto");
       return;
     }
-    hotspot.action();
+    await hotspot.action();
   }
 });
 
@@ -336,6 +428,8 @@ window.correctPasswordAudioSrc = correctPasswordAudioSrc;
 window.wrongPasswordAudioSrc = wrongPasswordAudioSrc;
 window.keyAudioSrc = keyAudioSrc;
 window.docAudioSrc = docAudioSrc;
+window.cryAudioSrc = cryAudioSrc;
+window.screamAudioSrc = screamAudioSrc;
 window.openSomethingAudioSrc = openSomethingAudioSrc;
 window.playFeedbackSound = (audioSrc, volume = 0.42) => {
   playSingleTransitionSound(audioSrc, volume);

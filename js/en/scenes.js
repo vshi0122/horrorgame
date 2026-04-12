@@ -99,6 +99,31 @@ const sceneArt = {
       <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/3rd floor.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
+  thirdFloorHallFlashlight: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/3rd floor.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  thirdFloorHallBlackout: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.1), rgba(8,10,12,0.22)), url('js/images/fake3rd.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  upperStairwellBlackout: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.28)), url('js/images/back.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  fourthFloorQuestion: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.28)), url('js/images/smell.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  monsterStare: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.16), rgba(8,10,12,0.34)), url('js/images/monster.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
   thirdFloorResidential: `
     <div class="room-art">
       <div class="art-layer" style="left:0;right:0;top:0;height:100%;background:linear-gradient(180deg,#0c0c0e 0%,#020203 100%);"></div>
@@ -219,6 +244,15 @@ function buildEndingOverlay(config) {
         </div>
       </article>
     </section>
+  `;
+}
+
+function buildFlashlightOverlay() {
+  return `
+    <div class="scene-flashlight-overlay">
+      <div class="scene-flashlight-darkness"></div>
+      <div class="scene-flashlight-glow"></div>
+    </div>
   `;
 }
 
@@ -522,9 +556,125 @@ const scenes = {
     title: "Photograph",
     hint: "Your own face is still visible. Your wife's face has been blacked out.",
     objective() { return "Return to the blocked stairwell when you're done looking."; },
-    message() { return 'The back of the photo only says <span class="signal-text">J &amp; M</span>.'; },
+    message() {
+      if (state.flags.stairwellPhotoReactionPending) {
+        state.flags.stairwellPhotoReactionPending = false;
+        return 'What was that just now...? Why did that face flash out of the photograph? The letters <span class="signal-text">J &amp; M</span> feel like they are trying to remind you of something.';
+      }
+      return 'The back of the photo only says <span class="signal-text">J &amp; M</span>.';
+    },
     hotspots() { return [
-      { id: "back", label: "Back to Blocked Stairwell", x: 34, y: 78, w: 32, h: 12, action() { setScene("upperStairwell"); } }
+      { id: "back", label: "Back to Stairwell", x: 34, y: 78, w: 32, h: 12, action() { setScene("upperStairwellBlackout"); } }
+    ]; }
+  },
+  thirdFloorHallBlackout: {
+    title: "Third Floor?",
+    hint() { return "The beam of your phone flashlight hits something shaped like the third-floor hallway, but the walls feel wrong."; },
+    objective() { return "Figure out whether this is really the third floor."; },
+    message() { return "Your phone light trembles in your hand. You are certain this place resembles the third floor, but not the one you just came from."; },
+    overlay() { return buildFlashlightOverlay(); },
+    hotspots() { return [
+      { id: "left-wall-text", label: "It's your fault", x: 8, y: 22, w: 20, h: 40, action() { showMessage('Fresh-looking words seem to seep straight out of the left wall: <span class="blood-text">It\'s your fault</span>.'); } },
+      { id: "right-wall-text", label: "She is dead", x: 72, y: 22, w: 20, h: 40, action() { showMessage('The words on the opposite wall are shorter and heavier, like someone carved them in with broken nails: <span class="blood-text">She is dead</span>.'); } },
+      { id: "return-stairwell", label: "Back to Stairwell", x: 35, y: 77, w: 26, h: 12, action() { setScene("upperStairwellBlackout"); } },
+      { id: "upstairs-question", label: "Go Up?", x: 42, y: 16, w: 18, h: 46, pulse: true, action() { setScene("fourthFloorQuestion"); } }
+    ]; }
+  },
+  upperStairwellBlackout: {
+    title: "Stairwell?",
+    hint() {
+      return state.flags.thirdFloorFlashlightEnabled
+        ? "You are back in the stairwell where you found the photo, but only the parts inside your flashlight beam still resemble reality."
+        : "You cannot see anything at all.";
+    },
+    objective() {
+      return state.flags.thirdFloorFlashlightEnabled
+        ? "Work out what changed between this stairwell and the floor above."
+        : "Hold yourself together in the dark.";
+    },
+    onEnter() {
+      if (state.flags.thirdFloorBlackoutIntroPlayed) {
+        state.flags.thirdFloorFlashlightEnabled = true;
+        return false;
+      }
+      state.flags.thirdFloorBlackoutIntroPlayed = true;
+      state.flags.thirdFloorFlashlightEnabled = false;
+      document.body.classList.add("scene-input-locked");
+      messageTextEl.innerHTML = "";
+      render();
+      if (typeof window.playFeedbackSound === "function" && window.cryAudioSrc) {
+        window.playFeedbackSound(window.cryAudioSrc, 0.92);
+      }
+      window.setTimeout(() => {
+        showMessage("The building has lost power. In the darkness, you hear a baby crying. You switch on your phone flashlight.");
+      }, 900);
+      window.setTimeout(() => {
+        state.flags.thirdFloorFlashlightEnabled = true;
+        document.body.classList.remove("scene-input-locked");
+        render();
+      }, 1800);
+      return true;
+    },
+    message() {
+      return state.flags.thirdFloorFlashlightEnabled
+        ? "The blood-writing, the walls, the corner where the photo lay are all still here, but the darkness outside your beam feels deeper than before."
+        : "";
+    },
+    overlay() {
+      if (!state.flags.thirdFloorFlashlightEnabled) {
+        return '<div class="scene-blackout-cover"></div>';
+      }
+      return buildFlashlightOverlay();
+    },
+    hotspots() { return [
+      { id: "blood-wall", label: "Blood-Written Wall", x: 18, y: 18, w: 64, h: 46, action() { showMessage("The blood-writing flickers at the edge of your flashlight, as if it keeps slipping away the moment you try to read it clearly."); } },
+      { id: "photo-corner", label: "Where the Photo Was", x: 8, y: 72, w: 18, h: 14, action() { showMessage("Only a damp rectangular mark remains in the corner. The photograph is gone."); } },
+      { id: "back-to-fake-third", label: "Back to Third Floor", x: 64, y: 16, w: 20, h: 20, action() { if (!state.flags.firstFakeThirdFloorSeen) { state.flags.firstFakeThirdFloorSeen = true; setScene("thirdFloorHallBlackout"); return; } setScene("thirdFloorHallFlashlight"); } }
+    ]; }
+  },
+  fourthFloorQuestion: {
+    title: "Go Up?",
+    hint() { return "The crying has faded, but the smell hanging in the air is worse than before."; },
+    objective() { return "Decide whether to turn back or keep climbing."; },
+    message() { return "Your light lands on an unfamiliar landing. Damp paint bubbles on the wall, and the air carries a rotten, chemical smell that makes you want to gag. It feels like something is watching you."; },
+    overlay() { return buildFlashlightOverlay(); },
+    hotspots() { return [
+      { id: "back-to-third-question", label: "Back to Third Floor?", x: 18, y: 76, w: 26, h: 12, action() { setScene("thirdFloorHallBlackout"); } },
+      { id: "to-real-third-floor", label: "Keep Going Up", x: 56, y: 74, w: 22, h: 14, pulse: true, action() { setScene("monsterStare"); } }
+    ]; }
+  },
+  monsterStare: {
+    title: "...",
+    hint() { return "The moment your light rises, it catches something that should not be there."; },
+    objective() { return "Do not freeze."; },
+    onEnter() {
+      document.body.classList.add("scene-input-locked");
+      messageTextEl.innerHTML = "A humanoid thing with a gaping, blood-soaked mouth is staring right at you. Then, in a single jerk, it snaps back into the dark.";
+      render();
+      window.setTimeout(() => {
+        setScene("thirdFloorHallFlashlight", {
+          lockInputDuringTransition: true
+        }).then(() => {
+          if (typeof window.playFeedbackSound === "function" && window.screamAudioSrc) {
+            window.playFeedbackSound(window.screamAudioSrc, 0.96);
+          }
+        });
+      }, 1200);
+      return true;
+    },
+    message() { return "A humanoid thing with a gaping, blood-soaked mouth is staring right at you. Then, in a single jerk, it snaps back into the dark."; },
+    hotspots() { return []; }
+  },
+  thirdFloorHallFlashlight: {
+    title: "Third Floor",
+    hint() { return "There are no lights left. You can only map the hallway a little at a time with your phone flashlight."; },
+    objective() { return state.flags.residentialUnlocked ? "Enter the residential corridor." : "Search the third floor and find the residential password."; },
+    message() { state.flags.thirdFloorVisited = true; return "Bloody handprints and blurred symbols still cover the floor. A torn notice lies on the left. On the right, something moves faintly behind the residential door."; },
+    overlay() { return buildFlashlightOverlay(); },
+    hotspots() { return [
+      { id: "back-stairwell", label: "Back to Stairwell", x: 42, y: 24, w: 18, h: 48, action() { setScene("upperStairwellBlackout"); } },
+      { id: "notice", label: "Torn Notice", x: 8, y: 62, w: 20, h: 14, action() { collectDocument({ id: "she-waits", title: "Torn Notice", source: "Floor, Third Floor", body: '<span class="blood-text">She is waiting for you</span>' }); showMessage('Only one sentence remains on the torn notice: <span class="blood-text">She is waiting for you.</span>'); } },
+      { id: "residential", label: state.flags.residentialUnlocked ? "Enter Residential Corridor" : "Residential Keypad", x: 74, y: 18, w: 18, h: 48, pulse: !state.flags.residentialUnlocked, action() { if (state.flags.residentialUnlocked) { setScene("thirdFloorResidential"); return; } const input = promptCode("Enter the residential access code"); if (input === null) { showMessage("The faint movement beyond the door continues."); return; } if (normalizeResidentialPassword(input) === "JM") { state.flags.residentialUnlocked = true; addNote("The residential password on the third floor is tied to the letters J & M on the photo."); showMessage("The lock clicks open softly."); return; } showMessage("Wrong password. Something metallic scrapes on the other side of the lock."); } }
     ]; }
   },
   thirdFloorHall: {

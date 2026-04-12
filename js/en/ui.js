@@ -17,6 +17,7 @@ const dialogueBarEl = document.querySelector(".dialogue-bar");
 const guidedScenes = new Set();
 const sceneAssetPromises = new Map();
 let latestSceneRenderToken = 0;
+let lastFlashlightPosition = { xRatio: 0.5, yRatio: 0.55 };
 const BUILTIN_HOTSPOT_RECTS = {
   "hallway::fire-exit": { x: 16.33, y: 26.05, w: 20.4, h: 43.33 },
   "hallway::stairs": { x: 43.19, y: 11.25, w: 18.98, h: 55.94 },
@@ -74,12 +75,27 @@ function preloadSceneAssets(markup) {
   return Promise.all(urls.map(preloadSceneAsset));
 }
 
+function updateSceneFlashlightPosition(clientX, clientY) {
+  const rect = sceneEl.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  const x = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+  const y = Math.min(Math.max(clientY - rect.top, 0), rect.height);
+  lastFlashlightPosition = {
+    xRatio: x / rect.width,
+    yRatio: y / rect.height
+  };
+  sceneEl.style.setProperty("--flashlight-x", `${x}px`);
+  sceneEl.style.setProperty("--flashlight-y", `${y}px`);
+}
+
 [
   "js/images/car.jpg",
   "js/images/gate.jpg",
   "js/images/letterbox.jpg",
   "js/images/pin.jpg",
-  "js/images/parkinglot.jpg"
+  "js/images/parkinglot.jpg",
+  "js/images/js.jpg"
 ].forEach(preloadSceneAsset);
 
 async function render() {
@@ -110,6 +126,8 @@ async function render() {
   }
   sceneEl.innerHTML = nextSceneMarkup;
   sceneEl.setAttribute("aria-busy", "false");
+  sceneEl.style.setProperty("--flashlight-x", `${sceneEl.clientWidth * lastFlashlightPosition.xRatio}px`);
+  sceneEl.style.setProperty("--flashlight-y", `${sceneEl.clientHeight * lastFlashlightPosition.yRatio}px`);
   if (typeof window.HotspotEditor?.afterRender === "function") {
     window.HotspotEditor.afterRender(sceneId, sceneEl);
   }
@@ -240,3 +258,11 @@ function flashScene() {
 }
 
 window.render = render;
+
+sceneEl.addEventListener("pointermove", (event) => {
+  updateSceneFlashlightPosition(event.clientX, event.clientY);
+});
+
+sceneEl.addEventListener("pointerdown", (event) => {
+  updateSceneFlashlightPosition(event.clientX, event.clientY);
+});

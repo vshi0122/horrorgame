@@ -131,6 +131,31 @@ window.sceneArt = {
       <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/3rd floor.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
+  thirdFloorHallFlashlight: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/3rd floor.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  thirdFloorHallBlackout: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.1), rgba(8,10,12,0.22)), url('js/images/fake3rd.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  upperStairwellBlackout: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.28)), url('js/images/back.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  fourthFloorQuestion: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.28)), url('js/images/smell.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
+  monsterStare: `
+    <div class="room-art">
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.16), rgba(8,10,12,0.34)), url('js/images/monster.jpg');background-size:cover;background-position:center center;"></div>
+    </div>
+  `,
   thirdFloorResidential: `
     <div class="room-art">
       <div class="art-layer" style="left:0;right:0;top:0;height:100%;background:linear-gradient(180deg,#0c0c0e 0%,#020203 100%);"></div>
