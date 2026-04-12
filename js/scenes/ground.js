@@ -19,6 +19,9 @@ window.scenes.carInterior = {
         action() {
           state.flags.wokeUp = true;
           if (!hasItem("钥匙串")) {
+            if (typeof window.playUiSound === "function") {
+              window.playUiSound("key");
+            }
             acquireItem("钥匙串");
             acquireItem("车钥匙");
             acquireItem("信箱钥匙");

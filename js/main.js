@@ -5,6 +5,9 @@ const bgmAudio = new Audio("js/sounds/bgm.wav");
 const carAudioSrc = "js/sounds/car.mp3";
 const correctPasswordAudioSrc = "js/sounds/correct password.m4a";
 const wrongPasswordAudioSrc = "js/sounds/wrong.m4a";
+const keyAudioSrc = "js/sounds/key.mp3";
+const docAudioSrc = "js/sounds/doc.m4a";
+const openSomethingAudioSrc = "js/sounds/open something.mp3";
 const sceneTransitionAudioSrc = "js/sounds/footstep.wav";
 let sceneTransitionChain = Promise.resolve();
 let bgmStarted = false;
@@ -70,12 +73,13 @@ function playSingleTransitionSound(audioSrc, volume = 0.45, waitForCompletion = 
 
 function playSceneTransitionSound(audioSrc = sceneTransitionAudioSrc, waitMsOverride = null) {
   if (audioSrc !== sceneTransitionAudioSrc) {
+    const transitionVolume = audioSrc === carAudioSrc ? 0.62 : 0.42;
     const waitMs = waitMsOverride ?? (audioSrc === correctPasswordAudioSrc ? 4000 : 6000);
     if (waitMs <= 0) {
-      playSingleTransitionSound(audioSrc, 0.42);
+      playSingleTransitionSound(audioSrc, transitionVolume);
       return Promise.resolve();
     }
-    return playSingleTransitionSound(audioSrc, 0.42, true, waitMs);
+    return playSingleTransitionSound(audioSrc, transitionVolume, true, waitMs);
   }
 
   const stepOffsets = [0, 260, 520];
@@ -269,11 +273,11 @@ sceneEl.addEventListener("click", (event) => {
     if (state.currentScene === "upperStairwell" && state.flags.stairwellBlocked && hotspot.id === "photo") {
       collectDocument({
         id: "jm-photo",
-        title: "J & M Photo",
-        source: "Corner of the blocked stairwell",
+        title: "J & M 合影",
+        source: "被封死的楼梯间角落",
         body: [
-          'On the back are the letters <span class="signal-text">J &amp; M</span>.',
-          "Your face is still visible. Your wife's face has been deliberately blacked out."
+          '照片背后写着 <span class="signal-text">J &amp; M</span>。',
+          "你的脸还在，妻子的面部却被故意涂黑。"
         ].join("\n")
       });
       setScene("blockedStairwellPhoto");
@@ -334,8 +338,24 @@ function setScene(sceneId, options = {}) {
 window.carAudioSrc = carAudioSrc;
 window.correctPasswordAudioSrc = correctPasswordAudioSrc;
 window.wrongPasswordAudioSrc = wrongPasswordAudioSrc;
+window.keyAudioSrc = keyAudioSrc;
+window.docAudioSrc = docAudioSrc;
+window.openSomethingAudioSrc = openSomethingAudioSrc;
 window.playFeedbackSound = (audioSrc, volume = 0.42) => {
   playSingleTransitionSound(audioSrc, volume);
+};
+window.playUiSound = (kind) => {
+  if (kind === "key") {
+    playSingleTransitionSound(keyAudioSrc, 0.5);
+    return;
+  }
+  if (kind === "doc") {
+    playSingleTransitionSound(docAudioSrc, 0.46);
+    return;
+  }
+  if (kind === "open") {
+    playSingleTransitionSound(openSomethingAudioSrc, 0.46);
+  }
 };
 
 function showMessage(message) {

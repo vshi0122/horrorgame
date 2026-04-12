@@ -108,27 +108,27 @@ window.sceneArt = {
   `,
   secondFloorHall: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/2nd floor.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/2nd floor.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   upperStairwell: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/2nd passing.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/2nd passing.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   upperStairwellBlocked: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/back.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/back.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   blockedStairwellPhoto: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.08), rgba(8,10,12,0.28)), url('js/images/picture.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.08), rgba(8,10,12,0.28)), url('js/images/picture.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   thirdFloorHall: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/3rd floor.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/3rd floor.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   thirdFloorResidential: `

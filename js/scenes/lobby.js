@@ -12,7 +12,17 @@ window.scenes.hallway = {
   },
   hotspots() {
     return [
-      { id: "fire-exit", label: "消防通道入口", x: 8, y: 22, w: 18, h: 48, action() { showMessage("消防通道平常锁闭着，门缝里只有绿色安全出口在黑里闪。"); } },
+      {
+        id: "fire-exit",
+        label: "消防通道入口",
+        x: 8, y: 22, w: 18, h: 48,
+        action() {
+          if (typeof window.playUiSound === "function") {
+            window.playUiSound("open");
+          }
+          showMessage("消防通道平常锁闭着，门缝里只有绿色安全出口在黑里闪。");
+        }
+      },
       {
         id: "stairs",
         label: "上楼楼梯",
@@ -121,7 +131,7 @@ window.scenes.secondFloorHall = {
             title: "被涂抹的告示",
             source: "二楼大厅左侧墙面",
             body: [
-                 "物业提醒：",
+              "物业提醒：",
               "",
               "住户请提前准备迎接[红色的手印]",
               "",
@@ -136,7 +146,17 @@ window.scenes.secondFloorHall = {
         }
       },
       { id: "stairs", label: "楼梯口", x: 42, y: 24, w: 18, h: 48, action() { setScene("upperStairwell"); } },
-      { id: "residential", label: "居民区入口", x: 74, y: 18, w: 18, h: 48, action() { showMessage("右侧是二楼居民区入口，但此刻没有任何声音。"); } },
+      {
+        id: "residential",
+        label: "居民区入口",
+        x: 74, y: 18, w: 18, h: 48,
+        action() {
+          if (typeof window.playUiSound === "function") {
+            window.playUiSound("open");
+          }
+          showMessage("右侧是二楼居民区入口，但此刻没有任何声音。");
+        }
+      },
       { id: "back", label: "回楼梯间", x: 40, y: 78, w: 20, h: 12, action() { setScene("stairwell"); } }
     ];
   }

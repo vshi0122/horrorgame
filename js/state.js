@@ -296,6 +296,8 @@ function hasItem(item) {
 
 function collectDocument(document) {
   const existingIndex = state.documents.findIndex((entry) => entry.id === document.id);
+  const previousSessionDocument = existingIndex === -1 ? null : state.documents[existingIndex];
+  const shouldPlayDocSound = !previousSessionDocument || previousSessionDocument.title !== document.title || previousSessionDocument.source !== document.source || previousSessionDocument.body !== document.body;
   if (existingIndex === -1) {
     state.documents.unshift(document);
   } else {
@@ -305,6 +307,9 @@ function collectDocument(document) {
   unlockDocument(document);
   state.selectedDocumentId = document.id;
   state.selectedArchiveDocumentId = document.id;
+  if (shouldPlayDocSound && typeof window.playUiSound === "function") {
+    window.playUiSound("doc");
+  }
 }
 
 function selectDocument(documentId) {

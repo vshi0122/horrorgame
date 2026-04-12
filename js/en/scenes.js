@@ -76,27 +76,27 @@ const sceneArt = {
   `,
   secondFloorHall: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/2nd floor.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/2nd floor.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   upperStairwell: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/2nd passing.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/2nd passing.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   upperStairwellBlocked: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/back.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/back.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   blockedStairwellPhoto: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.08), rgba(8,10,12,0.28)), url('js/images/picture.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.08), rgba(8,10,12,0.28)), url('js/images/picture.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   thirdFloorHall: `
     <div class="room-art">
-      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/3rd floor.png');background-size:cover;background-position:center center;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/3rd floor.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   thirdFloorResidential: `
@@ -418,7 +418,7 @@ const scenes = {
     objective() { return hasItem("Ketchup") ? "Get out, cross the parking lot, and head to the apartment entrance." : "Find the keyring in the driver's seat, then get out and open the trunk in the parking lot to take the ketchup."; },
     message() { return state.flags.wokeUp ? "The car is damp and close. You still have to bring the ketchup upstairs." : "You jolt awake in the driver's seat. The apartment building stands silently ahead."; },
     hotspots() { return [
-      { id: "seat", label: hasItem("Keyring") ? "Driver's Seat" : "Keyring", x: 2.44, y: 64.8, w: 41.89, h: 34.82, action() { state.flags.wokeUp = true; if (!hasItem("Keyring")) { acquireItem("Keyring"); acquireItem("Car Key"); acquireItem("Mailbox Key"); addNote("You found a keyring in the driver's seat. It holds the car key and the mailbox key."); showMessage("You pull a keyring from the gap beside the driver's seat. The metal is unnaturally cold."); return; } showMessage("The dashboard has been dead for a long time. The only sound left is your own breathing."); } },
+      { id: "seat", label: hasItem("Keyring") ? "Driver's Seat" : "Keyring", x: 2.44, y: 64.8, w: 41.89, h: 34.82, action() { state.flags.wokeUp = true; if (!hasItem("Keyring")) { if (typeof window.playUiSound === "function") { window.playUiSound("key"); } acquireItem("Keyring"); acquireItem("Car Key"); acquireItem("Mailbox Key"); addNote("You found a keyring in the driver's seat. It holds the car key and the mailbox key."); showMessage("You pull a keyring from the gap beside the driver's seat. The metal is unnaturally cold."); return; } showMessage("The dashboard has been dead for a long time. The only sound left is your own breathing."); } },
       { id: "exit-car", label: "Get Out", x: 56.68, y: 6.87, w: 41.41, h: 89.53, action() { setScene("parkingLot", { transitionAudioSrc: window.carAudioSrc, transitionAudioWaitMs: 0 }); } },
       { id: "flee-engine", label: "Start the Car and Leave", x: 28, y: 74, w: 44, h: 12, visible: state.flags.wokeUp && !state.flags.fleePromptShown, action() { state.flags.fleePromptShown = true; showMessage("The dashboard flickers once. Do you really want to drive away now? Your wife is still inside that building."); render(); } },
       { id: "flee-confirm", label: "Yes. Leave Now", x: 14, y: 74, w: 33, h: 12, visible: state.flags.fleePromptShown, action() { setScene("fleeEnding"); } },
@@ -473,7 +473,7 @@ const scenes = {
     objective() { return state.flags.powerOutage ? "You can try to leave the building, or go back upstairs." : "Head upstairs and keep investigating."; },
     message() { return state.flags.powerOutage ? "Only the emergency lights remain after the blackout. You remember the notice said the entry lock would reset to 0000." : "Inside the fire exit, only the green emergency sign is glowing. The property notice on the wall seems to be waiting for you."; },
     hotspots() { return [
-      { id: "fire-exit", label: "Fire Exit", x: 8, y: 22, w: 18, h: 48, action() { showMessage("The fire exit is usually kept locked. Only the green sign glows through the crack in the door."); } },
+      { id: "fire-exit", label: "Fire Exit", x: 8, y: 22, w: 18, h: 48, action() { if (typeof window.playUiSound === "function") { window.playUiSound("open"); } showMessage("The fire exit is usually kept locked. Only the green sign glows through the crack in the door."); } },
       { id: "stairs", label: "Upstairs", x: 42, y: 24, w: 18, h: 48, action() { if (state.flags.powerOutage) { state.flags.normalAfterOutage = true; setScene("stairwellNormal"); return; } setScene("stairwell"); } },
       { id: "notice", label: "Property Notice", x: 74, y: 18, w: 18, h: 42, action() { collectDocument({ id: "arrival-notice-1f", title: "Day of Arrival Notice", source: "Right Wall, First Floor Hallway", body: ["Property Reminder:", "", "Residents are advised to prepare lights, food, and water for the <span class=\"blood-text\">Day of Arrival</span>.", "If you hear an unfamiliar voice calling your name, do not answer."].join("\n") }); if (!state.flags.powerOutage) { showMessage("The notice reads less like a warning and more like a ritual checklist."); return; } showMessage("Looking at the notice again after the blackout, you immediately remember the note about the lock resetting to 0000."); } },
       { id: "back-outside", label: state.flags.powerOutage ? "Leave Building" : "Back to Car", x: 38, y: 82, w: 24, h: 10, action() { if (state.flags.powerOutage) { const shouldLeave = window.confirm("Do you want to leave the apartment building?"); if (!shouldLeave) { showMessage("You stop before touching the door."); return; } const input = promptCode("Enter the blackout entry code"); if (input === null) { showMessage("You hesitate and leave the keypad untouched."); return; } if (input.replace(/\s+/g, "") === "0000") { setScene("normalEnding"); return; } setScene("failedEscapeEnding"); return; } setScene("entrance"); } }
@@ -498,7 +498,7 @@ const scenes = {
     hotspots() { return [
       { id: "notice", label: "Smeared Notice", x: 8, y: 18, w: 18, h: 48, action() { collectDocument({ id: "arrival-notice-2f", title: "Smeared Notice", source: "Left Wall, Second Floor Hall", body: ["The lower half of the notice has been covered in dark red smears.", "", "<span class=\"blood-text\">You cannot tell whether it is blood or something else.</span>"].join("\n") }); showMessage("The red stain looks like it was spread by someone's palm."); } },
       { id: "stairs", label: "Stairwell", x: 42, y: 24, w: 18, h: 48, action() { setScene("upperStairwell"); } },
-      { id: "residential", label: "Residential Entrance", x: 74, y: 18, w: 18, h: 48, action() { showMessage("The entrance to the second-floor residences is on the right, but not a sound comes from beyond it."); } },
+      { id: "residential", label: "Residential Entrance", x: 74, y: 18, w: 18, h: 48, action() { if (typeof window.playUiSound === "function") { window.playUiSound("open"); } showMessage("The entrance to the second-floor residences is on the right, but not a sound comes from beyond it."); } },
       { id: "back", label: "Back to Stairwell", x: 40, y: 78, w: 20, h: 12, action() { setScene("stairwell"); } }
     ]; }
   },
