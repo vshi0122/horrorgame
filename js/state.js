@@ -28,6 +28,7 @@ const initialState = () => ({
     stairwellBlocked: false,
     stairwellPhotoJumpscarePlayed: false,
     stairwellPhotoReactionPending: false,
+    stairwellPhotoFootstepsActive: false,
     thirdFloorBlackoutIntroPlayed: false,
     thirdFloorFlashlightEnabled: false,
     firstFakeThirdFloorSeen: false,
@@ -268,6 +269,9 @@ function openMainMenu(tab = "home", selectedDocumentId = null) {
   state.selectedArchiveDocumentId = tab === "documents"
     ? (selectedDocumentId || getUnlockedDocuments()[0]?.id || null)
     : selectedDocumentId;
+  if (typeof window.syncSceneAmbient === "function") {
+    window.syncSceneAmbient();
+  }
   messageTextEl.innerHTML = scenes.mainMenu.message();
   render();
 }
@@ -275,6 +279,9 @@ function openMainMenu(tab = "home", selectedDocumentId = null) {
 function startNewGame() {
   state = initialState();
   state.currentScene = "carInterior";
+  if (typeof window.syncSceneAmbient === "function") {
+    window.syncSceneAmbient();
+  }
   messageTextEl.innerHTML = scenes.carInterior.message();
   render();
 }

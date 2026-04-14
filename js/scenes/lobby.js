@@ -82,7 +82,7 @@ window.scenes.hallway = {
               setScene("normalEnding");
               return;
             }
-            setScene("failedEscapeEnding");
+            window.triggerFailedEscapeEnding();
             return;
           }
           setScene("entrance");

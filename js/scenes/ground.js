@@ -220,7 +220,7 @@ window.scenes.entranceKeypad = {
           if (typeof window.playFeedbackSound === "function") {
             window.playFeedbackSound(window.wrongPasswordAudioSrc, 0.42);
           }
-          showMessage("密码错误。面板上的冷光闪了一下，又恢复沉默。");
+          window.triggerFailedEscapeEnding();
         }
       },
       { id: "back-entrance", label: "返回入口", x: 81.16, y: 44.38, w: 18.7, h: 54.64, action() { setScene("entrance"); } }

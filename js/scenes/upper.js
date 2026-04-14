@@ -480,13 +480,16 @@ window.scenes.thirdFloorResidential = {
       ? '那个身影已经发现了你。<span class="blood-text">快逃进左侧的安全通道。</span>'
       : "门口躺着一具尸体，一个奇怪的身影正背对着你啃食它。";
   },
+  overlay() {
+    return buildFlashlightOverlay();
+  },
   hotspots() {
     const allExamined = () =>
       state.flags.corpseExamined && state.flags.creatureExamined && state.flags.homeDoorExamined;
 
     const examine = (flag, firstMsg) => {
       if (state.flags.creatureAlerted) {
-        setScene("badEnding");
+        window.triggerMonsterCaughtEnding();
         return;
       }
       if (!state.flags[flag]) {
@@ -543,7 +546,7 @@ window.scenes.thirdFloorResidential = {
         x: 38, y: 78, w: 20, h: 12,
         action() {
           if (state.flags.creatureAlerted) {
-            setScene("badEnding");
+            window.triggerMonsterCaughtEnding();
             return;
           }
           setScene("thirdFloorHall");

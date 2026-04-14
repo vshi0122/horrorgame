@@ -10,6 +10,9 @@ window.scenes.escapeStairwell = {
   message() {
     return "你听见背后传来嘶吼和咆哮，黑暗中唯一剩下的念头就是逃。";
   },
+  overlay() {
+    return buildFlashlightOverlay();
+  },
   hotspots() {
     return [
       { id: "run", label: "向下跑", x: 34, y: 54, w: 30, h: 18, pulse: true, action() { state.flags.powerOutage = true; setScene("hallway"); } }

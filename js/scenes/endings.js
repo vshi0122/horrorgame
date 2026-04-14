@@ -57,6 +57,58 @@ window.scenes.fleeEnding = {
   }
 };
 
+window.scenes.monsterCaughtIntro = {
+  title: "BAD ENDING",
+  hint: "",
+  objective() {
+    return "";
+  },
+  onEnter() {
+    document.body.classList.add("scene-input-locked");
+    if (typeof window.playFeedbackSound === "function" && window.roarAudioSrc) {
+      window.playFeedbackSound(window.roarAudioSrc, 0.82);
+    }
+    window.setTimeout(() => {
+      setScene("badEnding", {
+        lockInputDuringTransition: true,
+        skipTransitionAudio: true
+      });
+    }, 3000);
+  },
+  message() {
+    return "";
+  },
+  hotspots() {
+    return [];
+  }
+};
+
+window.scenes.failedEscapeIntro = {
+  title: "BAD ENDING",
+  hint: "",
+  objective() {
+    return "";
+  },
+  onEnter() {
+    document.body.classList.add("scene-input-locked");
+    if (typeof window.playFeedbackSound === "function" && window.ending2AudioSrc) {
+      window.playFeedbackSound(window.ending2AudioSrc, 0.82);
+    }
+    window.setTimeout(() => {
+      setScene("failedEscapeEnding", {
+        lockInputDuringTransition: true,
+        skipTransitionAudio: true
+      });
+    }, 3000);
+  },
+  message() {
+    return "";
+  },
+  hotspots() {
+    return [];
+  }
+};
+
 window.scenes.badEnding = {
   endingId: "badEnding",
   title: "结局 · 失陷",

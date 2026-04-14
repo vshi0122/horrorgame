@@ -156,21 +156,14 @@ window.sceneArt = {
       <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.16), rgba(8,10,12,0.34)), url('js/images/monster.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
-  thirdFloorResidential: `
+  thirdFloorResidential: () => `
     <div class="room-art">
-      <div class="art-layer" style="left:0;right:0;top:0;height:100%;background:linear-gradient(180deg,#0c0c0e 0%,#020203 100%);"></div>
-      <div class="art-layer" style="left:10%;top:14%;width:18%;height:64%;background:linear-gradient(180deg,#17181b,#060607);border-radius:8px;"></div>
-      <div class="art-layer" style="right:10%;top:14%;width:18%;height:64%;background:linear-gradient(180deg,#17181b,#060607);border-radius:8px;"></div>
-      <div class="art-layer" style="left:43%;top:18%;width:14%;height:46%;background:linear-gradient(180deg,#221b1b,#080707);border-radius:8px;"></div>
-      <div class="art-layer" style="left:39%;top:58%;width:22%;height:10%;background:linear-gradient(180deg,rgba(83,14,14,0.78),rgba(83,14,14,0.18));border-radius:40% 55% 45% 50%;transform:rotate(-8deg);"></div>
-      <div class="art-layer" style="left:58%;top:42%;width:10%;height:22%;background:linear-gradient(180deg,rgba(28,28,31,0.96),rgba(6,6,8,0.98));border-radius:44% 44% 30% 30%;transform:rotate(10deg);"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('${state.flags.creatureAlerted ? "js/images/3rd run.jpg" : "js/images/3rd resident.jpg"}');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   escapeStairwell: `
     <div class="room-art">
-      <div class="art-layer" style="left:0;right:0;top:0;height:100%;background:linear-gradient(180deg,#060709 0%,#010102 100%);"></div>
-      <div class="art-layer" style="left:14%;bottom:0;width:30%;height:74%;background:linear-gradient(180deg,#161c22,#050608);clip-path:polygon(0 100%,100% 100%,100% 18%,76% 18%,76% 0,52% 0,52% 18%,28% 18%,28% 36%,0 36%);"></div>
-      <div class="art-layer" style="left:70%;top:10%;width:8%;height:14%;background:radial-gradient(circle,rgba(193,28,28,0.55),rgba(193,28,28,0.02));border-radius:999px;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/ladder.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   hallwayNormal: `
@@ -230,10 +223,16 @@ window.sceneArt = {
     </div>
   `,
   badEnding: `
-    <div class="room-art"><div class="art-layer" style="inset:0;background:radial-gradient(circle at center,rgba(100,0,0,0.2),transparent 34%),linear-gradient(180deg,#080809 0%,#010101 100%);"></div></div>
+    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/bad ending.png');background-size:cover;background-position:center center;"></div></div>
+  `,
+  monsterCaughtIntro: `
+    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/bad ending.png');background-size:cover;background-position:center center;"></div></div>
+  `,
+  failedEscapeIntro: `
+    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/badending2.png');background-size:cover;background-position:center center;"></div></div>
   `,
   failedEscapeEnding: `
-    <div class="room-art"><div class="art-layer" style="inset:0;background:radial-gradient(circle at center,rgba(156,18,18,0.25),transparent 30%),linear-gradient(180deg,#0a0909 0%,#010101 100%);"></div></div>
+    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/badending2.png');background-size:cover;background-position:center center;"></div></div>
   `,
   normalEnding: `
     <div class="room-art"><div class="art-layer" style="inset:0;background:linear-gradient(180deg,#111722 0%,#05070a 100%);"></div></div>

@@ -2,6 +2,8 @@ const TUTORIAL_STORAGE_KEY = "horrorgame-tutorial-seen-en";
 const SCENE_TRANSITION_OUT_MS = 420;
 const SCENE_TRANSITION_IN_MS = 420;
 const bgmAudio = new Audio("js/sounds/bgm.wav");
+const eatingAudio = new Audio("js/sounds/eating.mp3");
+const photoFootstepAudio = new Audio("js/sounds/fotstep.m4a");
 const carAudioSrc = "js/sounds/car.mp3";
 const correctPasswordAudioSrc = "js/sounds/correct password.m4a";
 const wrongPasswordAudioSrc = "js/sounds/wrong.m4a";
@@ -9,6 +11,8 @@ const keyAudioSrc = "js/sounds/key.mp3";
 const docAudioSrc = "js/sounds/doc.m4a";
 const cryAudioSrc = "js/sounds/cry.m4a";
 const jumpscareAudioSrc = "js/sounds/jumpscare.m4a";
+const roarAudioSrc = "js/sounds/roar.m4a";
+const ending2AudioSrc = "js/sounds/ending2.m4a";
 const screamAudioSrc = "js/sounds/scream.m4a";
 const openSomethingAudioSrc = "js/sounds/open something.mp3";
 const sceneTransitionAudioSrc = "js/sounds/footstep.wav";
@@ -19,6 +23,12 @@ let activeJumpscarePromise = null;
 bgmAudio.preload = "auto";
 bgmAudio.loop = true;
 bgmAudio.volume = 0.4;
+eatingAudio.preload = "auto";
+eatingAudio.loop = true;
+eatingAudio.volume = 0.42;
+photoFootstepAudio.preload = "auto";
+photoFootstepAudio.loop = true;
+photoFootstepAudio.volume = 0.34;
 
 function wait(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -38,7 +48,55 @@ function ensureBgmPlaying() {
   } catch {
     bgmStarted = false;
   }
+
+  syncSceneAmbient();
 }
+
+function stopEatingAmbient() {
+  eatingAudio.pause();
+  eatingAudio.currentTime = 0;
+}
+
+function stopPhotoFootstepsAmbient() {
+  photoFootstepAudio.pause();
+  photoFootstepAudio.currentTime = 0;
+}
+
+function syncSceneAmbient() {
+  const shouldPlayEating = state?.currentScene === "thirdFloorResidential";
+  const shouldPlayPhotoFootsteps =
+    !!state?.flags?.stairwellPhotoFootstepsActive &&
+    !["thirdFloorHall", "thirdFloorHallBlackout", "thirdFloorHallFlashlight", "thirdFloorResidential"].includes(state?.currentScene);
+
+  if (!shouldPlayEating) {
+    stopEatingAmbient();
+  } else {
+    try {
+      const playback = eatingAudio.play();
+      if (playback?.catch) {
+        playback.catch(() => {});
+      }
+    } catch {
+      // Ignore autoplay failures until the next user interaction.
+    }
+  }
+
+  if (!shouldPlayPhotoFootsteps) {
+    stopPhotoFootstepsAmbient();
+    return;
+  }
+
+  try {
+    const playback = photoFootstepAudio.play();
+    if (playback?.catch) {
+      playback.catch(() => {});
+    }
+  } catch {
+    // Ignore autoplay failures until the next user interaction.
+  }
+}
+
+window.syncSceneAmbient = syncSceneAmbient;
 
 function playSingleTransitionSound(audioSrc, volume = 0.45, waitForCompletion = false, waitMs = 6000) {
   return new Promise((resolve) => {
@@ -368,6 +426,7 @@ sceneEl.addEventListener("click", async (event) => {
         await runJumpscare({ imageUrl: "js/images/js.jpg" });
         state.flags.stairwellPhotoReactionPending = true;
       }
+      state.flags.stairwellPhotoFootstepsActive = true;
       setScene("blockedStairwellPhoto");
       return;
     }
@@ -377,6 +436,10 @@ sceneEl.addEventListener("click", async (event) => {
 
 function applyScene(sceneId) {
   state.currentScene = sceneId;
+  if (["thirdFloorHall", "thirdFloorHallBlackout", "thirdFloorHallFlashlight", "thirdFloorResidential"].includes(sceneId)) {
+    state.flags.stairwellPhotoFootstepsActive = false;
+  }
+  syncSceneAmbient();
   const scene = scenes[sceneId];
   if (scene.endingId) {
     incrementEndingCounter(scene.endingId);
@@ -400,10 +463,12 @@ function setScene(sceneId, options = {}) {
       document.body.classList.add("scene-input-locked");
     }
 
-    await playSceneTransitionSound(
-      options.transitionAudioSrc || sceneTransitionAudioSrc,
-      options.transitionAudioWaitMs ?? null
-    );
+    if (!options.skipTransitionAudio) {
+      await playSceneTransitionSound(
+        options.transitionAudioSrc || sceneTransitionAudioSrc,
+        options.transitionAudioWaitMs ?? null
+      );
+    }
     sceneFrame.classList.remove("scene-transition-in");
     void sceneFrame.offsetWidth;
     sceneFrame.classList.add("scene-transition-out");
@@ -429,6 +494,8 @@ window.wrongPasswordAudioSrc = wrongPasswordAudioSrc;
 window.keyAudioSrc = keyAudioSrc;
 window.docAudioSrc = docAudioSrc;
 window.cryAudioSrc = cryAudioSrc;
+window.roarAudioSrc = roarAudioSrc;
+window.ending2AudioSrc = ending2AudioSrc;
 window.screamAudioSrc = screamAudioSrc;
 window.openSomethingAudioSrc = openSomethingAudioSrc;
 window.playFeedbackSound = (audioSrc, volume = 0.42) => {
@@ -446,6 +513,20 @@ window.playUiSound = (kind) => {
   if (kind === "open") {
     playSingleTransitionSound(openSomethingAudioSrc, 0.46);
   }
+};
+
+window.triggerMonsterCaughtEnding = () => {
+  return setScene("monsterCaughtIntro", {
+    lockInputDuringTransition: true,
+    skipTransitionAudio: true
+  });
+};
+
+window.triggerFailedEscapeEnding = () => {
+  return setScene("failedEscapeIntro", {
+    lockInputDuringTransition: true,
+    skipTransitionAudio: true
+  });
 };
 
 function showMessage(message) {

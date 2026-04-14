@@ -124,21 +124,14 @@ const sceneArt = {
       <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.16), rgba(8,10,12,0.34)), url('js/images/monster.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
-  thirdFloorResidential: `
+  thirdFloorResidential: () => `
     <div class="room-art">
-      <div class="art-layer" style="left:0;right:0;top:0;height:100%;background:linear-gradient(180deg,#0c0c0e 0%,#020203 100%);"></div>
-      <div class="art-layer" style="left:10%;top:14%;width:18%;height:64%;background:linear-gradient(180deg,#17181b,#060607);border-radius:8px;"></div>
-      <div class="art-layer" style="right:10%;top:14%;width:18%;height:64%;background:linear-gradient(180deg,#17181b,#060607);border-radius:8px;"></div>
-      <div class="art-layer" style="left:43%;top:18%;width:14%;height:46%;background:linear-gradient(180deg,#221b1b,#080707);border-radius:8px;"></div>
-      <div class="art-layer" style="left:39%;top:58%;width:22%;height:10%;background:linear-gradient(180deg,rgba(83,14,14,0.78),rgba(83,14,14,0.18));border-radius:40% 55% 45% 50%;transform:rotate(-8deg);"></div>
-      <div class="art-layer" style="left:58%;top:42%;width:10%;height:22%;background:linear-gradient(180deg,rgba(28,28,31,0.96),rgba(6,6,8,0.98));border-radius:44% 44% 30% 30%;transform:rotate(10deg);"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('${state.flags.creatureAlerted ? "js/images/3rd run.jpg" : "js/images/3rd resident.jpg"}');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   escapeStairwell: `
     <div class="room-art">
-      <div class="art-layer" style="left:0;right:0;top:0;height:100%;background:linear-gradient(180deg,#060709 0%,#010102 100%);"></div>
-      <div class="art-layer" style="left:14%;bottom:0;width:30%;height:74%;background:linear-gradient(180deg,#161c22,#050608);clip-path:polygon(0 100%,100% 100%,100% 18%,76% 18%,76% 0,52% 0,52% 18%,28% 18%,28% 36%,0 36%);"></div>
-      <div class="art-layer" style="left:70%;top:10%;width:8%;height:14%;background:radial-gradient(circle,rgba(193,28,28,0.55),rgba(193,28,28,0.02));border-radius:999px;"></div>
+      <div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.14), rgba(8,10,12,0.36)), url('js/images/ladder.jpg');background-size:cover;background-position:center center;"></div>
     </div>
   `,
   hallwayNormal: `
@@ -211,8 +204,10 @@ const sceneArt = {
       <div class="art-layer" style="right:24%;bottom:6%;width:22%;height:16%;background:radial-gradient(ellipse,rgba(255,240,200,0.3),rgba(255,240,200,0));"></div>
     </div>
   `,
-  badEnding: `<div class="room-art"><div class="art-layer" style="inset:0;background:radial-gradient(circle at center,rgba(100,0,0,0.2),transparent 34%),linear-gradient(180deg,#080809 0%,#010101 100%);"></div></div>`,
-  failedEscapeEnding: `<div class="room-art"><div class="art-layer" style="inset:0;background:radial-gradient(circle at center,rgba(156,18,18,0.25),transparent 30%),linear-gradient(180deg,#0a0909 0%,#010101 100%);"></div></div>`,
+  badEnding: `<div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/bad ending.png');background-size:cover;background-position:center center;"></div></div>`,
+  monsterCaughtIntro: `<div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/bad ending.png');background-size:cover;background-position:center center;"></div></div>`,
+  failedEscapeIntro: `<div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/badending2.png');background-size:cover;background-position:center center;"></div></div>`,
+  failedEscapeEnding: `<div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/badending2.png');background-size:cover;background-position:center center;"></div></div>`,
   normalEnding: `<div class="room-art"><div class="art-layer" style="inset:0;background:linear-gradient(180deg,#111722 0%,#05070a 100%);"></div></div>`,
   goodEndingQuestion: `<div class="room-art"><div class="art-layer" style="inset:0;background:radial-gradient(circle at center,rgba(255,255,255,0.18),transparent 28%),linear-gradient(180deg,#f0ece2 0%,#77716b 100%);"></div></div>`
 };
@@ -497,7 +492,7 @@ const scenes = {
     objective() { return state.flags.codeDiscovered ? "Enter the correct code and get inside the building." : "You need to find the code first."; },
     message() { return state.flags.codeDiscovered ? "You know the code now. The keypad waits in silence." : "The keypad is lit, but you do not yet know what to enter."; },
     hotspots() { return [
-      { id: "use-keypad", label: state.flags.codeDiscovered ? "Enter Code" : "Try the Keypad", x: 49.9, y: 15.18, w: 17.1, h: 46.61, locked: !state.flags.codeDiscovered, action() { if (!state.flags.codeDiscovered) { showMessage("You still don't know the new code."); return; } const input = promptCode("Enter the building entry code"); if (input === null) { showMessage("Your hand lingers over the keypad, but you do not type anything."); return; } if (input.replace(/\s+/g, "") === "0327") { state.flags.buildingEntered = true; setScene("hallway", { transitionAudioSrc: window.correctPasswordAudioSrc, lockInputDuringTransition: true }); return; } if (typeof window.playFeedbackSound === "function") { window.playFeedbackSound(window.wrongPasswordAudioSrc, 0.42); } showMessage("Wrong code. The keypad flashes once, then falls silent again."); } },
+      { id: "use-keypad", label: state.flags.codeDiscovered ? "Enter Code" : "Try the Keypad", x: 49.9, y: 15.18, w: 17.1, h: 46.61, locked: !state.flags.codeDiscovered, action() { if (!state.flags.codeDiscovered) { showMessage("You still don't know the new code."); return; } const input = promptCode("Enter the building entry code"); if (input === null) { showMessage("Your hand lingers over the keypad, but you do not type anything."); return; } if (input.replace(/\s+/g, "") === "0327") { state.flags.buildingEntered = true; setScene("hallway", { transitionAudioSrc: window.correctPasswordAudioSrc, lockInputDuringTransition: true }); return; } if (typeof window.playFeedbackSound === "function") { window.playFeedbackSound(window.wrongPasswordAudioSrc, 0.42); } window.triggerFailedEscapeEnding(); } },
       { id: "back-entrance", label: "Back to Entrance", x: 81.16, y: 44.38, w: 18.7, h: 54.64, action() { setScene("entrance"); } }
     ]; }
   },
@@ -510,7 +505,7 @@ const scenes = {
       { id: "fire-exit", label: "Fire Exit", x: 8, y: 22, w: 18, h: 48, action() { if (typeof window.playUiSound === "function") { window.playUiSound("open"); } showMessage("The fire exit is usually kept locked. Only the green sign glows through the crack in the door."); } },
       { id: "stairs", label: "Upstairs", x: 42, y: 24, w: 18, h: 48, action() { if (state.flags.powerOutage) { state.flags.normalAfterOutage = true; setScene("stairwellNormal"); return; } setScene("stairwell"); } },
       { id: "notice", label: "Property Notice", x: 74, y: 18, w: 18, h: 42, action() { collectDocument({ id: "arrival-notice-1f", title: "Day of Arrival Notice", source: "Right Wall, First Floor Hallway", body: ["Property Reminder:", "", "Residents are advised to prepare lights, food, and water for the <span class=\"blood-text\">Day of Arrival</span>.", "If you hear an unfamiliar voice calling your name, do not answer."].join("\n") }); if (!state.flags.powerOutage) { showMessage("The notice reads less like a warning and more like a ritual checklist."); return; } showMessage("Looking at the notice again after the blackout, you immediately remember the note about the lock resetting to 0000."); } },
-      { id: "back-outside", label: state.flags.powerOutage ? "Leave Building" : "Back to Car", x: 38, y: 82, w: 24, h: 10, action() { if (state.flags.powerOutage) { const shouldLeave = window.confirm("Do you want to leave the apartment building?"); if (!shouldLeave) { showMessage("You stop before touching the door."); return; } const input = promptCode("Enter the blackout entry code"); if (input === null) { showMessage("You hesitate and leave the keypad untouched."); return; } if (input.replace(/\s+/g, "") === "0000") { setScene("normalEnding"); return; } setScene("failedEscapeEnding"); return; } setScene("entrance"); } }
+      { id: "back-outside", label: state.flags.powerOutage ? "Leave Building" : "Back to Car", x: 38, y: 82, w: 24, h: 10, action() { if (state.flags.powerOutage) { const shouldLeave = window.confirm("Do you want to leave the apartment building?"); if (!shouldLeave) { showMessage("You stop before touching the door."); return; } const input = promptCode("Enter the blackout entry code"); if (input === null) { showMessage("You hesitate and leave the keypad untouched."); return; } if (input.replace(/\s+/g, "") === "0000") { setScene("normalEnding"); return; } window.triggerFailedEscapeEnding(); return; } setScene("entrance"); } }
     ]; }
   },
   stairwell: {
@@ -697,12 +692,13 @@ const scenes = {
       return `Investigate the corridor. Examined ${examined}/3.`;
     },
     message() { return state.flags.creatureAlerted ? 'The creature has noticed you. <span class="blood-text">Run to the fire exit.</span>' : "A corpse lies near your door. A strange figure, its back turned to you, is crouched over it and feeding."; },
-    hotspots() { const allExamined = () => state.flags.corpseExamined && state.flags.creatureExamined && state.flags.homeDoorExamined; const examine = (flag, text) => { if (state.flags.creatureAlerted) { setScene("badEnding"); return; } if (!state.flags[flag]) { state.flags[flag] = true; if (allExamined()) { state.flags.creatureAlerted = true; showMessage(`${text}<br><span class="blood-text">The figure stops. It has noticed you. Run to the fire exit on the left.</span>`); } else { showMessage(text); } render(); return; } showMessage("You have already looked here."); }; return [
+    overlay() { return buildFlashlightOverlay(); },
+    hotspots() { const allExamined = () => state.flags.corpseExamined && state.flags.creatureExamined && state.flags.homeDoorExamined; const examine = (flag, text) => { if (state.flags.creatureAlerted) { window.triggerMonsterCaughtEnding(); return; } if (!state.flags[flag]) { state.flags[flag] = true; if (allExamined()) { state.flags.creatureAlerted = true; showMessage(`${text}<br><span class="blood-text">The figure stops. It has noticed you. Run to the fire exit on the left.</span>`); } else { showMessage(text); } render(); return; } showMessage("You have already looked here."); }; return [
       { id: "escape", label: "Fire Exit", x: 8, y: 20, w: 18, h: 54, pulse: state.flags.creatureAlerted, action() { setScene("escapeStairwell"); } },
       { id: "corpse", label: "Corpse", x: 38, y: 58, w: 24, h: 14, action() { examine("corpseExamined", "The body has been ripped open. Blood has soaked through the clothing and spread across the floor."); } },
       { id: "creature", label: "Feeding Figure", x: 58, y: 34, w: 14, h: 28, action() { examine("creatureExamined", "Its shoulders bend at the wrong angle. Wet tearing sounds fill the corridor as it feeds."); } },
       { id: "home-door", label: "Your Door", x: 74, y: 20, w: 16, h: 46, action() { examine("homeDoorExamined", "Beyond the narrow opening of your door there is only darkness."); } },
-      { id: "back", label: "Back to Third Floor", x: 38, y: 78, w: 20, h: 12, action() { if (state.flags.creatureAlerted) { setScene("badEnding"); return; } setScene("thirdFloorHall"); } }
+      { id: "back", label: "Back to Third Floor", x: 38, y: 78, w: 20, h: 12, action() { if (state.flags.creatureAlerted) { window.triggerMonsterCaughtEnding(); return; } setScene("thirdFloorHall"); } }
     ]; }
   },
   escapeStairwell: {
@@ -710,6 +706,7 @@ const scenes = {
     hint: "The power is out. Everything is pitch black.",
     objective() { return "Do not look back. Run downward."; },
     message() { return "Behind you, snarls and howls echo through the darkness. Running is the only thought left in your mind."; },
+    overlay() { return buildFlashlightOverlay(); },
     hotspots() { return [{ id: "run", label: "Run Downward", x: 34, y: 54, w: 30, h: 18, pulse: true, action() { state.flags.powerOutage = true; setScene("hallway"); } }]; }
   },
   hallwayNormal: {
@@ -796,6 +793,44 @@ const scenes = {
     message() { return "The apartment building vanishes behind the rain-streaked glass. The passenger seat is empty. You drive away anyway."; },
     overlay() { return buildEndingOverlay({ order: 5, variant: "bad", name: "Flight", summary: "You never entered the building. Your wife and the truth remained inside, and you chose not to look back." }); },
     hotspots() { return [{ id: "restart", label: "Wake Up Again", x: 38, y: 68, w: 24, h: 14, action() { resetGame(); } }]; }
+  },
+  monsterCaughtIntro: {
+    title: "BAD ENDING",
+    hint: "",
+    objective() { return ""; },
+    onEnter() {
+      document.body.classList.add("scene-input-locked");
+      if (typeof window.playFeedbackSound === "function" && window.roarAudioSrc) {
+        window.playFeedbackSound(window.roarAudioSrc, 0.82);
+      }
+      window.setTimeout(() => {
+        setScene("badEnding", {
+          lockInputDuringTransition: true,
+          skipTransitionAudio: true
+        });
+      }, 3000);
+    },
+    message() { return ""; },
+    hotspots() { return []; }
+  },
+  failedEscapeIntro: {
+    title: "BAD ENDING",
+    hint: "",
+    objective() { return ""; },
+    onEnter() {
+      document.body.classList.add("scene-input-locked");
+      if (typeof window.playFeedbackSound === "function" && window.ending2AudioSrc) {
+        window.playFeedbackSound(window.ending2AudioSrc, 0.82);
+      }
+      window.setTimeout(() => {
+        setScene("failedEscapeEnding", {
+          lockInputDuringTransition: true,
+          skipTransitionAudio: true
+        });
+      }, 3000);
+    },
+    message() { return ""; },
+    hotspots() { return []; }
   },
   badEnding: {
     endingId: "badEnding",
