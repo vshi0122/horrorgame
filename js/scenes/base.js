@@ -202,16 +202,16 @@ window.sceneArt = {
     </div>
   `,
   badEnding: `
-    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/bad ending.png');background-size:cover;background-position:center center;"></div></div>
+    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/bad ending.jpg');background-size:cover;background-position:center center;"></div></div>
   `,
   monsterCaughtIntro: `
-    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/bad ending.png');background-size:cover;background-position:center center;"></div></div>
+    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/bad ending.jpg');background-size:cover;background-position:center center;"></div></div>
   `,
   failedEscapeIntro: `
-    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/badending2.png');background-size:cover;background-position:center center;"></div></div>
+    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/badending2.jpg');background-size:cover;background-position:center center;"></div></div>
   `,
   failedEscapeEnding: `
-    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/badending2.png');background-size:cover;background-position:center center;"></div></div>
+    <div class="room-art"><div class="art-layer" style="inset:0;background-image:linear-gradient(180deg, rgba(8,10,12,0.12), rgba(8,10,12,0.42)), url('js/images/badending2.jpg');background-size:cover;background-position:center center;"></div></div>
   `,
   normalEnding: `
     <div class="room-art"><div class="art-layer" style="inset:0;background:linear-gradient(180deg,#111722 0%,#05070a 100%);"></div></div>
