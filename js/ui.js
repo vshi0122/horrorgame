@@ -39,7 +39,24 @@ const BUILTIN_HOTSPOT_RECTS = {
   "upperStairwellBlocked::wall": { x: 13.97, y: 10.85, w: 72.59, h: 54.6 },
   "thirdFloorHall::notice": { x: 2.85, y: 65.36, w: 15.24, h: 24 },
   "thirdFloorHall::back-stairwell": { x: 24.83, y: 17.43, w: 19.65, h: 50.87 },
-  "thirdFloorHall::residential": { x: 73.83, y: 22.68, w: 22.36, h: 51.47 }
+  "thirdFloorHall::residential": { x: 73.83, y: 22.68, w: 22.36, h: 51.47 },
+  "stairwellNormal::to-1f": { x: 16, y: 45, w: 22, h: 33 },
+  "stairwellNormal::to-2f": { x: 54, y: 17, w: 31, h: 60 },
+  "secondFloorHallNormal::wall": { x: 8, y: 16, w: 24, h: 52 },
+  "secondFloorHallNormal::back": { x: 17, y: 15, w: 27, h: 60 },
+  "secondFloorHallNormal::stairs": { x: 54, y: 16, w: 31, h: 60 },
+  "secondFloorHallNormal::residential": { x: 88, y: 13, w: 12, h: 72 },
+  "upperStairwellNormal::back": { x: 16, y: 45, w: 22, h: 33 },
+  "upperStairwellNormal::to-3f": { x: 54, y: 17, w: 31, h: 60 },
+  "thirdFloorHallNormal::wall": { x: 42, y: 13, w: 37, h: 67 },
+  "thirdFloorHallNormal::stairs": { x: 2, y: 14, w: 35, h: 67 },
+  "thirdFloorHallNormal::residential": { x: 79, y: 7, w: 21, h: 79 },
+  "thirdFloorResidentialNormal::home-door": { x: 62, y: 22, w: 16, h: 58 },
+  "thirdFloorResidentialNormal::back": { x: 0, y: 5, w: 24, h: 72 },
+  "dinnerTableScene::wife": { x: 59, y: 22, w: 16, h: 60 },
+  "dinnerTableScene::dinner": { x: 24, y: 57, w: 25, h: 18 },
+  "dinnerTableScene::symbol": { x: 79, y: 14, w: 14, h: 18 },
+  "dinnerTableScene::back": { x: 86, y: 74, w: 12, h: 16 }
 };
 
 function extractSceneAssetUrls(markup) {

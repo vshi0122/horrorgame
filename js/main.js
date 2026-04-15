@@ -15,6 +15,7 @@ const roarAudioSrc = "js/sounds/roar.m4a";
 const ending2AudioSrc = "js/sounds/ending2.m4a";
 const screamAudioSrc = "js/sounds/scream.m4a";
 const openSomethingAudioSrc = "js/sounds/open something.mp3";
+const openRoomAudioSrc = "js/sounds/openroom.mp3";
 const sceneTransitionAudioSrc = "js/sounds/footstep.wav";
 let sceneTransitionChain = Promise.resolve();
 let bgmStarted = false;
@@ -389,6 +390,10 @@ sceneEl.addEventListener("click", async (event) => {
       setMenuTab("documents", unlockedDocuments[0]?.id || null);
       render();
     }
+    if (action === "open-credits") {
+      setMenuTab("credits");
+      render();
+    }
     if (action === "go-home") {
       setMenuTab("home");
       render();
@@ -414,6 +419,13 @@ sceneEl.addEventListener("click", async (event) => {
   const hotspot = scene.hotspots().find((spot) => spot.id === hotspotButton.dataset.id);
   if (hotspot) {
     incrementDecisionCounter(`hotspot:${state.currentScene}:${hotspot.id}`);
+    if (state.currentScene === "thirdFloorResidentialNormal" && hotspot.id === "home-door") {
+      setScene("dinnerTableScene", {
+        transitionAudioSrc: window.openRoomAudioSrc,
+        transitionAudioWaitMs: 0
+      });
+      return;
+    }
     if (state.currentScene === "upperStairwell" && state.flags.stairwellBlocked && hotspot.id === "photo") {
       collectDocument({
         id: "jm-photo",
@@ -502,6 +514,7 @@ window.roarAudioSrc = roarAudioSrc;
 window.ending2AudioSrc = ending2AudioSrc;
 window.screamAudioSrc = screamAudioSrc;
 window.openSomethingAudioSrc = openSomethingAudioSrc;
+window.openRoomAudioSrc = openRoomAudioSrc;
 window.playFeedbackSound = (audioSrc, volume = 0.42) => {
   playSingleTransitionSound(audioSrc, volume);
 };

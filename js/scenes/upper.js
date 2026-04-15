@@ -102,23 +102,23 @@ window.scenes.upperStairwell = {
 };
 
 window.scenes.blockedStairwellPhoto = {
-  title: "Photo",
-  hint: "Your face is still visible. Her face has been blacked out.",
+  title: "合影",
+  hint: "你的脸还留在照片里，她的脸却被整块涂黑了。",
   objective() {
-    return "Return to the blocked stairwell.";
+    return "回到被封死的楼梯间。";
   },
   message() {
     if (state.flags.stairwellPhotoReactionPending) {
       state.flags.stairwellPhotoReactionPending = false;
       return '刚才那是什么……？照片里为什么会突然闪出那张脸？<span class="signal-text">J &amp; M</span> 几个字母像在提醒你什么。';
     }
-    return 'The back of the photo only says <span class="signal-text">J &amp; M</span>.';
+    return '照片背面只写着 <span class="signal-text">J &amp; M</span>。';
   },
   hotspots() {
     return [
       {
         id: "back",
-        label: "Back",
+        label: "返回",
         x: 34, y: 78, w: 32, h: 12,
         action() {
           setScene("upperStairwellBlackout");

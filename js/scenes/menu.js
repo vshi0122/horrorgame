@@ -13,7 +13,64 @@ const MENU_ENDING_CATALOG = [
   { id: "chapter2GunEnding", order: 10, name: "吞枪", teaser: "拿到手枪后，你没有再等待任何人，结局在你扣下扳机的瞬间结束。" }
 ];
 
-const MENU_DOCUMENT_TOTAL = 25;
+const MENU_DOCUMENT_TOTAL = 34;
+const MENU_CREDITS = [
+  {
+    role: "制作 / Created By",
+    names: ["prophet"]
+  },
+  {
+    role: "故事 / Story",
+    names: ["prophet"]
+  },
+  {
+    role: "美术与资源整合 / Art & Asset Integration",
+    names: ["prophet"]
+  },
+  {
+    role: "程序 / Programming",
+    names: ["prophet"]
+  },
+  {
+    role: "测试 / Playtesting",
+    names: ["子明","罗英伦","Matthew Sakitis","吴昭邦","吴月锋","谢宇菁"]
+  },
+  {
+    role: "特别感谢 / Special Thanks",
+    names: ["愿意步入这场梦境的每一位玩家",  "提供部分素材的艺术家们"]
+  }
+];
+const MENU_CREDITS_GROUPED = [
+  {
+    role: "制作 / Created By",
+    names: ["prophet"]
+  },
+  {
+    role: "故事 / Story",
+    names: ["prophet"]
+  },
+  {
+    role: "美术与资源整合 / Art & Asset Integration",
+    names: ["prophet"]
+  },
+  {
+    role: "程序 / Programming",
+    names: ["prophet"]
+  },
+  {
+    role: "测试 / Playtesting",
+    names: ["lyl", "Matthew Sakitis"]
+  },
+  {
+    role: "试玩人员",
+    names: ["子明", "昭昭", "yf", "洛竹"]
+  },
+  {
+    role: "特别感谢 / Special Thanks",
+    names: ["愿意步入这场梦境的每一位玩家", "提供部分素材的艺术家们"]
+  }
+];
+
 const CHAPTER3_UNLOCK_ENDING_IDS = [
   "chapter2UneasyReunionEnding",
   "chapter2WaitWifeEnding",
@@ -58,6 +115,7 @@ function buildMainMenuHome() {
           ${chapter3Action}
           <button class="menu-action" type="button" data-action="open-endings">结局图鉴</button>
           <button class="menu-action" type="button" data-action="open-documents">文本图鉴</button>
+          <button class="menu-action" type="button" data-action="open-credits">制作人员</button>
         </nav>
         <footer class="menu-footer">
           <div class="menu-stat">
@@ -179,6 +237,46 @@ function buildDocumentArchive() {
   `;
 }
 
+function buildCreditsArchive() {
+  const entries = MENU_CREDITS_GROUPED.map((section) => `
+    <section class="credits-section">
+      <p class="credits-role">${section.role}</p>
+      <div class="credits-names">
+        ${section.names.map((name) => `<p class="credits-name">${name}</p>`).join("")}
+      </div>
+    </section>
+  `).join("");
+
+  return `
+    <section class="scene-overlay menu-overlay menu-overlay-archive" aria-label="制作人员">
+      <div class="archive-page">
+        <header class="archive-topnav">
+          <nav class="archive-breadcrumb">
+            <span class="archive-breadcrumb-home">降临之日</span>
+            <span class="archive-breadcrumb-sep">→</span>
+            <span class="archive-breadcrumb-current">制作人员</span>
+          </nav>
+          <div class="archive-topnav-right">
+            <span class="archive-count">Staff Roll</span>
+            <button class="menu-action archive-back" type="button" data-action="go-home">返回主界面</button>
+          </div>
+        </header>
+        <div class="archive-content archive-content-credits">
+          <h2 class="archive-section-title">制作人员</h2>
+          <p class="archive-section-subtitle">这场噩梦的缔造者。</p>
+          <div class="credits-roll-shell">
+            <div class="credits-roll-track">
+              <div class="credits-roll">
+                ${entries}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 window.scenes.mainMenu = {
   title: "主界面",
   hint: hasChapter3Access()
@@ -189,12 +287,14 @@ window.scenes.mainMenu = {
   objective() {
     if (state.menuTab === "endings") return `浏览已解锁结局 ${getUnlockedEndingCount()}/${MENU_ENDING_CATALOG.length}。`;
     if (state.menuTab === "documents") return `浏览已收录文本 ${getUnlockedDocumentCount()}/${MENU_DOCUMENT_TOTAL}。`;
+    if (state.menuTab === "credits") return "查看制作人员名单。";
     if (hasChapter3Access()) return "第三章已解锁。你可以前往终章，或继续回看图鉴。";
     return hasChapter2Access() ? "第二章已解锁。你可以继续深入，或回看图鉴。" : "选择再次醒来，或进入图鉴。";
   },
   message() {
     if (state.menuTab === "endings") return "有些门已经被你推开，有些还没有。";
     if (state.menuTab === "documents") return "字条不会自己说话，但你可以把它们重新排成线索。";
+    if (state.menuTab === "credits") return "在最后，这些名字会缓缓经过你眼前。";
     if (hasChapter3Access()) return "你走到了章节分歧的尽头。最后一层回响正在等你。";
     return hasChapter2Access() ? "你已经醒过一次。接下来，轮到你回头。" : "每一次醒来，都只是从另一个入口重新开始。";
   },
@@ -204,6 +304,7 @@ window.scenes.mainMenu = {
   overlay() {
     if (state.menuTab === "endings") return buildEndingArchive();
     if (state.menuTab === "documents") return buildDocumentArchive();
+    if (state.menuTab === "credits") return buildCreditsArchive();
     return buildMainMenuHome();
   }
 };

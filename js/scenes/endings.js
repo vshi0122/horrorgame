@@ -2,7 +2,7 @@
 window.scenes = window.scenes || {};
 
 const TOTAL_ENDINGS = 10;
-const TOTAL_DOCUMENTS = 25;
+const TOTAL_DOCUMENTS = 34;
 
 function buildEndingOverlay(config) {
   const collectedDocuments = state.documents.length;
@@ -58,7 +58,7 @@ window.scenes.fleeEnding = {
 };
 
 window.scenes.monsterCaughtIntro = {
-  title: "BAD ENDING",
+  title: "坏结局",
   hint: "",
   objective() {
     return "";
@@ -84,7 +84,7 @@ window.scenes.monsterCaughtIntro = {
 };
 
 window.scenes.failedEscapeIntro = {
-  title: "BAD ENDING",
+  title: "坏结局",
   hint: "",
   objective() {
     return "";
