@@ -1,0 +1,5 @@
+.godot/
+.editorconfig
+*.import
+export_presets.cfg
+*.rar

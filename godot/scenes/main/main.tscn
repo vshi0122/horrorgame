@@ -1,0 +1,447 @@
+[gd_scene load_steps=4 format=3 uid="uid://ddbx6mgpk6n8p"]
+
+[ext_resource type="Script" path="res://godot/scripts/main/main.gd" id="1_7euvc"]
+[ext_resource type="Script" path="res://godot/scripts/ui/hud.gd" id="2_f0i5n"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font_size = 34
+font_color = Color(0.941176, 0.92549, 0.870588, 1)
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("1_7euvc")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0588235, 0.054902, 0.0666667, 1)
+
+[node name="RootMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 18.0
+offset_top = 18.0
+offset_right = -18.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Layout" type="HBoxContainer" parent="RootMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+
+[node name="CenterColumn" type="VBoxContainer" parent="RootMargin/Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="TopBar" type="PanelContainer" parent="RootMargin/Layout/CenterColumn"]
+layout_mode = 2
+
+[node name="TopBarMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/TopBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="TopBarLayout" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="TitleColumn" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn"]
+layout_mode = 2
+text = "Day Of Arrival"
+label_settings = SubResource("LabelSettings_title")
+
+[node name="RoomName" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Parking Lot"
+
+[node name="TopActions" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 10
+
+[node name="ObjectiveButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions"]
+layout_mode = 2
+text = "Goal"
+
+[node name="DocumentsButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions"]
+layout_mode = 2
+text = "Files"
+
+[node name="RoomViewport" type="PanelContainer" parent="RootMargin/Layout/CenterColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RoomContent" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="RoomStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="RoomHint" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack"]
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+text = "The rain has stopped, but the night still feels unfinished."
+
+[node name="RoomVisual" type="AspectRatioContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack"]
+custom_minimum_size = Vector2(0, 0)
+layout_mode = 2
+size_flags_vertical = 3
+ratio = 1.77778
+stretch_mode = 2
+
+[node name="RoomVisualFrame" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="RoomVisualLayer" type="Control" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 1
+
+[node name="BackgroundTexture" type="TextureRect" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame/RoomVisualLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="HotspotLayer" type="Control" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame/RoomVisualLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="InteractionList" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="MessagePanel" type="PanelContainer" parent="RootMargin/Layout/CenterColumn"]
+layout_mode = 2
+
+[node name="MessageMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/MessagePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="MessageValue" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/MessagePanel/MessageMargin"]
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+text = "This scene is the first vertical slice target: a single room, a few interactions, and a clean migration path."
+
+[node name="RightRail" type="PanelContainer" parent="RootMargin/Layout"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 1
+size_flags_vertical = 3
+script = ExtResource("2_f0i5n")
+
+[node name="HUDMargin" type="MarginContainer" parent="RootMargin/Layout/RightRail"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="HUDStack" type="VBoxContainer" parent="RootMargin/Layout/RightRail/HUDMargin"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="InventoryTitle" type="Label" parent="RootMargin/Layout/RightRail/HUDMargin/HUDStack"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Inventory"
+
+[node name="InventoryValue" type="ItemList" parent="RootMargin/Layout/RightRail/HUDMargin/HUDStack"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="RailHint" type="Label" parent="RootMargin/Layout/RightRail/HUDMargin/HUDStack"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+text = "Use Files to review notes and Goal to check what to do next."
+
+[node name="InspectOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0.02, 0.02, 0.03, 0.84)
+
+[node name="InspectCenter" type="CenterContainer" parent="InspectOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="InspectPanel" type="PanelContainer" parent="InspectOverlay/InspectCenter"]
+custom_minimum_size = Vector2(760, 480)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="InspectMargin" type="MarginContainer" parent="InspectOverlay/InspectCenter/InspectPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="InspectStack" type="VBoxContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="InspectTitle" type="Label" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Inspect"
+
+[node name="InspectImageFrame" type="PanelContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="InspectImage" type="TextureRect" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 6
+
+[node name="InspectHotspotLayer" type="Control" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="InspectBody" type="RichTextLabel" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack"]
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+text = ""
+
+[node name="InspectSubActions" type="VBoxContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="InspectActions" type="HBoxContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 12
+
+[node name="InspectCloseButton" type="Button" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectActions"]
+layout_mode = 2
+text = "Close"
+
+[node name="InspectConfirmButton" type="Button" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectActions"]
+layout_mode = 2
+text = "Continue"
+
+[node name="DocumentsOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0.02, 0.02, 0.03, 0.84)
+
+[node name="DocumentsCenter" type="CenterContainer" parent="DocumentsOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DocumentsPanel" type="PanelContainer" parent="DocumentsOverlay/DocumentsCenter"]
+custom_minimum_size = Vector2(820, 500)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="DocumentsMargin" type="MarginContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="DocumentsStack" type="VBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="DocumentsHeader" type="HBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DocumentsTitle" type="Label" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+text = "Files"
+
+[node name="DocumentsCloseButton" type="Button" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsHeader"]
+layout_mode = 2
+text = "Close"
+
+[node name="DocumentsBody" type="HBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="DocumentsList" type="ItemList" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DocumentViewer" type="PanelContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DocumentViewerMargin" type="MarginContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="DocumentViewerStack" type="VBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DocumentTitle" type="Label" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "No files yet"
+
+[node name="DocumentSource" type="Label" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Find notes and files in the world to read them here."
+
+[node name="DocumentText" type="RichTextLabel" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_active = true
+text = ""
+
+[node name="ObjectiveOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0.02, 0.02, 0.03, 0.84)
+
+[node name="ObjectiveCenter" type="CenterContainer" parent="ObjectiveOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ObjectivePanel" type="PanelContainer" parent="ObjectiveOverlay/ObjectiveCenter"]
+custom_minimum_size = Vector2(560, 220)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="ObjectiveMargin" type="MarginContainer" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="ObjectiveStack" type="VBoxContainer" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ObjectiveHeader" type="HBoxContainer" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack"]
+layout_mode = 2
+
+[node name="ObjectiveTitle" type="Label" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+text = "Goal"
+
+[node name="ObjectiveCloseButton" type="Button" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveHeader"]
+layout_mode = 2
+text = "Close"
+
+[node name="ObjectiveValue" type="RichTextLabel" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack"]
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+text = "Find a migration path from the web prototype into a room-based Godot game."
