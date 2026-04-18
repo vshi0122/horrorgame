@@ -7,6 +7,7 @@ var current_room_id: String = START_ROOM_ID
 var objective_text: String = ""
 var message_text: String = ""
 var inventory: Array[String] = []
+var selected_inventory_item: String = ""
 var unlocked_documents: Array[Dictionary] = []
 var archived_documents: Array[Dictionary] = []
 var unlocked_endings: Array[String] = []
@@ -24,9 +25,10 @@ func _ready() -> void:
 
 func reset() -> void:
 	current_room_id = START_ROOM_ID
-	objective_text = "先在驾驶座拿钥匙串，然后下车去停车场打开后备箱取出番茄酱。"
-	message_text = "你在驾驶座上猛地惊醒，公寓楼正静静立在挡风玻璃前。"
+	objective_text = "Find the keyring in the driver seat, then leave the car and open the trunk for the ketchup."
+	message_text = "You wake up in the driver seat with the apartment building looming beyond the windshield."
 	inventory.clear()
+	selected_inventory_item = ""
 	unlocked_documents.clear()
 	flags = {
 		"woke_up": false,
@@ -94,10 +96,39 @@ func has_item(item_id: String) -> bool:
 	return inventory.has(item_id)
 
 
+func select_item(item_id: String) -> void:
+	if item_id == "" or not inventory.has(item_id):
+		return
+	selected_inventory_item = item_id
+	emit_signal("hud_changed")
+
+
+func clear_selected_item() -> void:
+	if selected_inventory_item == "":
+		return
+	selected_inventory_item = ""
+	emit_signal("hud_changed")
+
+
+func toggle_selected_item(item_id: String) -> void:
+	if item_id == "" or not inventory.has(item_id):
+		return
+	if selected_inventory_item == item_id:
+		clear_selected_item()
+		return
+	select_item(item_id)
+
+
+func is_item_selected(item_id: String) -> bool:
+	return selected_inventory_item == item_id
+
+
 func remove_item(item_id: String) -> void:
 	if not inventory.has(item_id):
 		return
 	inventory.erase(item_id)
+	if selected_inventory_item == item_id:
+		selected_inventory_item = ""
 	emit_signal("hud_changed")
 
 

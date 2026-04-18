@@ -200,6 +200,10 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	var interaction: Dictionary = SceneRouter.get_interaction(GameState.current_room_id, interaction_id)
 	if interaction.is_empty():
 		return
+	if not SceneRouter.is_interaction_ready(interaction):
+		GameState.set_message(SceneRouter.get_interaction_block_message(interaction))
+		_refresh_hud()
+		return
 
 	var inspect_data: Dictionary = interaction.get("inspect", {})
 	if not inspect_data.is_empty():

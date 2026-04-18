@@ -70,7 +70,6 @@ func get_interaction(room_id: String, interaction_id: String) -> Dictionary:
 		if is_interaction_available(interaction):
 			return interaction
 	return first_match
-	
 
 
 func is_interaction_available(interaction: Dictionary) -> bool:
@@ -93,6 +92,28 @@ func is_interaction_available(interaction: Dictionary) -> bool:
 	return true
 
 
+func is_interaction_ready(interaction: Dictionary) -> bool:
+	if not is_interaction_available(interaction):
+		return false
+
+	var requires_item: String = interaction.get("requires_item", "")
+	if requires_item != "" and not GameState.is_item_selected(requires_item):
+		return false
+
+	return true
+
+
+func get_interaction_block_message(interaction: Dictionary) -> String:
+	var requires_item: String = interaction.get("requires_item", "")
+	if requires_item != "" and GameState.has_item(requires_item) and not GameState.is_item_selected(requires_item):
+		var custom_message := String(interaction.get("requires_item_message", ""))
+		if custom_message != "":
+			return custom_message
+		return "Select %s before using it here." % requires_item
+
+	return "That does not seem possible yet."
+
+
 func apply_interaction(interaction_id: String) -> void:
 	var first_match: Dictionary = {}
 	for interaction: Dictionary in get_interactions(GameState.current_room_id):
@@ -102,6 +123,9 @@ func apply_interaction(interaction_id: String) -> void:
 			first_match = interaction
 		if not is_interaction_available(interaction):
 			GameState.set_message("That does not seem possible yet.")
+			continue
+		if not is_interaction_ready(interaction):
+			GameState.set_message(get_interaction_block_message(interaction))
 			continue
 
 		var next_flag: String = interaction.get("sets_flag", "")
@@ -184,4 +208,4 @@ func apply_interaction(interaction_id: String) -> void:
 		return
 
 	if not first_match.is_empty():
-		GameState.set_message("That does not seem possible yet.")
+		GameState.set_message(get_interaction_block_message(first_match))
