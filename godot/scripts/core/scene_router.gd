@@ -109,9 +109,9 @@ func get_interaction_block_message(interaction: Dictionary) -> String:
 		var custom_message := String(interaction.get("requires_item_message", ""))
 		if custom_message != "":
 			return custom_message
-		return "Select %s before using it here." % requires_item
+		return I18n.t("ui.select_item_first", {"item": I18n.item_name(requires_item)})
 
-	return "That does not seem possible yet."
+	return I18n.t("ui.interaction.blocked")
 
 
 func apply_interaction(interaction_id: String) -> void:
@@ -122,7 +122,7 @@ func apply_interaction(interaction_id: String) -> void:
 		if first_match.is_empty():
 			first_match = interaction
 		if not is_interaction_available(interaction):
-			GameState.set_message("That does not seem possible yet.")
+			GameState.set_message(I18n.t("ui.interaction.blocked"))
 			continue
 		if not is_interaction_ready(interaction):
 			GameState.set_message(get_interaction_block_message(interaction))
@@ -157,7 +157,7 @@ func apply_interaction(interaction_id: String) -> void:
 				continue
 			GameState.flags[clear_flag_name] = false
 
-		var next_objective: String = interaction.get("objective", "")
+		var next_objective: String = I18n.text_from(interaction, "objective", "")
 		if next_objective != "":
 			GameState.set_objective(next_objective)
 
@@ -183,11 +183,11 @@ func apply_interaction(interaction_id: String) -> void:
 					continue
 				GameState.flags[next_conditional_flag] = true
 
-			var conditional_objective: String = interaction.get("if_flags_all_true_then_objective", "")
+			var conditional_objective: String = I18n.text_from(interaction, "if_flags_all_true_then_objective", "")
 			if conditional_objective != "":
 				GameState.set_objective(conditional_objective)
 
-			var conditional_message: String = interaction.get("if_flags_all_true_then_message", "")
+			var conditional_message: String = I18n.text_from(interaction, "if_flags_all_true_then_message", "")
 			if conditional_message != "":
 				GameState.set_message(conditional_message)
 
@@ -203,8 +203,8 @@ func apply_interaction(interaction_id: String) -> void:
 		if interaction.get("resets_game", false):
 			GameState.reset()
 
-		if not can_apply_conditionals or interaction.get("if_flags_all_true_then_message", "") == "":
-			GameState.set_message(interaction.get("message", "You notice nothing new."))
+		if not can_apply_conditionals or I18n.text_from(interaction, "if_flags_all_true_then_message", "") == "":
+			GameState.set_message(I18n.text_from(interaction, "message", I18n.t("ui.interaction.nothing_new")))
 		return
 
 	if not first_match.is_empty():

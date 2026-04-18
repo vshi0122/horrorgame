@@ -128,15 +128,42 @@ func _ready() -> void:
 	_sync_scene_ambient(GameState.current_room_id)
 	_build_web_ui_overlays()
 	_apply_web_ui_theme()
+	_apply_static_translations()
 	_refresh_room(GameState.current_room_id)
 	_refresh_hud()
 	_show_main_menu_home()
 
 
+func _text(data: Dictionary, field: String, fallback: String = "") -> String:
+	return I18n.text_from(data, field, fallback)
+
+
+func _document_text(data: Dictionary, field: String, fallback: String = "") -> String:
+	return I18n.text_from(data, field, fallback)
+
+
+func _apply_static_translations() -> void:
+	$RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn/Title.text = I18n.t("game.title")
+	$RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/MenuButton.text = I18n.t("ui.top.menu")
+	$RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/RestartButton.text = I18n.t("ui.top.restart")
+	objective_button.text = I18n.t("ui.top.goal")
+	documents_button.text = I18n.t("ui.top.files")
+	$RootMargin/Layout/RightRail/HUDMargin/HUDStack/InventoryTitle.text = I18n.t("ui.inventory.title")
+	$DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsHeader/DocumentsTitle.text = I18n.t("ui.documents.title")
+	documents_close_button.text = I18n.t("ui.menu.close")
+	$ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveHeader/ObjectiveTitle.text = I18n.t("ui.objective.title")
+	objective_close_button.text = I18n.t("ui.menu.close")
+	inspect_close_button.text = I18n.t("ui.inspect.close")
+	inspect_confirm_button.text = I18n.t("ui.inspect.continue")
+	$CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeTitle.text = I18n.t("ui.code.title")
+	code_cancel_button.text = I18n.t("ui.code.cancel")
+	code_confirm_button.text = I18n.t("ui.code.confirm")
+
+
 func _refresh_room(room_id: String) -> void:
 	var room: Dictionary = SceneRouter.get_room(room_id)
-	room_name_label.text = room.get("title", "Unknown Room")
-	room_hint_label.text = room.get("hint", "")
+	room_name_label.text = _text(room, "title", I18n.t("ui.room.unknown"))
+	room_hint_label.text = _text(room, "hint", "")
 	_apply_background(room.get("background", ""))
 	_track_ending_unlock(room_id, room)
 	_sync_scene_ambient(room_id)
@@ -167,7 +194,7 @@ func _refresh_room(room_id: String) -> void:
 		if not SceneRouter.is_interaction_available(interaction):
 			continue
 		var button := Button.new()
-		button.text = interaction.get("label", "Interact")
+		button.text = _text(interaction, "label", I18n.t("ui.interaction.default"))
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.focus_mode = Control.FOCUS_NONE
 		button.pressed.connect(_on_interaction_requested.bind(interaction.get("id", "")))
@@ -182,7 +209,7 @@ func _refresh_hud() -> void:
 	objective_value_label.text = GameState.objective_text
 	_refresh_documents_list()
 	if ending_overlay != null and ending_overlay.visible:
-		ending_documents_value_label.text = "%d files" % GameState.unlocked_documents.size()
+		ending_documents_value_label.text = I18n.t("ui.files.count_short", {"count": GameState.unlocked_documents.size()})
 	if is_main_menu_open and main_menu_overlay != null and main_menu_overlay.visible:
 		_refresh_main_menu_view()
 
@@ -217,7 +244,7 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	if not code_input_data.is_empty():
 		active_code_interaction_id = interaction_id
 		active_code_data = code_input_data
-		GameState.set_message(interaction.get("message", GameState.message_text))
+		GameState.set_message(_text(interaction, "message", GameState.message_text))
 		_refresh_hud()
 		_show_code_overlay(code_input_data)
 		return
@@ -233,7 +260,7 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	
 	else:
 		SceneRouter.apply_interaction(interaction_id)
-		GameState.set_message(interaction.get("message", ""))
+		GameState.set_message(_text(interaction, "message", ""))
 		_refresh_room(GameState.current_room_id)
 	
 
@@ -391,7 +418,7 @@ func _build_web_ui_overlays() -> void:
 	ending_endings_value_label = stat2.get_node("Margin/Stack/Value") as Label
 	stats.add_child(stat2)
 
-	var stat3 := _build_ending_stat("Documents")
+	var stat3 := _build_ending_stat(I18n.t("ui.ending.documents"))
 	ending_documents_value_label = stat3.get_node("Margin/Stack/Value") as Label
 	stats.add_child(stat3)
 
@@ -462,7 +489,7 @@ func _build_web_ui_overlays() -> void:
 	menu_nav_row.add_child(main_menu_nav)
 
 	main_menu_close_button = Button.new()
-	main_menu_close_button.text = "Close"
+	main_menu_close_button.text = I18n.t("ui.menu.close")
 	main_menu_close_button.pressed.connect(_close_main_menu)
 	menu_nav_row.add_child(main_menu_close_button)
 
@@ -532,7 +559,7 @@ func _refresh_ending_overlay(room: Dictionary) -> void:
 	ending_summary_label.text = ending_data.get("summary", room.get("hint", ""))
 	ending_order_value_label.text = ending_data.get("order", "-")
 	ending_endings_value_label.text = "%d/%d" % [GameState.unlocked_endings.size(), MENU_ENDING_TOTAL]
-	ending_documents_value_label.text = "%d files" % GameState.archived_documents.size()
+	ending_documents_value_label.text = I18n.t("ui.files.count_short", {"count": GameState.archived_documents.size()})
 
 	var variant := String(ending_data.get("variant", "normal"))
 	var border := Color(0.847, 0.765, 0.604, 0.30)
@@ -596,7 +623,7 @@ func _add_menu_button() -> void:
 		return
 	var menu_button := Button.new()
 	menu_button.name = "MenuButton"
-	menu_button.text = "Menu"
+	menu_button.text = I18n.t("ui.top.menu")
 	menu_button.pressed.connect(_show_main_menu_home)
 	top_actions.add_child(menu_button)
 	top_actions.move_child(menu_button, 0)
@@ -618,24 +645,24 @@ func _show_main_menu_home() -> void:
 	main_menu_overlay.visible = true
 	main_menu_close_button.visible = _can_resume_game()
 	_clear_main_menu_content()
-	main_menu_title_label.text = "Day Of Arrival"
-	main_menu_body_label.text = "Wake in the parked car again, or review the endings and files you have already carried out of the building."
-	main_menu_stats_label.text = "Unlocked endings: %d/%d    Archived files: %d/%d" % [
-		GameState.unlocked_endings.size(),
-		MENU_ENDING_TOTAL,
-		GameState.archived_documents.size(),
-		MENU_DOCUMENT_TOTAL
-	]
+	main_menu_title_label.text = I18n.t("ui.menu.home.title")
+	main_menu_body_label.text = I18n.t("ui.menu.home.body")
+	main_menu_stats_label.text = I18n.t("ui.menu.home.stats", {
+		"endings": GameState.unlocked_endings.size(),
+		"ending_total": MENU_ENDING_TOTAL,
+		"documents": GameState.archived_documents.size(),
+		"document_total": MENU_DOCUMENT_TOTAL
+	})
 
 	var actions: Array[Dictionary] = []
 	if _can_resume_game():
-		actions.append({"label": "Continue", "call": "_close_main_menu", "accent": true})
+		actions.append({"label": I18n.t("ui.menu.action.continue"), "call": "_close_main_menu", "accent": true})
 	else:
-		actions.append({"label": "Start Game", "call": "_close_main_menu", "accent": true})
-	actions.append({"label": "Wake Up Again", "call": "_restart_from_menu", "accent": false})
-	actions.append({"label": "Ending Archive", "call": "_show_main_menu_endings", "accent": false})
-	actions.append({"label": "Document Archive", "call": "_show_main_menu_documents", "accent": false})
-	actions.append({"label": "Credits", "call": "_show_main_menu_credits", "accent": false})
+		actions.append({"label": I18n.t("ui.menu.action.start"), "call": "_close_main_menu", "accent": true})
+	actions.append({"label": I18n.t("ui.menu.action.restart"), "call": "_restart_from_menu", "accent": false})
+	actions.append({"label": I18n.t("ui.menu.action.endings"), "call": "_show_main_menu_endings", "accent": false})
+	actions.append({"label": I18n.t("ui.menu.action.documents"), "call": "_show_main_menu_documents", "accent": false})
+	actions.append({"label": I18n.t("ui.menu.action.credits"), "call": "_show_main_menu_credits", "accent": false})
 
 	for action in actions:
 		var button := Button.new()
@@ -651,21 +678,21 @@ func _show_main_menu_endings() -> void:
 	main_menu_overlay.visible = true
 	main_menu_close_button.visible = _can_resume_game()
 	_clear_main_menu_content()
-	main_menu_title_label.text = "Ending Archive"
-	main_menu_body_label.text = "Explore different routes to unlock more endings. Entries not yet ported stay locked for now."
-	main_menu_stats_label.text = "Unlocked endings: %d/%d" % [GameState.unlocked_endings.size(), MENU_ENDING_TOTAL]
-	_add_menu_nav_button("Home", _show_main_menu_home, false)
-	_add_menu_nav_button("Endings", _show_main_menu_endings, true)
-	_add_menu_nav_button("Documents", _show_main_menu_documents, false)
-	_add_menu_nav_button("Credits", _show_main_menu_credits, false)
+	main_menu_title_label.text = I18n.t("ui.menu.endings.title")
+	main_menu_body_label.text = I18n.t("ui.menu.endings.body")
+	main_menu_stats_label.text = I18n.t("ui.menu.endings.stats", {"count": GameState.unlocked_endings.size(), "total": MENU_ENDING_TOTAL})
+	_add_menu_nav_button(I18n.t("ui.menu.nav.home"), _show_main_menu_home, false)
+	_add_menu_nav_button(I18n.t("ui.menu.nav.endings"), _show_main_menu_endings, true)
+	_add_menu_nav_button(I18n.t("ui.menu.nav.documents"), _show_main_menu_documents, false)
+	_add_menu_nav_button(I18n.t("ui.menu.nav.credits"), _show_main_menu_credits, false)
 
 	for ending in MENU_ENDING_CATALOG:
 		var unlocked := GameState.unlocked_endings.has(String(ending["id"]))
 		main_menu_body_stack.add_child(_build_archive_card(
 			String(ending["order"]),
-			String(ending["name"]) if unlocked else "???",
-			String(ending["teaser"]) if unlocked else "This ending has not been unlocked yet.",
-			"Triggered %d time(s)" % GameState.get_ending_trigger_count(String(ending["id"])),
+			String(ending["name"]) if unlocked else I18n.t("ui.menu.endings.locked_name"),
+			String(ending["teaser"]) if unlocked else I18n.t("ui.menu.endings.locked_body"),
+			I18n.t("ui.menu.endings.triggered", {"count": GameState.get_ending_trigger_count(String(ending["id"]))}),
 			unlocked
 		))
 
@@ -676,19 +703,19 @@ func _show_main_menu_documents() -> void:
 	main_menu_overlay.visible = true
 	main_menu_close_button.visible = _can_resume_game()
 	_clear_main_menu_content()
-	main_menu_title_label.text = "Document Archive"
-	main_menu_body_label.text = "Documents recovered in any run are archived here."
-	main_menu_stats_label.text = "Archived documents: %d/%d" % [GameState.archived_documents.size(), MENU_DOCUMENT_TOTAL]
-	_add_menu_nav_button("Home", _show_main_menu_home, false)
-	_add_menu_nav_button("Endings", _show_main_menu_endings, false)
-	_add_menu_nav_button("Documents", _show_main_menu_documents, true)
-	_add_menu_nav_button("Credits", _show_main_menu_credits, false)
+	main_menu_title_label.text = I18n.t("ui.menu.documents.title")
+	main_menu_body_label.text = I18n.t("ui.menu.documents.body")
+	main_menu_stats_label.text = I18n.t("ui.menu.documents.stats", {"count": GameState.archived_documents.size(), "total": MENU_DOCUMENT_TOTAL})
+	_add_menu_nav_button(I18n.t("ui.menu.nav.home"), _show_main_menu_home, false)
+	_add_menu_nav_button(I18n.t("ui.menu.nav.endings"), _show_main_menu_endings, false)
+	_add_menu_nav_button(I18n.t("ui.menu.nav.documents"), _show_main_menu_documents, true)
+	_add_menu_nav_button(I18n.t("ui.menu.nav.credits"), _show_main_menu_credits, false)
 
 	if GameState.archived_documents.is_empty():
 		var empty_panel := _build_archive_card(
-			"Files",
-			"No archived documents yet",
-			"Keep exploring. Notes, notices, and letters you recover will remain here across future runs.",
+			I18n.t("ui.menu.documents.empty_index"),
+			I18n.t("ui.menu.documents.empty_title"),
+			I18n.t("ui.menu.documents.empty_body"),
 			"",
 			false
 		)
@@ -723,7 +750,7 @@ func _show_main_menu_documents() -> void:
 		for document in GameState.archived_documents:
 			var button := Button.new()
 			var document_id := String(document.get("id", ""))
-			button.text = String(document.get("title", "Untitled"))
+			button.text = _document_text(document, "title", "Untitled")
 			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			button.pressed.connect(_select_menu_document.bind(document_id))
@@ -749,13 +776,13 @@ func _show_main_menu_documents() -> void:
 		viewer_margin.add_child(viewer_stack)
 
 		var doc_title := Label.new()
-		doc_title.text = String(selected_document.get("title", "Untitled"))
+		doc_title.text = _document_text(selected_document, "title", "Untitled")
 		doc_title.add_theme_font_size_override("font_size", 24)
 		doc_title.add_theme_color_override("font_color", Color(0.96, 0.95, 0.92, 1))
 		viewer_stack.add_child(doc_title)
 
 		var doc_source := Label.new()
-		doc_source.text = String(selected_document.get("source", ""))
+		doc_source.text = _document_text(selected_document, "source", "")
 		doc_source.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		doc_source.add_theme_color_override("font_color", Color(0.847, 0.765, 0.604, 0.92))
 		viewer_stack.add_child(doc_source)
@@ -764,7 +791,7 @@ func _show_main_menu_documents() -> void:
 		doc_body.bbcode_enabled = true
 		doc_body.scroll_active = true
 		doc_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		doc_body.text = String(selected_document.get("body", ""))
+		doc_body.text = _document_text(selected_document, "body", "")
 		doc_body.add_theme_color_override("default_color", Color(0.93, 0.95, 0.97, 0.96))
 		viewer_stack.add_child(doc_body)
 
@@ -775,13 +802,13 @@ func _show_main_menu_credits() -> void:
 	main_menu_overlay.visible = true
 	main_menu_close_button.visible = _can_resume_game()
 	_clear_main_menu_content()
-	main_menu_title_label.text = "Credits"
-	main_menu_body_label.text = "The people behind this nightmare."
-	main_menu_stats_label.text = "Staff Roll"
-	_add_menu_nav_button("Home", _show_main_menu_home, false)
-	_add_menu_nav_button("Endings", _show_main_menu_endings, false)
-	_add_menu_nav_button("Documents", _show_main_menu_documents, false)
-	_add_menu_nav_button("Credits", _show_main_menu_credits, true)
+	main_menu_title_label.text = I18n.t("ui.menu.credits.title")
+	main_menu_body_label.text = I18n.t("ui.menu.credits.body")
+	main_menu_stats_label.text = I18n.t("ui.menu.credits.stats")
+	_add_menu_nav_button(I18n.t("ui.menu.nav.home"), _show_main_menu_home, false)
+	_add_menu_nav_button(I18n.t("ui.menu.nav.endings"), _show_main_menu_endings, false)
+	_add_menu_nav_button(I18n.t("ui.menu.nav.documents"), _show_main_menu_documents, false)
+	_add_menu_nav_button(I18n.t("ui.menu.nav.credits"), _show_main_menu_credits, true)
 
 	for entry in MENU_CREDITS:
 		main_menu_body_stack.add_child(_build_credit_block(String(entry["role"]), entry["names"]))
@@ -979,8 +1006,8 @@ func _add_hotspot_button(interaction: Dictionary) -> void:
 		return
 
 	var button := Button.new()
-	button.text = interaction.get("label", "Interact")
-	button.tooltip_text = interaction.get("label", "Interact")
+	button.text = _text(interaction, "label", I18n.t("ui.interaction.default"))
+	button.tooltip_text = _text(interaction, "label", I18n.t("ui.interaction.default"))
 	button.focus_mode = Control.FOCUS_NONE
 	button.flat = false
 	var ui_style: String = interaction.get("ui_style", "")
@@ -1035,11 +1062,11 @@ func _rebuild_hotspots() -> void:
 
 func _show_inspect_overlay(inspect_data: Dictionary) -> void:
 	active_inspect_data = inspect_data
-	inspect_title_label.text = inspect_data.get("title", "Inspect")
-	inspect_body_label.text = inspect_data.get("body", "")
+	inspect_title_label.text = _text(inspect_data, "title", I18n.t("ui.inspect.default_title"))
+	inspect_body_label.text = _text(inspect_data, "body", "")
 	var image_path := String(inspect_data.get("image", ""))
 	inspect_image.texture = load(image_path) if image_path != "" else null
-	inspect_confirm_button.text = inspect_data.get("confirm_label", "Continue")
+	inspect_confirm_button.text = _text(inspect_data, "confirm_label", I18n.t("ui.inspect.continue"))
 
 	for child: Node in inspect_sub_actions.get_children():
 		child.queue_free()
@@ -1047,7 +1074,7 @@ func _show_inspect_overlay(inspect_data: Dictionary) -> void:
 	for action_variant in inspect_data.get("actions", []):
 		var action: Dictionary = action_variant
 		var action_button := Button.new()
-		action_button.text = action.get("label", "Inspect")
+		action_button.text = _text(action, "label", I18n.t("ui.inspect.default_title"))
 		action_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		action_button.focus_mode = Control.FOCUS_NONE
 		action_button.pressed.connect(_on_inspect_action_pressed.bind(action))
@@ -1065,11 +1092,11 @@ func _on_inspect_action_pressed(action: Dictionary) -> void:
 	var action_type := String(action.get("type", "text"))
 	match action_type:
 		"text":
-			inspect_body_label.text = action.get("body", inspect_body_label.text)
+			inspect_body_label.text = _text(action, "body", inspect_body_label.text)
 		"confirm":
 			_hide_inspect_overlay()
 		_:
-			inspect_body_label.text = action.get("body", inspect_body_label.text)
+			inspect_body_label.text = _text(action, "body", inspect_body_label.text)
 
 
 func _on_inspect_confirm_pressed() -> void:
@@ -1077,7 +1104,7 @@ func _on_inspect_confirm_pressed() -> void:
 
 
 func _show_code_overlay(code_input_data: Dictionary) -> void:
-	code_prompt_label.text = code_input_data.get("prompt", "Enter the code")
+	code_prompt_label.text = _text(code_input_data, "prompt", "Enter the code")
 	code_feedback_label.text = ""
 	code_input.text = ""
 	code_overlay.visible = true
@@ -1114,7 +1141,7 @@ func _submit_code_input() -> void:
 		_refresh_hud()
 		return
 
-	var failure_message := String(active_code_data.get("failure_message", "That code does not work."))
+	var failure_message := _text(active_code_data, "failure_message", "That code does not work.")
 	code_feedback_label.text = failure_message
 	GameState.set_message(failure_message)
 	_refresh_hud()
@@ -1181,12 +1208,12 @@ func _hide_objective_overlay() -> void:
 func _refresh_documents_list() -> void:
 	documents_list.clear()
 	for document: Dictionary in GameState.unlocked_documents:
-		documents_list.add_item(document.get("title", "Untitled"))
+		documents_list.add_item(_document_text(document, "title", "Untitled"))
 
 	if GameState.unlocked_documents.is_empty():
 		selected_document_index = -1
-		document_title_label.text = "No files yet"
-		document_source_label.text = "Find notes and files in the world to read them here."
+		document_title_label.text = I18n.t("ui.documents.empty_title")
+		document_source_label.text = I18n.t("ui.documents.empty_source")
 		document_text_label.text = ""
 		return
 
@@ -1207,9 +1234,9 @@ func _show_document(index: int) -> void:
 		return
 
 	var document: Dictionary = GameState.unlocked_documents[index]
-	document_title_label.text = document.get("title", "Untitled")
-	document_source_label.text = document.get("source", "")
-	document_text_label.text = document.get("body", "")
+	document_title_label.text = _document_text(document, "title", "Untitled")
+	document_source_label.text = _document_text(document, "source", "")
+	document_text_label.text = _document_text(document, "body", "")
 
 
 func _build_hotspot_style(background_color: Color, border_color: Color, corner_radius: int = 8) -> StyleBoxFlat:

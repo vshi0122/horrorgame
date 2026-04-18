@@ -25,8 +25,8 @@ func _ready() -> void:
 
 func reset() -> void:
 	current_room_id = START_ROOM_ID
-	objective_text = "Find the keyring in the driver seat, then leave the car and open the trunk for the ketchup."
-	message_text = "You wake up in the driver seat with the apartment building looming beyond the windshield."
+	objective_text = I18n.t("objective.start")
+	message_text = I18n.t("message.start")
 	inventory.clear()
 	selected_inventory_item = ""
 	unlocked_documents.clear()

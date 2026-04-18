@@ -13,9 +13,9 @@ func _ready() -> void:
 func refresh() -> void:
 	inventory_value.clear()
 	for item_id: String in GameState.inventory:
-		inventory_value.add_item(item_id)
+		inventory_value.add_item(I18n.item_name(item_id))
 	if GameState.inventory.is_empty():
-		inventory_value.add_item("Empty")
+		inventory_value.add_item("-")
 		inventory_value.deselect_all()
 		return
 
@@ -40,6 +40,6 @@ func _on_inventory_item_clicked(index: int, _at_position: Vector2, mouse_button_
 	var was_selected := GameState.is_item_selected(item_id)
 	GameState.toggle_selected_item(item_id)
 	if was_selected:
-		GameState.set_message("Put away: %s" % item_id)
+		GameState.set_message(I18n.t("ui.unselected_item", {"item": I18n.item_name(item_id)}))
 	else:
-		GameState.set_message("Selected: %s" % item_id)
+		GameState.set_message(I18n.t("ui.selected_item", {"item": I18n.item_name(item_id)}))

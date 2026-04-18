@@ -4,41 +4,39 @@ extends RefCounted
 static func build() -> Dictionary:
 	return {
 		"id": "dinner_table",
-		"title": "餐桌",
-		"hint": "暖黄色的灯光填满整个房间，饭菜已经摆好了。",
+		"title": "晚餐桌前",
+		"hint": "灯光和饭菜的热气让这里几乎像真正的家。",
 		"background": "res://godot/asserts/images/home.jpg",
 		"interactions": [
 			{
-				"id": "wife",
-				"label": "妻子",
-				"requires_item": "番茄酱",
-				"requires_flag_false": "dinner_ketchup_given",
+				"id": "wife-give-ketchup",
+				"label_key": "room.dinner_table.wife.label",
+				"requires_item": "ketchup",
 				"sets_flag": "dinner_ketchup_given",
-				"removes_item": "番茄酱",
-				"objective": "看向墙上的黑白标志。",
-				"message": "她笑着接过番茄酱，叫你坐下。就在那一刻，墙上浮出了一个黑白标志。",
-				"hotspot_rect": Rect2(0.72, 0.2, 0.18, 0.36)
+				"removes_item": "ketchup",
+				"message_key": "room.dinner_table.wife.give_ketchup.message",
+				"hotspot_rect": Rect2(0.313, 0.208, 0.374, 0.53)
 			},
 			{
-				"id": "wife",
-				"label": "妻子",
-				"requires_missing_item": "番茄酱",
+				"id": "wife-needs-ketchup",
+				"label_key": "room.dinner_table.wife.label",
+				"requires_missing_item": "ketchup",
 				"requires_flag_false": "dinner_ketchup_given",
-				"message": "她看着你，轻声问：番茄酱呢？",
-				"hotspot_rect": Rect2(0.72, 0.2, 0.18, 0.36)
+				"message_key": "room.dinner_table.wife.ask_ketchup.message",
+				"hotspot_rect": Rect2(0.313, 0.208, 0.374, 0.53)
 			},
 			{
-				"id": "wife",
+				"id": "wife-after-ketchup",
 				"label": "妻子",
 				"requires_flag_true": "dinner_ketchup_given",
 				"message": "她笑得很自然，像是完全看不见墙上的异样。",
-				"hotspot_rect": Rect2(0.72, 0.2, 0.18, 0.36)
+				"hotspot_rect": Rect2(0.313, 0.208, 0.374, 0.53)
 			},
 			{
-				"id": "dinner",
+				"id": "food",
 				"label": "饭菜",
 				"message": "热气从饭菜上缓缓升起，真实得让人不敢怀疑。",
-				"hotspot_rect": Rect2(0.26, 0.58, 0.34, 0.16)
+				"hotspot_rect": Rect2(0.044, 0.63, 0.548, 0.245)
 			},
 			{
 				"id": "symbol",
@@ -46,14 +44,14 @@ static func build() -> Dictionary:
 				"requires_flag_true": "dinner_ketchup_given",
 				"message": "那个标志把你的视线牢牢扯过去，直到房间、餐桌和你的呼吸都像一起坠了下去。",
 				"goto_room": "good_ending_question",
-				"hotspot_rect": Rect2(0.12, 0.18, 0.14, 0.18)
+				"hotspot_rect": Rect2(0.655, 0.107, 0.197, 0.233)
 			},
 			{
-				"id": "back",
+				"id": "back-hall",
 				"label": "回走廊",
 				"message": "你退回走廊，房间里的暖意却仍比外面的公寓更像现实。",
 				"goto_room": "third_floor_residential_normal",
-				"hotspot_rect": Rect2(0.42, 0.78, 0.18, 0.12)
+				"hotspot_rect": Rect2(0.0, 0.176, 0.219, 0.692)
 			}
 		]
 	}
