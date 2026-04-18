@@ -25,10 +25,15 @@ SceneRouter="*res://godot/scripts/core/scene_router.gd"
 
 [display]
 
-window/size/viewport_width=1600
-window/size/viewport_height=900
+window/size/viewport_width=2560
+window/size/viewport_height=1440
+window/size/mode="fullscreen"
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[interface]
+
+theme/default_font_size=32
 
 [input]
 

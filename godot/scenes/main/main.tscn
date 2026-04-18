@@ -1,7 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://ddbx6mgpk6n8p"]
+[gd_scene load_steps=9 format=3 uid="uid://ddbx6mgpk6n8p"]
 
 [ext_resource type="Script" path="res://godot/scripts/main/main.gd" id="1_7euvc"]
 [ext_resource type="Script" path="res://godot/scripts/ui/hud.gd" id="2_f0i5n"]
+[ext_resource type="AudioStream" path="res://godot/sounds/bgm.wav" id="3_bgm"]
+[ext_resource type="AudioStream" path="res://godot/sounds/eating.mp3" id="4_eating"]
+[ext_resource type="AudioStream" path="res://godot/sounds/footstep.wav" id="5_footstep"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_title"]
 font_size = 34
@@ -69,9 +72,15 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
+[node name="Eyebrow" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Point & Click Horror"
+uppercase = true
+
 [node name="Title" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn"]
 layout_mode = 2
-text = "Day Of Arrival"
+text = "降临之日"
 label_settings = SubResource("LabelSettings_title")
 
 [node name="RoomName" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn"]
@@ -83,6 +92,14 @@ text = "Parking Lot"
 layout_mode = 2
 alignment = 2
 theme_override_constants/separation = 10
+
+[node name="MenuButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions"]
+layout_mode = 2
+text = "主界面"
+
+[node name="RestartButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions"]
+layout_mode = 2
+text = "重新开始"
 
 [node name="ObjectiveButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions"]
 layout_mode = 2
@@ -119,7 +136,7 @@ text = "The rain has stopped, but the night still feels unfinished."
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 2
 size_flags_vertical = 3
-ratio = 1.77778
+ratio = 1.5
 stretch_mode = 2
 
 [node name="RoomVisualFrame" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual"]
@@ -202,11 +219,27 @@ text = "Inventory"
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="RailHint" type="Label" parent="RootMargin/Layout/RightRail/HUDMargin/HUDStack"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-autowrap_mode = 3
-text = "Use Files to review notes and Goal to check what to do next."
+[node name="BGMPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_bgm")
+volume_db = -8.0
+autoplay = true
+bus = &"Master"
+
+[node name="EatingAmbientPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_eating")
+volume_db = -7.8
+bus = &"Master"
+
+[node name="FootstepAmbientPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_footstep")
+volume_db = -6.6
+bus = &"Master"
+
+[node name="TransitionPlayer" type="AudioStreamPlayer" parent="."]
+bus = &"Master"
+
+[node name="UISoundPlayer" type="AudioStreamPlayer" parent="."]
+bus = &"Master"
 
 [node name="InspectOverlay" type="ColorRect" parent="."]
 visible = false
@@ -307,6 +340,96 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 color = Color(0.02, 0.02, 0.03, 0.84)
+
+[node name="CodeOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0.02, 0.02, 0.03, 0.84)
+
+[node name="CodeCenter" type="CenterContainer" parent="CodeOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CodePanel" type="PanelContainer" parent="CodeOverlay/CodeCenter"]
+custom_minimum_size = Vector2(520, 260)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="CodeMargin" type="MarginContainer" parent="CodeOverlay/CodeCenter/CodePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="CodeStack" type="VBoxContainer" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="CodeTitle" type="Label" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "Keypad"
+
+[node name="CodePrompt" type="RichTextLabel" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack"]
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+text = "Enter the apartment entrance code"
+
+[node name="CodeInput" type="LineEdit" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack"]
+layout_mode = 2
+placeholder_text = "0327"
+
+[node name="CodeFeedback" type="Label" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack"]
+layout_mode = 2
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.937255, 0.568627, 0.501961, 1)
+text = ""
+
+[node name="CodeActions" type="HBoxContainer" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack"]
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 12
+
+[node name="CodeCancelButton" type="Button" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeActions"]
+layout_mode = 2
+text = "Cancel"
+
+[node name="CodeConfirmButton" type="Button" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeActions"]
+layout_mode = 2
+text = "Confirm"
+
+[node name="BlinkOverlay" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Flash" type="ColorRect" parent="BlinkOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
 
 [node name="DocumentsCenter" type="CenterContainer" parent="DocumentsOverlay"]
 layout_mode = 1
