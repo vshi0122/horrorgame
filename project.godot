@@ -23,6 +23,7 @@ config/features=PackedStringArray("4.6")
 I18n="*res://godot/scripts/core/i18n.gd"
 GameState="*res://godot/scripts/core/game_state.gd"
 SceneRouter="*res://godot/scripts/core/scene_router.gd"
+SoundManager="*res://godot/scripts/core/sound_manager.gd"
 
 [display]
 

@@ -22,24 +22,7 @@ const MENU_CREDITS := [
 	{"role": "Playtesting", "names": ["lyl", "Matthew Sakitis"]},
 	{"role": "Special Thanks", "names": ["Everyone who stepped into this nightmare."]}
 ]
-
-const AUDIO_SOURCES := {
-	"bgm": preload("res://godot/sounds/bgm.wav"),
-	"eating": preload("res://godot/sounds/eating.mp3"),
-	"footstep": preload("res://godot/sounds/footstep.wav"),
-	"car": preload("res://godot/sounds/car.mp3"),
-	"correct_password": preload("res://godot/sounds/correct password.wav"),
-	"wrong_password": preload("res://godot/sounds/wrong.wav"),
-	"key": preload("res://godot/sounds/key.mp3"),
-	"doc": preload("res://godot/sounds/doc.wav"),
-	"cry": preload("res://godot/sounds/cry.wav"),
-	"jumpscare": preload("res://godot/sounds/jumpscare.wav"),
-	"roar": preload("res://godot/sounds/roar.wav"),
-	"ending2": preload("res://godot/sounds/ending2.wav"),
-	"scream": preload("res://godot/sounds/scream.wav"),
-	"open_something": preload("res://godot/sounds/open something.mp3"),
-	"open_room": preload("res://godot/sounds/openroom.mp3")
-}
+const MENU_BACKDROP := preload("res://godot/asserts/images/parkinglot.jpg")
 
 @onready var room_name_label: Label = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn/RoomName
 @onready var room_hint_label: RichTextLabel = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomHint
@@ -73,17 +56,24 @@ const AUDIO_SOURCES := {
 @onready var objective_overlay: ColorRect = $ObjectiveOverlay
 @onready var objective_value_label: RichTextLabel = $ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveValue
 @onready var objective_close_button: Button = $ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveHeader/ObjectiveCloseButton
-
-@onready var bgm_player: AudioStreamPlayer = $BGMPlayer
-@onready var eating_ambient_player: AudioStreamPlayer = $EatingAmbientPlayer
-@onready var footstep_ambient_player: AudioStreamPlayer = $FootstepAmbientPlayer
-@onready var transition_player: AudioStreamPlayer = $TransitionPlayer
-@onready var ui_sound_player: AudioStreamPlayer = $UISoundPlayer
+@onready var gameplay_root: MarginContainer = $RootMargin
+@onready var top_menu_button: Button = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/MenuButton
+@onready var top_restart_button: Button = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/RestartButton
 
 var selected_document_index: int = -1
 var active_inspect_data: Dictionary = {}
 var active_code_interaction_id: String = ""
 var active_code_data: Dictionary = {}
+var scene_keypad_input: String = ""
+var hotspot_edit_mode: bool = false
+var hotspot_editor_overlay: Control
+var hotspot_editor_panel: PanelContainer
+var hotspot_editor_status_label: Label
+var hotspot_editor_detail_label: RichTextLabel
+var hotspot_editor_selected_target: Dictionary = {}
+var hotspot_editor_drag_mode: String = ""
+var hotspot_editor_drag_start_mouse: Vector2 = Vector2.ZERO
+var hotspot_editor_drag_start_rect: Rect2 = Rect2()
 var is_transitioning: bool = false
 var ending_overlay: ColorRect
 var ending_card: PanelContainer
@@ -101,6 +91,12 @@ var main_menu_nav: HBoxContainer
 var main_menu_scroll: ScrollContainer
 var main_menu_body_stack: VBoxContainer
 var main_menu_close_button: Button
+var main_menu_shell: PanelContainer
+var main_menu_home_panel: PanelContainer
+var main_menu_home_actions: VBoxContainer
+var main_menu_footer: HBoxContainer
+var main_menu_endings_stat_value: Label
+var main_menu_documents_stat_value: Label
 var is_main_menu_open: bool = true
 var current_menu_tab: String = "home"
 var selected_menu_document_id: String = ""
@@ -112,6 +108,8 @@ func _ready() -> void:
 	GameState.room_changed.connect(_refresh_room)
 	GameState.hud_changed.connect(_refresh_hud)
 	hotspot_layer.resized.connect(_rebuild_hotspots)
+	top_menu_button.pressed.connect(_show_main_menu_home)
+	top_restart_button.pressed.connect(_restart_from_topbar)
 	documents_button.pressed.connect(_show_documents_overlay)
 	objective_button.pressed.connect(_show_objective_overlay)
 	documents_close_button.pressed.connect(_hide_documents_overlay)
@@ -124,7 +122,7 @@ func _ready() -> void:
 	code_input.text_submitted.connect(_on_code_text_submitted)
 	
 	# Start BGM
-	bgm_player.play()
+	SoundManager.play_bgm()
 	_sync_scene_ambient(GameState.current_room_id)
 	_build_web_ui_overlays()
 	_apply_web_ui_theme()
@@ -132,6 +130,18 @@ func _ready() -> void:
 	_refresh_room(GameState.current_room_id)
 	_refresh_hud()
 	_show_main_menu_home()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F2:
+			_toggle_hotspot_edit_mode()
+			get_viewport().set_input_as_handled()
+			return
+		if hotspot_edit_mode and event.ctrl_pressed and event.keycode == KEY_C:
+			_copy_selected_hotspot_rect()
+			get_viewport().set_input_as_handled()
+			return
 
 
 func _text(data: Dictionary, field: String, fallback: String = "") -> String:
@@ -189,6 +199,13 @@ func _refresh_room(room_id: String) -> void:
 
 	for child: Node in interaction_list.get_children():
 		child.queue_free()
+
+	if _has_scene_keypad(room):
+		var keypad_interaction := _get_scene_keypad_interaction(room)
+		if not keypad_interaction.is_empty():
+			active_code_interaction_id = String(keypad_interaction.get("id", ""))
+			active_code_data = keypad_interaction.get("code_input", {})
+			scene_keypad_input = ""
 
 	for interaction: Dictionary in SceneRouter.get_interactions(room_id):
 		if not SceneRouter.is_interaction_available(interaction):
@@ -249,6 +266,8 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 		_show_code_overlay(code_input_data)
 		return
 
+	var unlocked_document_count_before := GameState.unlocked_documents.size()
+
 	if interaction.get("goto_room", "") != "":
 		var transition_audio = interaction.get("transition_sound", "footstep")
 		await _play_blink_transition(func():
@@ -265,83 +284,34 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	
 
 	_refresh_hud()
+	var gained_new_document := GameState.unlocked_documents.size() > unlocked_document_count_before
 	
 	# Play UI sounds based on interaction
 	var sound_kind = interaction.get("sound", "")
-	if sound_kind != "":
+	if sound_kind == "doc":
+		if gained_new_document:
+			_play_ui_sound(sound_kind)
+	elif sound_kind != "":
 		_play_ui_sound(sound_kind)
 	
 	# Legacy hardcoded sounds
 	if interaction_id == "trunk":
 		_play_ui_sound("key")
-	elif interaction_id == "mailbox":
+	elif interaction_id == "mailbox" and gained_new_document:
 		_play_ui_sound("doc")
-	elif interaction_id in ["door", "elevator"]:
-		_play_ui_sound("open")
 
 
 func _sync_scene_ambient(room_id: String) -> void:
-	var should_play_eating = room_id == "thirdFloorResidential"
-	var should_play_footsteps = GameState.flags.get("stairwellPhotoFootstepsActive", false) and not ["thirdFloorHall", "thirdFloorResidential"].has(room_id)
-	
-	if not should_play_eating:
-		eating_ambient_player.stop()
-	else:
-		if not eating_ambient_player.playing:
-			eating_ambient_player.play()
-	
-	if not should_play_footsteps:
-		footstep_ambient_player.stop()
-	else:
-		if not footstep_ambient_player.playing:
-			footstep_ambient_player.play()
+	SoundManager.sync_scene_ambient(room_id)
 
 func _play_ui_sound(kind: String) -> void:
-	var stream: AudioStream
-	match kind:
-		"key":
-			stream = AUDIO_SOURCES["key"]
-			ui_sound_player.volume_db = linear_to_db(0.5)
-		"doc":
-			stream = AUDIO_SOURCES["doc"]
-			ui_sound_player.volume_db = linear_to_db(0.46)
-		"open":
-			stream = AUDIO_SOURCES["open_something"]
-			ui_sound_player.volume_db = linear_to_db(0.46)
-		_:
-			return
-	ui_sound_player.stream = stream
-	ui_sound_player.play()
+	SoundManager.play_ui_sound(kind)
 
 func _play_feedback_sound(audio_key: String, volume: float = 0.42, wait_for_completion: bool = false, wait_ms: float = 6.0) -> void:
-	var stream = AUDIO_SOURCES.get(audio_key)
-	if stream:
-		transition_player.stream = stream
-		transition_player.volume_db = linear_to_db(volume)
-		transition_player.play()
-		if wait_for_completion:
-			await get_tree().create_timer(wait_ms).timeout
+	await SoundManager.play_feedback_sound(audio_key, volume, wait_for_completion, wait_ms)
 
 func _play_scene_transition_sound(audio_key: String = "footstep", volume: float = 0.38, wait_for_completion: bool = false, wait_ms: float = 6.0) -> void:
-	var stream = AUDIO_SOURCES.get(audio_key)
-	if not stream:
-		return
-	
-	if audio_key == "footstep":
-		# Play three times with offsets
-		transition_player.stream = stream
-		transition_player.volume_db = linear_to_db(volume)
-		transition_player.play()
-		await get_tree().create_timer(0.26).timeout
-		transition_player.play()
-		await get_tree().create_timer(0.26).timeout
-		transition_player.play()
-	else:
-		transition_player.stream = stream
-		transition_player.volume_db = linear_to_db(volume)
-		transition_player.play()
-		if wait_for_completion:
-			await get_tree().create_timer(wait_ms).timeout
+	await SoundManager.play_scene_transition_sound(audio_key, volume, wait_for_completion, wait_ms)
 
 func _apply_background(texture_path: String) -> void:
 	if texture_path == "":
@@ -426,61 +396,138 @@ func _build_web_ui_overlays() -> void:
 	main_menu_overlay.name = "MainMenuOverlay"
 	main_menu_overlay.visible = false
 	main_menu_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	main_menu_overlay.color = Color(0.02, 0.025, 0.035, 0.94)
+	main_menu_overlay.color = Color(0.01, 0.015, 0.02, 1.0)
 	add_child(main_menu_overlay)
 	move_child(main_menu_overlay, get_child_count() - 1)
 
-	var menu_center := CenterContainer.new()
-	menu_center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	main_menu_overlay.add_child(menu_center)
+	var menu_backdrop := TextureRect.new()
+	menu_backdrop.name = "Backdrop"
+	menu_backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	menu_backdrop.texture = MENU_BACKDROP
+	menu_backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	menu_backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	main_menu_overlay.add_child(menu_backdrop)
 
-	var menu_shell := PanelContainer.new()
-	menu_shell.custom_minimum_size = Vector2(760, 560)
-	menu_center.add_child(menu_shell)
+	var menu_scrim := ColorRect.new()
+	menu_scrim.name = "Scrim"
+	menu_scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	menu_scrim.color = Color(0.02, 0.025, 0.035, 0.72)
+	main_menu_overlay.add_child(menu_scrim)
 
 	var menu_margin := MarginContainer.new()
+	menu_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	menu_margin.add_theme_constant_override("margin_left", 28)
 	menu_margin.add_theme_constant_override("margin_top", 28)
 	menu_margin.add_theme_constant_override("margin_right", 28)
 	menu_margin.add_theme_constant_override("margin_bottom", 28)
-	menu_shell.add_child(menu_margin)
+	main_menu_overlay.add_child(menu_margin)
+
+	var menu_layout := HBoxContainer.new()
+	menu_layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	menu_layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	menu_layout.add_theme_constant_override("separation", 24)
+	menu_margin.add_child(menu_layout)
+
+	main_menu_home_panel = PanelContainer.new()
+	main_menu_home_panel.custom_minimum_size = Vector2(580, 0)
+	main_menu_home_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_menu_home_panel.size_flags_horizontal = Control.SIZE_FILL
+	menu_layout.add_child(main_menu_home_panel)
+
+	var hero_margin := MarginContainer.new()
+	hero_margin.add_theme_constant_override("margin_left", 26)
+	hero_margin.add_theme_constant_override("margin_top", 28)
+	hero_margin.add_theme_constant_override("margin_right", 26)
+	hero_margin.add_theme_constant_override("margin_bottom", 28)
+	main_menu_home_panel.add_child(hero_margin)
 
 	main_menu_content = VBoxContainer.new()
 	main_menu_content.add_theme_constant_override("separation", 18)
-	menu_margin.add_child(main_menu_content)
+	main_menu_content.alignment = BoxContainer.ALIGNMENT_CENTER
+	hero_margin.add_child(main_menu_content)
 
 	var menu_kicker := Label.new()
-	menu_kicker.text = "A Point & Click Horror Game"
+	menu_kicker.text = "A POINT & CLICK HORROR"
 	menu_kicker.add_theme_font_size_override("font_size", 12)
 	menu_kicker.add_theme_color_override("font_color", Color(0.847, 0.765, 0.604, 0.84))
+	menu_kicker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	main_menu_content.add_child(menu_kicker)
 
 	main_menu_title_label = Label.new()
 	main_menu_title_label.text = "Day Of Arrival"
-	main_menu_title_label.add_theme_font_size_override("font_size", 48)
+	main_menu_title_label.add_theme_font_size_override("font_size", 62)
 	main_menu_title_label.add_theme_color_override("font_color", Color(0.97, 0.96, 0.92, 1))
+	main_menu_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	main_menu_content.add_child(main_menu_title_label)
 
 	main_menu_body_label = RichTextLabel.new()
 	main_menu_body_label.bbcode_enabled = true
 	main_menu_body_label.fit_content = true
 	main_menu_body_label.scroll_active = false
+	main_menu_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	main_menu_body_label.add_theme_color_override("default_color", Color(0.74, 0.78, 0.84, 0.96))
 	main_menu_content.add_child(main_menu_body_label)
 
 	var divider := ColorRect.new()
-	divider.custom_minimum_size = Vector2(0, 1)
+	divider.custom_minimum_size = Vector2(1, 44)
+	divider.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	divider.color = Color(0.85, 0.76, 0.60, 0.24)
 	main_menu_content.add_child(divider)
 
+	main_menu_home_actions = VBoxContainer.new()
+	main_menu_home_actions.custom_minimum_size = Vector2(252, 0)
+	main_menu_home_actions.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	main_menu_home_actions.add_theme_constant_override("separation", 10)
+	main_menu_content.add_child(main_menu_home_actions)
+
+	main_menu_footer = HBoxContainer.new()
+	main_menu_footer.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	main_menu_footer.alignment = BoxContainer.ALIGNMENT_CENTER
+	main_menu_footer.add_theme_constant_override("separation", 0)
+	main_menu_content.add_child(main_menu_footer)
+
+	var ending_stat := _build_menu_footer_stat()
+	main_menu_endings_stat_value = ending_stat.get_node("Value") as Label
+	var ending_stat_label := ending_stat.get_node("Label") as Label
+	ending_stat_label.text = "UNLOCKED ENDINGS"
+	main_menu_footer.add_child(ending_stat)
+
+	var footer_sep := ColorRect.new()
+	footer_sep.custom_minimum_size = Vector2(1, 30)
+	footer_sep.color = Color(1, 1, 1, 0.10)
+	main_menu_footer.add_child(footer_sep)
+
+	var document_stat := _build_menu_footer_stat()
+	main_menu_documents_stat_value = document_stat.get_node("Value") as Label
+	var document_stat_label := document_stat.get_node("Label") as Label
+	document_stat_label.text = "ARCHIVED TEXTS"
+	main_menu_footer.add_child(document_stat)
+
 	main_menu_stats_label = Label.new()
-	main_menu_stats_label.add_theme_font_size_override("font_size", 14)
-	main_menu_stats_label.add_theme_color_override("font_color", Color(0.847, 0.765, 0.604, 0.92))
+	main_menu_stats_label.visible = false
 	main_menu_content.add_child(main_menu_stats_label)
+
+	main_menu_shell = PanelContainer.new()
+	main_menu_shell.custom_minimum_size = Vector2(760, 560)
+	main_menu_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_menu_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	menu_layout.add_child(main_menu_shell)
+
+	var shell_margin := MarginContainer.new()
+	shell_margin.add_theme_constant_override("margin_left", 24)
+	shell_margin.add_theme_constant_override("margin_top", 24)
+	shell_margin.add_theme_constant_override("margin_right", 24)
+	shell_margin.add_theme_constant_override("margin_bottom", 24)
+	main_menu_shell.add_child(shell_margin)
+
+	var shell_stack := VBoxContainer.new()
+	shell_stack.add_theme_constant_override("separation", 18)
+	shell_margin.add_child(shell_stack)
 
 	var menu_nav_row := HBoxContainer.new()
 	menu_nav_row.add_theme_constant_override("separation", 10)
-	main_menu_content.add_child(menu_nav_row)
+	shell_stack.add_child(menu_nav_row)
 
 	main_menu_nav = HBoxContainer.new()
 	main_menu_nav.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -496,7 +543,7 @@ func _build_web_ui_overlays() -> void:
 	main_menu_scroll = ScrollContainer.new()
 	main_menu_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	main_menu_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	main_menu_content.add_child(main_menu_scroll)
+	shell_stack.add_child(main_menu_scroll)
 
 	var scroll_margin := MarginContainer.new()
 	scroll_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -511,6 +558,42 @@ func _build_web_ui_overlays() -> void:
 	main_menu_body_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	main_menu_body_stack.add_theme_constant_override("separation", 14)
 	scroll_margin.add_child(main_menu_body_stack)
+
+	hotspot_editor_overlay = Control.new()
+	hotspot_editor_overlay.name = "HotspotEditorOverlay"
+	hotspot_editor_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hotspot_editor_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hotspot_editor_overlay.visible = false
+	hotspot_layer.add_child(hotspot_editor_overlay)
+
+	hotspot_editor_panel = PanelContainer.new()
+	hotspot_editor_panel.name = "HotspotEditorPanel"
+	hotspot_editor_panel.visible = false
+	hotspot_editor_panel.position = Vector2(28, 28)
+	hotspot_editor_panel.size = Vector2(360, 140)
+	add_child(hotspot_editor_panel)
+	move_child(hotspot_editor_panel, get_child_count() - 1)
+
+	var editor_margin := MarginContainer.new()
+	editor_margin.add_theme_constant_override("margin_left", 14)
+	editor_margin.add_theme_constant_override("margin_top", 12)
+	editor_margin.add_theme_constant_override("margin_right", 14)
+	editor_margin.add_theme_constant_override("margin_bottom", 12)
+	hotspot_editor_panel.add_child(editor_margin)
+
+	var editor_stack := VBoxContainer.new()
+	editor_stack.add_theme_constant_override("separation", 8)
+	editor_margin.add_child(editor_stack)
+
+	hotspot_editor_status_label = Label.new()
+	hotspot_editor_status_label.add_theme_color_override("font_color", Color(0.95, 0.90, 0.76, 1))
+	editor_stack.add_child(hotspot_editor_status_label)
+
+	hotspot_editor_detail_label = RichTextLabel.new()
+	hotspot_editor_detail_label.bbcode_enabled = true
+	hotspot_editor_detail_label.fit_content = true
+	hotspot_editor_detail_label.scroll_active = false
+	editor_stack.add_child(hotspot_editor_detail_label)
 
 
 func _build_ending_stat(title: String) -> PanelContainer:
@@ -544,6 +627,30 @@ func _build_ending_stat(title: String) -> PanelContainer:
 	stack.add_child(value)
 
 	return panel
+
+
+func _build_menu_footer_stat() -> VBoxContainer:
+	var stack := VBoxContainer.new()
+	stack.name = "Stack"
+	stack.custom_minimum_size = Vector2(136, 0)
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	stack.add_theme_constant_override("separation", 5)
+
+	var value := Label.new()
+	value.name = "Value"
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value.add_theme_font_size_override("font_size", 22)
+	value.add_theme_color_override("font_color", Color(0.847, 0.765, 0.604, 0.98))
+	stack.add_child(value)
+
+	var label := Label.new()
+	label.name = "Label"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_color_override("font_color", Color(0.74, 0.78, 0.84, 0.86))
+	stack.add_child(label)
+
+	return stack
 
 
 func _refresh_ending_overlay(room: Dictionary) -> void:
@@ -603,7 +710,9 @@ func _apply_web_ui_theme() -> void:
 	_style_overlay_panel($ObjectiveOverlay/ObjectiveCenter/ObjectivePanel)
 	_style_overlay_panel($DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer)
 	_style_overlay_panel($InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame, 18)
-	_style_overlay_panel(main_menu_overlay.get_child(0).get_child(0), 26)
+	_style_overlay_panel(main_menu_shell, 26)
+	main_menu_home_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	hotspot_editor_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.07, 0.10, 0.94), Color(0.95, 0.90, 0.76, 0.32), 16))
 
 	documents_list.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.72), Color(0.73, 0.84, 1.0, 0.08), 14))
 	$RootMargin/Layout/RightRail/HUDMargin/HUDStack/InventoryValue.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.72), Color(0.73, 0.84, 1.0, 0.08), 14))
@@ -611,6 +720,8 @@ func _apply_web_ui_theme() -> void:
 	code_input.add_theme_stylebox_override("focus", _build_panel_style(Color(0.05, 0.06, 0.08, 0.96), Color(0.85, 0.76, 0.60, 0.58), 12))
 	code_input.add_theme_color_override("font_color", Color(0.96, 0.96, 0.95, 1))
 	code_input.add_theme_color_override("placeholder_color", Color(0.59, 0.64, 0.71, 0.9))
+	hotspot_editor_detail_label.add_theme_color_override("default_color", Color(0.93, 0.95, 0.97, 0.96))
+	_refresh_hotspot_editor_panel()
 
 
 func _style_overlay_panel(panel: PanelContainer, radius: int = 20) -> void:
@@ -618,16 +729,35 @@ func _style_overlay_panel(panel: PanelContainer, radius: int = 20) -> void:
 
 
 func _add_menu_button() -> void:
-	var top_actions := $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions
-	if top_actions.has_node("MenuButton"):
-		return
-	var menu_button := Button.new()
-	menu_button.name = "MenuButton"
-	menu_button.text = I18n.t("ui.top.menu")
-	menu_button.pressed.connect(_show_main_menu_home)
-	top_actions.add_child(menu_button)
-	top_actions.move_child(menu_button, 0)
-	_style_button(menu_button, false)
+	_style_button(top_menu_button, false)
+	_style_button(top_restart_button, false)
+
+
+func _hide_secondary_overlays() -> void:
+	documents_overlay.visible = false
+	objective_overlay.visible = false
+	inspect_overlay.visible = false
+	code_overlay.visible = false
+
+
+func _set_gameplay_ui_visible(visible: bool) -> void:
+	gameplay_root.visible = visible
+	if ending_overlay != null:
+		ending_overlay.visible = visible and not SceneRouter.get_room(GameState.current_room_id).get("ending_data", {}).is_empty()
+
+
+func _open_main_menu(tab: String) -> void:
+	current_menu_tab = tab
+	is_main_menu_open = true
+	_hide_secondary_overlays()
+	_set_gameplay_ui_visible(false)
+	main_menu_overlay.visible = true
+	main_menu_close_button.visible = _can_resume_game()
+
+
+func _set_main_menu_view_mode(home_visible: bool) -> void:
+	main_menu_home_panel.visible = home_visible
+	main_menu_shell.visible = not home_visible
 
 
 func _clear_main_menu_content() -> void:
@@ -637,29 +767,24 @@ func _clear_main_menu_content() -> void:
 		child.queue_free()
 	for child: Node in main_menu_body_stack.get_children():
 		child.queue_free()
+	for child: Node in main_menu_home_actions.get_children():
+		child.queue_free()
 
 
 func _show_main_menu_home() -> void:
-	current_menu_tab = "home"
-	is_main_menu_open = true
-	main_menu_overlay.visible = true
-	main_menu_close_button.visible = _can_resume_game()
+	_open_main_menu("home")
+	_set_main_menu_view_mode(true)
 	_clear_main_menu_content()
 	main_menu_title_label.text = I18n.t("ui.menu.home.title")
 	main_menu_body_label.text = I18n.t("ui.menu.home.body")
-	main_menu_stats_label.text = I18n.t("ui.menu.home.stats", {
-		"endings": GameState.unlocked_endings.size(),
-		"ending_total": MENU_ENDING_TOTAL,
-		"documents": GameState.archived_documents.size(),
-		"document_total": MENU_DOCUMENT_TOTAL
-	})
+	main_menu_endings_stat_value.text = "%d / %d" % [GameState.unlocked_endings.size(), MENU_ENDING_TOTAL]
+	main_menu_documents_stat_value.text = "%d / %d" % [GameState.archived_documents.size(), MENU_DOCUMENT_TOTAL]
 
 	var actions: Array[Dictionary] = []
 	if _can_resume_game():
 		actions.append({"label": I18n.t("ui.menu.action.continue"), "call": "_close_main_menu", "accent": true})
 	else:
 		actions.append({"label": I18n.t("ui.menu.action.start"), "call": "_close_main_menu", "accent": true})
-	actions.append({"label": I18n.t("ui.menu.action.restart"), "call": "_restart_from_menu", "accent": false})
 	actions.append({"label": I18n.t("ui.menu.action.endings"), "call": "_show_main_menu_endings", "accent": false})
 	actions.append({"label": I18n.t("ui.menu.action.documents"), "call": "_show_main_menu_documents", "accent": false})
 	actions.append({"label": I18n.t("ui.menu.action.credits"), "call": "_show_main_menu_credits", "accent": false})
@@ -667,28 +792,32 @@ func _show_main_menu_home() -> void:
 	for action in actions:
 		var button := Button.new()
 		button.text = action["label"]
+		button.custom_minimum_size = Vector2(0, 56)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.pressed.connect(Callable(self, String(action["call"])))
-		_style_button(button, bool(action["accent"]))
-		main_menu_body_stack.add_child(button)
+		_style_menu_action(button, bool(action["accent"]))
+		main_menu_home_actions.add_child(button)
 
 
 func _show_main_menu_endings() -> void:
-	current_menu_tab = "endings"
-	is_main_menu_open = true
-	main_menu_overlay.visible = true
-	main_menu_close_button.visible = _can_resume_game()
+	_open_main_menu("endings")
+	_set_main_menu_view_mode(false)
 	_clear_main_menu_content()
 	main_menu_title_label.text = I18n.t("ui.menu.endings.title")
 	main_menu_body_label.text = I18n.t("ui.menu.endings.body")
 	main_menu_stats_label.text = I18n.t("ui.menu.endings.stats", {"count": GameState.unlocked_endings.size(), "total": MENU_ENDING_TOTAL})
-	_add_menu_nav_button(I18n.t("ui.menu.nav.home"), _show_main_menu_home, false)
-	_add_menu_nav_button(I18n.t("ui.menu.nav.endings"), _show_main_menu_endings, true)
-	_add_menu_nav_button(I18n.t("ui.menu.nav.documents"), _show_main_menu_documents, false)
-	_add_menu_nav_button(I18n.t("ui.menu.nav.credits"), _show_main_menu_credits, false)
+	_add_archive_header(I18n.t("ui.menu.endings.title"), "%d / %d" % [GameState.unlocked_endings.size(), MENU_ENDING_TOTAL])
+	main_menu_body_stack.add_child(_build_archive_intro(I18n.t("ui.menu.endings.title"), I18n.t("ui.menu.endings.body")))
+
+	var ending_grid := GridContainer.new()
+	ending_grid.columns = 2
+	ending_grid.add_theme_constant_override("h_separation", 16)
+	ending_grid.add_theme_constant_override("v_separation", 16)
+	main_menu_body_stack.add_child(ending_grid)
 
 	for ending in MENU_ENDING_CATALOG:
 		var unlocked := GameState.unlocked_endings.has(String(ending["id"]))
-		main_menu_body_stack.add_child(_build_archive_card(
+		ending_grid.add_child(_build_archive_card(
 			String(ending["order"]),
 			String(ending["name"]) if unlocked else I18n.t("ui.menu.endings.locked_name"),
 			String(ending["teaser"]) if unlocked else I18n.t("ui.menu.endings.locked_body"),
@@ -698,18 +827,14 @@ func _show_main_menu_endings() -> void:
 
 
 func _show_main_menu_documents() -> void:
-	current_menu_tab = "documents"
-	is_main_menu_open = true
-	main_menu_overlay.visible = true
-	main_menu_close_button.visible = _can_resume_game()
+	_open_main_menu("documents")
+	_set_main_menu_view_mode(false)
 	_clear_main_menu_content()
 	main_menu_title_label.text = I18n.t("ui.menu.documents.title")
 	main_menu_body_label.text = I18n.t("ui.menu.documents.body")
 	main_menu_stats_label.text = I18n.t("ui.menu.documents.stats", {"count": GameState.archived_documents.size(), "total": MENU_DOCUMENT_TOTAL})
-	_add_menu_nav_button(I18n.t("ui.menu.nav.home"), _show_main_menu_home, false)
-	_add_menu_nav_button(I18n.t("ui.menu.nav.endings"), _show_main_menu_endings, false)
-	_add_menu_nav_button(I18n.t("ui.menu.nav.documents"), _show_main_menu_documents, true)
-	_add_menu_nav_button(I18n.t("ui.menu.nav.credits"), _show_main_menu_credits, false)
+	_add_archive_header(I18n.t("ui.menu.documents.title"), "%d / %d" % [GameState.archived_documents.size(), MENU_DOCUMENT_TOTAL])
+	main_menu_body_stack.add_child(_build_archive_intro(I18n.t("ui.menu.documents.title"), I18n.t("ui.menu.documents.body")))
 
 	if GameState.archived_documents.is_empty():
 		var empty_panel := _build_archive_card(
@@ -797,18 +922,14 @@ func _show_main_menu_documents() -> void:
 
 
 func _show_main_menu_credits() -> void:
-	current_menu_tab = "credits"
-	is_main_menu_open = true
-	main_menu_overlay.visible = true
-	main_menu_close_button.visible = _can_resume_game()
+	_open_main_menu("credits")
+	_set_main_menu_view_mode(false)
 	_clear_main_menu_content()
 	main_menu_title_label.text = I18n.t("ui.menu.credits.title")
 	main_menu_body_label.text = I18n.t("ui.menu.credits.body")
 	main_menu_stats_label.text = I18n.t("ui.menu.credits.stats")
-	_add_menu_nav_button(I18n.t("ui.menu.nav.home"), _show_main_menu_home, false)
-	_add_menu_nav_button(I18n.t("ui.menu.nav.endings"), _show_main_menu_endings, false)
-	_add_menu_nav_button(I18n.t("ui.menu.nav.documents"), _show_main_menu_documents, false)
-	_add_menu_nav_button(I18n.t("ui.menu.nav.credits"), _show_main_menu_credits, true)
+	_add_archive_header(I18n.t("ui.menu.credits.title"), "Staff Roll")
+	main_menu_body_stack.add_child(_build_archive_intro(I18n.t("ui.menu.credits.title"), I18n.t("ui.menu.credits.body")))
 
 	for entry in MENU_CREDITS:
 		main_menu_body_stack.add_child(_build_credit_block(String(entry["role"]), entry["names"]))
@@ -818,6 +939,21 @@ func _close_main_menu() -> void:
 	has_started_run = true
 	is_main_menu_open = false
 	main_menu_overlay.visible = false
+	_set_gameplay_ui_visible(true)
+	_refresh_room(GameState.current_room_id)
+	_refresh_hud()
+
+
+func _restart_from_topbar() -> void:
+	selected_menu_document_id = ""
+	GameState.reset()
+	has_started_run = true
+	_hide_secondary_overlays()
+	main_menu_overlay.visible = false
+	is_main_menu_open = false
+	_set_gameplay_ui_visible(true)
+	_refresh_room(GameState.current_room_id)
+	_refresh_hud()
 
 
 func _style_button(button: Button, accent: bool) -> void:
@@ -839,6 +975,27 @@ func _style_button(button: Button, accent: bool) -> void:
 	button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
 	button.add_theme_color_override("font_focus_color", Color(1, 1, 1, 1))
 	button.add_theme_constant_override("h_separation", 8)
+
+
+func _style_menu_action(button: Button, primary: bool) -> void:
+	var border := Color(1, 1, 1, 0.10)
+	var normal_bg := Color(1, 1, 1, 0.03)
+	var hover_bg := Color(1, 1, 1, 0.06)
+	var pressed_bg := Color(1, 1, 1, 0.10)
+	if primary:
+		border = Color(0.847, 0.765, 0.604, 0.50)
+		normal_bg = Color(0.847, 0.765, 0.604, 0.16)
+		hover_bg = Color(0.847, 0.765, 0.604, 0.24)
+		pressed_bg = Color(0.847, 0.765, 0.604, 0.30)
+
+	button.add_theme_stylebox_override("normal", _build_panel_style(normal_bg, border, 5))
+	button.add_theme_stylebox_override("hover", _build_panel_style(hover_bg, border, 5))
+	button.add_theme_stylebox_override("pressed", _build_panel_style(pressed_bg, border, 5))
+	button.add_theme_stylebox_override("focus", _build_panel_style(hover_bg, border, 5))
+	button.add_theme_color_override("font_color", Color(0.93, 0.95, 0.97, 1))
+	button.add_theme_color_override("font_hover_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_focus_color", Color(1, 1, 1, 1))
 
 
 func _build_panel_style(background_color: Color, border_color: Color, corner_radius: int = 18) -> StyleBoxFlat:
@@ -869,6 +1026,49 @@ func _add_menu_nav_button(label: String, callback: Callable, active: bool) -> vo
 	button.pressed.connect(callback)
 	_style_button(button, active)
 	main_menu_nav.add_child(button)
+
+
+func _add_archive_header(title: String, count_text: String) -> void:
+	var breadcrumb := Label.new()
+	breadcrumb.text = "%s  >  %s" % [I18n.t("ui.menu.home.title"), title]
+	breadcrumb.add_theme_color_override("font_color", Color(0.847, 0.765, 0.604, 0.92))
+	main_menu_nav.add_child(breadcrumb)
+
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_menu_nav.add_child(spacer)
+
+	var count_label := Label.new()
+	count_label.text = count_text
+	count_label.add_theme_color_override("font_color", Color(0.74, 0.78, 0.84, 0.92))
+	main_menu_nav.add_child(count_label)
+
+	var back_button := Button.new()
+	back_button.text = I18n.t("ui.menu.nav.home")
+	back_button.pressed.connect(_show_main_menu_home)
+	_style_menu_action(back_button, false)
+	main_menu_nav.add_child(back_button)
+
+
+func _build_archive_intro(title_text: String, subtitle_text: String) -> VBoxContainer:
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 8)
+
+	var title_label := Label.new()
+	title_label.text = title_text
+	title_label.add_theme_font_size_override("font_size", 30)
+	title_label.add_theme_color_override("font_color", Color(0.96, 0.95, 0.92, 1))
+	stack.add_child(title_label)
+
+	var subtitle_label := RichTextLabel.new()
+	subtitle_label.bbcode_enabled = true
+	subtitle_label.fit_content = true
+	subtitle_label.scroll_active = false
+	subtitle_label.text = subtitle_text
+	subtitle_label.add_theme_color_override("default_color", Color(0.74, 0.78, 0.84, 0.96))
+	stack.add_child(subtitle_label)
+
+	return stack
 
 
 func _build_archive_card(index_text: String, title_text: String, body_text: String, meta_text: String, unlocked: bool) -> PanelContainer:
@@ -925,6 +1125,7 @@ func _build_archive_card(index_text: String, title_text: String, body_text: Stri
 func _build_credit_block(role: String, names: Array) -> PanelContainer:
 	var card := PanelContainer.new()
 	card.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.07, 0.10, 0.96), Color(0.73, 0.84, 1.0, 0.10), 18))
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 16)
@@ -934,6 +1135,7 @@ func _build_credit_block(role: String, names: Array) -> PanelContainer:
 	card.add_child(margin)
 
 	var stack := VBoxContainer.new()
+	stack.alignment = BoxContainer.ALIGNMENT_CENTER
 	stack.add_theme_constant_override("separation", 8)
 	margin.add_child(stack)
 
@@ -941,12 +1143,14 @@ func _build_credit_block(role: String, names: Array) -> PanelContainer:
 	role_label.text = role
 	role_label.add_theme_font_size_override("font_size", 18)
 	role_label.add_theme_color_override("font_color", Color(0.847, 0.765, 0.604, 0.92))
+	role_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stack.add_child(role_label)
 
 	for name_variant in names:
 		var name_label := Label.new()
 		name_label.text = String(name_variant)
 		name_label.add_theme_color_override("font_color", Color(0.93, 0.95, 0.97, 0.96))
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		stack.add_child(name_label)
 
 	return card
@@ -1052,12 +1256,332 @@ func _add_hotspot_button(interaction: Dictionary) -> void:
 
 func _rebuild_hotspots() -> void:
 	for child: Node in hotspot_layer.get_children():
+		if child == hotspot_editor_overlay:
+			for editor_child: Node in hotspot_editor_overlay.get_children():
+				editor_child.queue_free()
+			continue
 		child.queue_free()
+
+	var room := SceneRouter.get_room(GameState.current_room_id)
+	var keypad_interaction_id := ""
+	if _has_scene_keypad(room):
+		keypad_interaction_id = String(room.get("scene_keypad", {}).get("interaction_id", ""))
 
 	for interaction: Dictionary in SceneRouter.get_interactions(GameState.current_room_id):
 		if not SceneRouter.is_interaction_available(interaction):
 			continue
+		if keypad_interaction_id != "" and String(interaction.get("id", "")) == keypad_interaction_id:
+			continue
 		_add_hotspot_button(interaction)
+
+	if _has_scene_keypad(room):
+		_build_scene_keypad(room)
+
+	if hotspot_editor_overlay.get_parent() != hotspot_layer:
+		hotspot_layer.add_child(hotspot_editor_overlay)
+	_refresh_hotspot_editor_overlay(room)
+
+
+func _has_scene_keypad(room: Dictionary) -> bool:
+	return room.has("scene_keypad") and room.get("scene_keypad", {}) is Dictionary
+
+
+func _get_scene_keypad_interaction(room: Dictionary) -> Dictionary:
+	if not _has_scene_keypad(room):
+		return {}
+	var interaction_id := String(room.get("scene_keypad", {}).get("interaction_id", ""))
+	if interaction_id == "":
+		return {}
+	return SceneRouter.get_interaction(room.get("id", ""), interaction_id)
+
+
+func _build_scene_keypad(room: Dictionary) -> void:
+	var keypad_config: Dictionary = room.get("scene_keypad", {})
+	var display_rect: Rect2 = keypad_config.get("display_rect", Rect2())
+
+	var parent_size := hotspot_layer.size
+	if parent_size == Vector2.ZERO:
+		parent_size = hotspot_layer.get_rect().size
+
+	var display_label := Label.new()
+	display_label.name = "Display"
+	display_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	display_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	display_label.text = scene_keypad_input if scene_keypad_input != "" else "----"
+	display_label.add_theme_font_size_override("font_size", 18)
+	display_label.add_theme_color_override("font_color", Color(0.90, 0.97, 1.0, 0.98))
+	if display_rect.size != Vector2.ZERO:
+		display_label.position = Vector2(display_rect.position.x * parent_size.x, display_rect.position.y * parent_size.y)
+		display_label.size = Vector2(display_rect.size.x * parent_size.x, display_rect.size.y * parent_size.y)
+		hotspot_layer.add_child(display_label)
+
+	var button_rects: Dictionary = keypad_config.get("button_rects", {})
+	for key_value in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "OK"]:
+		var key_rect: Rect2 = button_rects.get(key_value, Rect2())
+		if key_rect.size == Vector2.ZERO:
+			continue
+		var button := Button.new()
+		button.text = key_value
+		button.focus_mode = Control.FOCUS_NONE
+		button.pressed.connect(_on_scene_keypad_pressed.bind(key_value))
+		button.add_theme_stylebox_override("normal", _build_panel_style(Color(0.08, 0.12, 0.16, 0.82), Color(0.82, 0.88, 0.95, 0.18), 8))
+		button.add_theme_stylebox_override("hover", _build_panel_style(Color(0.12, 0.16, 0.22, 0.92), Color(0.95, 0.90, 0.76, 0.42), 8))
+		button.add_theme_stylebox_override("pressed", _build_panel_style(Color(0.16, 0.22, 0.28, 0.98), Color(0.95, 0.90, 0.76, 0.60), 8))
+		button.position = Vector2(key_rect.position.x * parent_size.x, key_rect.position.y * parent_size.y)
+		button.size = Vector2(key_rect.size.x * parent_size.x, key_rect.size.y * parent_size.y)
+		hotspot_layer.add_child(button)
+
+
+func _on_scene_keypad_pressed(key_value: String) -> void:
+	if is_transitioning or active_code_interaction_id == "":
+		return
+
+	match key_value:
+		"C":
+			scene_keypad_input = ""
+		"OK":
+			await _submit_code_value(scene_keypad_input)
+			return
+		_:
+			var expected_code := String(active_code_data.get("solution", ""))
+			if expected_code == "" or scene_keypad_input.length() >= expected_code.length():
+				return
+			scene_keypad_input += key_value
+
+	_rebuild_hotspots()
+
+
+func _toggle_hotspot_edit_mode() -> void:
+	hotspot_edit_mode = not hotspot_edit_mode
+	hotspot_editor_drag_mode = ""
+	hotspot_editor_selected_target = {}
+	hotspot_editor_overlay.visible = hotspot_edit_mode
+	hotspot_editor_overlay.mouse_filter = Control.MOUSE_FILTER_STOP if hotspot_edit_mode else Control.MOUSE_FILTER_IGNORE
+	hotspot_editor_panel.visible = hotspot_edit_mode
+	_refresh_hotspot_editor_panel()
+	_rebuild_hotspots()
+
+
+func _refresh_hotspot_editor_panel() -> void:
+	if hotspot_editor_status_label == null or hotspot_editor_detail_label == null:
+		return
+	hotspot_editor_status_label.text = "Hotspot Editor: %s" % ("ON" if hotspot_edit_mode else "OFF")
+	if hotspot_editor_selected_target.is_empty():
+		hotspot_editor_detail_label.text = "F2: toggle\nLeft drag: move\nRight drag: resize\nCtrl+C: copy selected Rect2"
+		return
+	var rect := _get_hotspot_rect_for_target(hotspot_editor_selected_target)
+	hotspot_editor_detail_label.text = "[b]%s[/b]\nRect2(%.4f, %.4f, %.4f, %.4f)" % [
+		String(hotspot_editor_selected_target.get("label", "hotspot")),
+		rect.position.x,
+		rect.position.y,
+		rect.size.x,
+		rect.size.y
+	]
+
+
+func _refresh_hotspot_editor_overlay(room: Dictionary) -> void:
+	if hotspot_editor_overlay == null:
+		return
+	for child: Node in hotspot_editor_overlay.get_children():
+		child.queue_free()
+	if not hotspot_edit_mode:
+		return
+
+	for editable in _collect_editable_hotspots(room):
+		_add_hotspot_editor_handle(editable)
+
+
+func _collect_editable_hotspots(room: Dictionary) -> Array:
+	var items: Array = []
+	var interactions: Array = room.get("interactions", [])
+	for index in range(interactions.size()):
+		var interaction: Dictionary = interactions[index]
+		var rect: Rect2 = interaction.get("hotspot_rect", Rect2())
+		if rect.size == Vector2.ZERO:
+			continue
+		items.append({
+			"label": String(interaction.get("id", "interaction")),
+			"target": {
+				"kind": "interaction",
+				"room_id": String(room.get("id", "")),
+				"index": index,
+				"field": "hotspot_rect",
+				"label": String(interaction.get("id", "interaction"))
+			},
+			"rect": rect
+		})
+
+	if _has_scene_keypad(room):
+		var keypad_config: Dictionary = room.get("scene_keypad", {})
+		for field_name in ["display_rect"]:
+			var keypad_rect: Rect2 = keypad_config.get(field_name, Rect2())
+			if keypad_rect.size == Vector2.ZERO:
+				continue
+			items.append({
+				"label": "scene_keypad.%s" % field_name,
+				"target": {
+					"kind": "scene_keypad",
+					"room_id": String(room.get("id", "")),
+					"field": field_name,
+					"label": "scene_keypad.%s" % field_name
+				},
+				"rect": keypad_rect
+			})
+		var button_rects: Dictionary = keypad_config.get("button_rects", {})
+		for button_key in button_rects.keys():
+			var button_rect: Rect2 = button_rects.get(button_key, Rect2())
+			if button_rect.size == Vector2.ZERO:
+				continue
+			items.append({
+				"label": "scene_keypad.button_rects.%s" % String(button_key),
+				"target": {
+					"kind": "scene_keypad_button",
+					"room_id": String(room.get("id", "")),
+					"field": String(button_key),
+					"label": "scene_keypad.button_rects.%s" % String(button_key)
+				},
+				"rect": button_rect
+			})
+	return items
+
+
+func _add_hotspot_editor_handle(editable: Dictionary) -> void:
+	var rect: Rect2 = editable.get("rect", Rect2())
+	var target: Dictionary = editable.get("target", {})
+	var label_text := String(editable.get("label", "hotspot"))
+	var frame := PanelContainer.new()
+	frame.mouse_filter = Control.MOUSE_FILTER_STOP
+	frame.focus_mode = Control.FOCUS_NONE
+	frame.set_meta("editor_target", target)
+	frame.add_theme_stylebox_override("panel", _build_hotspot_style(Color(0.95, 0.84, 0.26, 0.08), Color(0.95, 0.84, 0.26, 0.92), 6))
+	_apply_editor_rect_to_control(frame, rect)
+	frame.gui_input.connect(_on_hotspot_editor_handle_input.bind(frame))
+	hotspot_editor_overlay.add_child(frame)
+
+	var tag := Label.new()
+	tag.text = label_text
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tag.add_theme_font_size_override("font_size", 12)
+	tag.add_theme_color_override("font_color", Color(1, 0.98, 0.92, 1))
+	tag.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	tag.offset_top = -22
+	tag.offset_bottom = 0
+	frame.add_child(tag)
+
+
+func _on_hotspot_editor_handle_input(event: InputEvent, frame: Control) -> void:
+	if not hotspot_edit_mode:
+		return
+	var target: Dictionary = frame.get_meta("editor_target", {})
+	if target.is_empty():
+		return
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.pressed:
+			hotspot_editor_selected_target = target
+			hotspot_editor_drag_start_mouse = mouse_event.global_position
+			hotspot_editor_drag_start_rect = _get_hotspot_rect_for_target(target)
+			hotspot_editor_drag_mode = "resize" if mouse_event.button_index == MOUSE_BUTTON_RIGHT else "move"
+			_refresh_hotspot_editor_panel()
+		elif mouse_event.button_index == MOUSE_BUTTON_LEFT or mouse_event.button_index == MOUSE_BUTTON_RIGHT:
+			if hotspot_editor_drag_mode != "":
+				_rebuild_hotspots()
+			hotspot_editor_drag_mode = ""
+	elif event is InputEventMouseMotion and hotspot_editor_drag_mode != "":
+		var motion_event := event as InputEventMouseMotion
+		var parent_size := hotspot_layer.size
+		if parent_size == Vector2.ZERO:
+			return
+		var delta := motion_event.global_position - hotspot_editor_drag_start_mouse
+		var delta_rect := Rect2(
+			delta.x / parent_size.x,
+			delta.y / parent_size.y,
+			delta.x / parent_size.x,
+			delta.y / parent_size.y
+		)
+		var next_rect := hotspot_editor_drag_start_rect
+		if hotspot_editor_drag_mode == "move":
+			next_rect.position += delta_rect.position
+		else:
+			next_rect.size += delta_rect.size
+		next_rect = _normalize_hotspot_rect(next_rect)
+		_set_hotspot_rect_for_target(target, next_rect)
+		_apply_editor_rect_to_control(frame, next_rect)
+		hotspot_editor_selected_target = target
+		_refresh_hotspot_editor_panel()
+
+
+func _apply_editor_rect_to_control(control: Control, rect: Rect2) -> void:
+	var parent_size := hotspot_layer.size
+	if parent_size == Vector2.ZERO:
+		parent_size = hotspot_layer.get_rect().size
+	control.position = Vector2(rect.position.x * parent_size.x, rect.position.y * parent_size.y)
+	control.size = Vector2(rect.size.x * parent_size.x, rect.size.y * parent_size.y)
+
+
+func _normalize_hotspot_rect(rect: Rect2) -> Rect2:
+	var width := clampf(rect.size.x, 0.02, 1.0)
+	var height := clampf(rect.size.y, 0.02, 1.0)
+	var x := clampf(rect.position.x, 0.0, 1.0 - width)
+	var y := clampf(rect.position.y, 0.0, 1.0 - height)
+	return Rect2(x, y, width, height)
+
+
+func _get_hotspot_rect_for_target(target: Dictionary) -> Rect2:
+	var room: Dictionary = SceneRouter.get_room(String(target.get("room_id", "")))
+	match String(target.get("kind", "")):
+		"interaction":
+			var interactions: Array = room.get("interactions", [])
+			var index := int(target.get("index", -1))
+			if index >= 0 and index < interactions.size():
+				return interactions[index].get("hotspot_rect", Rect2())
+		"scene_keypad":
+			var keypad_config: Dictionary = room.get("scene_keypad", {})
+			return keypad_config.get(String(target.get("field", "")), Rect2())
+		"scene_keypad_button":
+			var keypad_config: Dictionary = room.get("scene_keypad", {})
+			var button_rects: Dictionary = keypad_config.get("button_rects", {})
+			return button_rects.get(String(target.get("field", "")), Rect2())
+	return Rect2()
+
+
+func _set_hotspot_rect_for_target(target: Dictionary, rect: Rect2) -> void:
+	var room_id := String(target.get("room_id", ""))
+	var room: Dictionary = SceneRouter.get_room(room_id)
+	match String(target.get("kind", "")):
+		"interaction":
+			var interactions: Array = room.get("interactions", [])
+			var index := int(target.get("index", -1))
+			if index >= 0 and index < interactions.size():
+				var interaction: Dictionary = interactions[index]
+				interaction["hotspot_rect"] = rect
+				interactions[index] = interaction
+				room["interactions"] = interactions
+		"scene_keypad":
+			var keypad_config: Dictionary = room.get("scene_keypad", {})
+			keypad_config[String(target.get("field", ""))] = rect
+			room["scene_keypad"] = keypad_config
+		"scene_keypad_button":
+			var keypad_config: Dictionary = room.get("scene_keypad", {})
+			var button_rects: Dictionary = keypad_config.get("button_rects", {})
+			button_rects[String(target.get("field", ""))] = rect
+			keypad_config["button_rects"] = button_rects
+			room["scene_keypad"] = keypad_config
+	SceneRouter.room_definitions[room_id] = room
+
+
+func _copy_selected_hotspot_rect() -> void:
+	if hotspot_editor_selected_target.is_empty():
+		return
+	var rect := _get_hotspot_rect_for_target(hotspot_editor_selected_target)
+	DisplayServer.clipboard_set("Rect2(%.4f, %.4f, %.4f, %.4f)" % [
+		rect.position.x,
+		rect.position.y,
+		rect.size.x,
+		rect.size.y
+	])
+	_refresh_hotspot_editor_panel()
 
 
 func _show_inspect_overlay(inspect_data: Dictionary) -> void:
@@ -1104,6 +1628,7 @@ func _on_inspect_confirm_pressed() -> void:
 
 
 func _show_code_overlay(code_input_data: Dictionary) -> void:
+	scene_keypad_input = ""
 	code_prompt_label.text = _text(code_input_data, "prompt", "Enter the code")
 	code_feedback_label.text = ""
 	code_input.text = ""
@@ -1114,6 +1639,7 @@ func _show_code_overlay(code_input_data: Dictionary) -> void:
 func _hide_code_overlay() -> void:
 	active_code_interaction_id = ""
 	active_code_data = {}
+	scene_keypad_input = ""
 	code_input.text = ""
 	code_feedback_label.text = ""
 	code_overlay.visible = false
@@ -1124,10 +1650,13 @@ func _on_code_text_submitted(_text: String) -> void:
 
 
 func _submit_code_input() -> void:
+	await _submit_code_value(code_input.text.strip_edges().replace(" ", ""))
+
+
+func _submit_code_value(entered_code: String) -> void:
 	if is_transitioning:
 		return
 
-	var entered_code := code_input.text.strip_edges().replace(" ", "")
 	var expected_code := String(active_code_data.get("solution", ""))
 	if entered_code == expected_code and active_code_interaction_id != "":
 		await _play_feedback_sound("correct_password", 0.42, true, 4.0)
@@ -1136,6 +1665,7 @@ func _submit_code_input() -> void:
 			SceneRouter.apply_interaction(active_code_interaction_id)
 			active_code_interaction_id = ""
 			active_code_data = {}
+			scene_keypad_input = ""
 			_refresh_room(GameState.current_room_id)
 		)
 		_refresh_hud()
@@ -1152,13 +1682,17 @@ func _submit_code_input() -> void:
 		await _play_blink_transition(func():
 			active_code_interaction_id = ""
 			active_code_data = {}
+			scene_keypad_input = ""
 			GameState.set_room(failure_room)
 			_refresh_room(GameState.current_room_id)
 		)
 		_refresh_hud()
 		return
-	code_input.grab_focus()
-	code_input.select_all()
+	scene_keypad_input = ""
+	if code_overlay.visible:
+		code_input.grab_focus()
+		code_input.select_all()
+	_rebuild_hotspots()
 
 
 func _play_blink_transition(callback: Callable = Callable()) -> void:
