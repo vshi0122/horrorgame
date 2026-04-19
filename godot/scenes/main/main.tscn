@@ -1,7 +1,6 @@
-[gd_scene load_steps=9 format=3 uid="uid://ddbx6mgpk6n8p"]
+[gd_scene load_steps=8 format=3 uid="uid://ddbx6mgpk6n8p"]
 
 [ext_resource type="Script" path="res://godot/scripts/main/main.gd" id="1_7euvc"]
-[ext_resource type="Script" path="res://godot/scripts/ui/hud.gd" id="2_f0i5n"]
 [ext_resource type="AudioStream" path="res://godot/sounds/bgm.wav" id="3_bgm"]
 [ext_resource type="AudioStream" path="res://godot/sounds/eating.mp3" id="4_eating"]
 [ext_resource type="AudioStream" path="res://godot/sounds/footstep.wav" id="5_footstep"]
@@ -34,38 +33,37 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 18.0
-offset_top = 18.0
-offset_right = -18.0
-offset_bottom = -18.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Layout" type="HBoxContainer" parent="RootMargin"]
+[node name="Layout" type="VBoxContainer" parent="RootMargin"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 18
+theme_override_constants/separation = 8
 
 [node name="CenterColumn" type="VBoxContainer" parent="RootMargin/Layout"]
 layout_mode = 2
-size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 14
+theme_override_constants/separation = 8
 
 [node name="TopBar" type="PanelContainer" parent="RootMargin/Layout/CenterColumn"]
 layout_mode = 2
 
 [node name="TopBarMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/TopBar"]
 layout_mode = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 14
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
 
 [node name="TopBarLayout" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 12
 
 [node name="TitleColumn" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout"]
 layout_mode = 2
@@ -115,42 +113,63 @@ size_flags_vertical = 3
 
 [node name="RoomContent" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport"]
 layout_mode = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 18
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 18
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
 [node name="RoomStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 4
 
-[node name="RoomHint" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack"]
+[node name="RoomVisualRow" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+
+[node name="RoomVisual" type="AspectRatioContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow"]
+custom_minimum_size = Vector2(0, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+ratio = 1.62
+stretch_mode = 2
+
+[node name="RoomVisualFrame" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="RoomHintBar" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 44.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="RoomHintMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomHintBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="RoomHint" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomHintBar/RoomHintMargin"]
 layout_mode = 2
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
 text = "The rain has stopped, but the night still feels unfinished."
 
-[node name="RoomVisual" type="AspectRatioContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack"]
-custom_minimum_size = Vector2(0, 0)
-layout_mode = 2
-size_flags_vertical = 3
-ratio = 1.5
-stretch_mode = 2
-
-[node name="RoomVisualFrame" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="RoomVisualLayer" type="Control" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame"]
+[node name="RoomVisualLayer" type="Control" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 mouse_filter = 1
 
-[node name="BackgroundTexture" type="TextureRect" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame/RoomVisualLayer"]
+[node name="BackgroundTexture" type="TextureRect" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -160,7 +179,7 @@ grow_vertical = 2
 expand_mode = 1
 stretch_mode = 6
 
-[node name="HotspotLayer" type="Control" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame/RoomVisualLayer"]
+[node name="HotspotLayer" type="Control" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -168,6 +187,128 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
+
+[node name="RightRail" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow"]
+custom_minimum_size = Vector2(296, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HUDMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="HUDStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="InventorySection" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack"]
+layout_mode = 2
+
+[node name="InventoryMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="InventoryStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="InventoryHeader" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 28)
+
+[node name="InventoryTitle" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "Inventory"
+
+[node name="InventoryNotice" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryHeader"]
+layout_mode = 2
+custom_minimum_size = Vector2(108, 0)
+horizontal_alignment = 2
+text = " "
+
+[node name="InventoryValue" type="ItemList" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 96)
+size_flags_vertical = 1
+
+[node name="DocumentsSection" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DocumentsMarginRail" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="DocumentsStackRail" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="DocumentsHeaderRail" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 28)
+
+[node name="DocumentsTitleRail" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentsHeaderRail"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+text = "Files"
+
+[node name="DocumentsNotice" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentsHeaderRail"]
+layout_mode = 2
+custom_minimum_size = Vector2(132, 0)
+horizontal_alignment = 2
+text = " "
+
+[node name="DocumentsValueRail" type="ItemList" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 112)
+size_flags_vertical = 1
+
+[node name="DocumentPreviewPanel" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 172)
+size_flags_vertical = 3
+
+[node name="DocumentPreviewMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="DocumentPreviewStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="DocumentPreviewTitle" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "No file yet"
+
+[node name="DocumentPreviewSource" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Explore to uncover notes and notices."
+
+[node name="DocumentPreviewBody" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack"]
+layout_mode = 2
+bbcode_enabled = true
+size_flags_vertical = 3
+scroll_active = true
 
 [node name="InteractionList" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack"]
 visible = false
@@ -179,10 +320,10 @@ layout_mode = 2
 
 [node name="MessageMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/MessagePanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 14
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
 
 [node name="MessageValue" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/MessagePanel/MessageMargin"]
 layout_mode = 2
@@ -191,33 +332,6 @@ fit_content = true
 scroll_active = false
 text = "This scene is the first vertical slice target: a single room, a few interactions, and a clean migration path."
 
-[node name="RightRail" type="PanelContainer" parent="RootMargin/Layout"]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-size_flags_horizontal = 1
-size_flags_vertical = 3
-script = ExtResource("2_f0i5n")
-
-[node name="HUDMargin" type="MarginContainer" parent="RootMargin/Layout/RightRail"]
-layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
-
-[node name="HUDStack" type="VBoxContainer" parent="RootMargin/Layout/RightRail/HUDMargin"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 12
-
-[node name="InventoryTitle" type="Label" parent="RootMargin/Layout/RightRail/HUDMargin/HUDStack"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "Inventory"
-
-[node name="InventoryValue" type="ItemList" parent="RootMargin/Layout/RightRail/HUDMargin/HUDStack"]
-layout_mode = 2
-size_flags_vertical = 3
 
 [node name="BGMPlayer" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("3_bgm")

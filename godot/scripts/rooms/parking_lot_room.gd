@@ -13,10 +13,17 @@ static func build() -> Dictionary:
 				"label_key": "room.parking_lot.trunk.label",
 				"requires_item": "car_key",
 				"requires_flag_false": "trunk_opened",
-				"gives_item": "ketchup",
 				"sets_flag": "trunk_opened",
-				"objective_key": "room.parking_lot.trunk.objective",
 				"message_key": "room.parking_lot.trunk.message",
+				"goto_room": "trunk_closeup",
+				"hotspot_rect": Rect2(0.0, 0.5303, 0.3263, 0.225)
+			},
+			{
+				"id": "trunk",
+				"label_key": "room.parking_lot.trunk.revisit.label",
+				"requires_flag_true": "trunk_opened",
+				"message_key": "room.parking_lot.trunk.revisit.message",
+				"goto_room": "trunk_closeup",
 				"hotspot_rect": Rect2(0.0, 0.5303, 0.3263, 0.225)
 			},
 			{

@@ -35,6 +35,8 @@ func reset() -> void:
 		"found_keys": false,
 		"flee_prompt_shown": false,
 		"trunk_opened": false,
+		"trunk_letter_taken": false,
+		"trunk_ketchup_taken": false,
 		"mailbox_opened": false,
 		"code_discovered": false,
 		"building_entered": false,
@@ -82,7 +84,7 @@ func set_message(text: String) -> void:
 func add_item(item_id: String) -> void:
 	if inventory.has(item_id):
 		return
-	inventory.append(item_id)
+	inventory.push_front(item_id)
 	emit_signal("hud_changed")
 
 
@@ -92,7 +94,7 @@ func add_items(item_ids: Array) -> void:
 		var item_id := String(item_id_variant)
 		if item_id == "" or inventory.has(item_id):
 			continue
-		inventory.append(item_id)
+		inventory.push_front(item_id)
 		added_any = true
 	if added_any:
 		emit_signal("hud_changed")
@@ -145,7 +147,7 @@ func unlock_document(document: Dictionary) -> void:
 			_archive_document(document)
 			emit_signal("hud_changed")
 			return
-	unlocked_documents.append(document)
+	unlocked_documents.push_front(document)
 	added_to_session = true
 	var changed_archive := _archive_document(document)
 	if added_to_session or changed_archive:
@@ -162,7 +164,7 @@ func unlock_documents(documents: Array) -> void:
 				already_unlocked = true
 				break
 		if not already_unlocked:
-			unlocked_documents.append(document)
+			unlocked_documents.push_front(document)
 			changed_any = true
 		if _archive_document(document):
 			changed_any = true

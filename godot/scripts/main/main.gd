@@ -1,7 +1,7 @@
 extends Control
 
 const MENU_ENDING_TOTAL := 10
-const MENU_DOCUMENT_TOTAL := 34
+const MENU_DOCUMENT_TOTAL := 35
 const MENU_ENDING_CATALOG := [
 	{"id": "bad_ending", "order": "1/10", "name": "Trapped", "teaser": "You lingered in the residential corridor too long and never made it back out."},
 	{"id": "failed_escape_ending", "order": "2/10", "name": "Outside the Door", "teaser": "You reached the first floor, but not in a way that let you leave."},
@@ -35,14 +35,27 @@ const FLASHLIGHT_ROOMS := [
 ]
 
 @onready var room_name_label: Label = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn/RoomName
-@onready var room_hint_label: RichTextLabel = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomHint
-@onready var room_visual_layer: Control = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame/RoomVisualLayer
-@onready var background_texture: TextureRect = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame/RoomVisualLayer/BackgroundTexture
-@onready var hotspot_layer: Control = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame/RoomVisualLayer/HotspotLayer
+@onready var room_hint_bar: PanelContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomHintBar
+@onready var room_hint_label: RichTextLabel = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomHintBar/RoomHintMargin/RoomHint
+@onready var room_visual_layer: Control = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer
+@onready var background_texture: TextureRect = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer/BackgroundTexture
+@onready var hotspot_layer: Control = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer/HotspotLayer
 @onready var interaction_list: VBoxContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/InteractionList
 @onready var message_label: RichTextLabel = $RootMargin/Layout/CenterColumn/MessagePanel/MessageMargin/MessageValue
 @onready var documents_button: Button = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/DocumentsButton
 @onready var objective_button: Button = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/ObjectiveButton
+@onready var inventory_section: PanelContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection
+@onready var inventory_title_label: Label = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryHeader/InventoryTitle
+@onready var inventory_notice_label: Label = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryHeader/InventoryNotice
+@onready var inventory_list: ItemList = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryValue
+@onready var rail_documents_section: PanelContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection
+@onready var rail_documents_title_label: Label = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentsHeaderRail/DocumentsTitleRail
+@onready var rail_documents_notice_label: Label = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentsHeaderRail/DocumentsNotice
+@onready var rail_documents_list: ItemList = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentsValueRail
+@onready var rail_document_preview_panel: PanelContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel
+@onready var rail_document_title_label: Label = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack/DocumentPreviewTitle
+@onready var rail_document_source_label: Label = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack/DocumentPreviewSource
+@onready var rail_document_body_label: RichTextLabel = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack/DocumentPreviewBody
 @onready var inspect_overlay: ColorRect = $InspectOverlay
 @onready var inspect_title_label: Label = $InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectTitle
 @onready var inspect_image: TextureRect = $InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame/InspectImage
@@ -122,6 +135,10 @@ var current_menu_tab: String = "home"
 var selected_menu_document_id: String = ""
 var last_recorded_ending_room_id: String = ""
 var has_started_run: bool = false
+var inventory_notice_tween: Tween
+var documents_notice_tween: Tween
+var inventory_highlight_tween: Tween
+var documents_highlight_tween: Tween
 
 
 func _ready() -> void:
@@ -136,6 +153,10 @@ func _ready() -> void:
 	documents_close_button.pressed.connect(_hide_documents_overlay)
 	objective_close_button.pressed.connect(_hide_objective_overlay)
 	documents_list.item_selected.connect(_on_document_selected)
+	inventory_list.allow_reselect = true
+	inventory_list.item_clicked.connect(_on_inventory_item_clicked)
+	rail_documents_list.allow_reselect = true
+	rail_documents_list.item_selected.connect(_on_rail_document_selected)
 	inspect_close_button.pressed.connect(_hide_inspect_overlay)
 	inspect_confirm_button.pressed.connect(_on_inspect_confirm_pressed)
 	code_cancel_button.pressed.connect(_hide_code_overlay)
@@ -183,7 +204,12 @@ func _apply_static_translations() -> void:
 	$RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/RestartButton.text = I18n.t("ui.top.restart")
 	objective_button.text = I18n.t("ui.top.goal")
 	documents_button.text = I18n.t("ui.top.files")
-	$RootMargin/Layout/RightRail/HUDMargin/HUDStack/InventoryTitle.text = I18n.t("ui.inventory.title")
+	inventory_title_label.text = I18n.t("ui.inventory.title")
+	rail_documents_title_label.text = I18n.t("ui.documents.title")
+	inventory_notice_label.text = " "
+	rail_documents_notice_label.text = " "
+	inventory_notice_label.modulate = Color(1, 1, 1, 0)
+	rail_documents_notice_label.modulate = Color(1, 1, 1, 0)
 	$DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsHeader/DocumentsTitle.text = I18n.t("ui.documents.title")
 	documents_close_button.text = I18n.t("ui.menu.close")
 	$ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveHeader/ObjectiveTitle.text = I18n.t("ui.objective.title")
@@ -193,6 +219,7 @@ func _apply_static_translations() -> void:
 	$CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeTitle.text = I18n.t("ui.code.title")
 	code_cancel_button.text = I18n.t("ui.code.cancel")
 	code_confirm_button.text = I18n.t("ui.code.confirm")
+	_set_rail_document_empty_state()
 
 
 func _refresh_room(room_id: String) -> void:
@@ -203,7 +230,7 @@ func _refresh_room(room_id: String) -> void:
 		GameState.flags["stairwell_photo_footsteps_active"] = false
 	room_name_label.text = _text(room, "title", I18n.t("ui.room.unknown"))
 	room_hint_label.text = _text(room, "hint", "")
-	_apply_background(room.get("background", ""))
+	_apply_background(_resolve_background_path(room_id, room))
 	_track_ending_unlock(room_id, room)
 	_sync_scene_ambient(room_id)
 	_update_room_effects(room_id)
@@ -253,6 +280,7 @@ func _end_flashlight_sequence() -> void:
 func _refresh_hud() -> void:
 	message_label.text = GameState.message_text
 	objective_value_label.text = GameState.objective_text
+	_refresh_inventory_list()
 	_refresh_documents_list()
 	if ending_overlay != null and ending_overlay.visible:
 		ending_documents_value_label.text = I18n.t("ui.files.count_short", {"count": GameState.unlocked_documents.size()})
@@ -304,7 +332,8 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 		_show_code_overlay(code_input_data)
 		return
 
-	var unlocked_document_count_before := GameState.unlocked_documents.size()
+	var inventory_before := _capture_inventory_ids()
+	var document_ids_before := _capture_document_ids()
 
 	if interaction.get("goto_room", "") != "":
 		var transition_audio = interaction.get("transition_sound", "footstep")
@@ -322,7 +351,9 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	
 
 	_refresh_hud()
-	var gained_new_document := GameState.unlocked_documents.size() > unlocked_document_count_before
+	var new_items := _collect_new_entries(inventory_before, _capture_inventory_ids())
+	var new_documents := _collect_new_entries(document_ids_before, _capture_document_ids())
+	var gained_new_document := not new_documents.is_empty()
 	
 	# Play UI sounds based on interaction
 	var sound_kind = interaction.get("sound", "")
@@ -333,10 +364,10 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 		_play_ui_sound(sound_kind)
 	
 	# Legacy hardcoded sounds
-	if interaction_id == "trunk":
-		_play_ui_sound("key")
-	elif interaction_id == "mailbox" and gained_new_document:
+	if interaction_id == "mailbox" and gained_new_document:
 		_play_ui_sound("doc")
+
+	_announce_rail_updates(new_items, new_documents)
 
 
 func _sync_scene_ambient(room_id: String) -> void:
@@ -367,9 +398,12 @@ func _handle_back_stairwell_to_third_floor(interaction: Dictionary) -> void:
 
 
 func _handle_back_stairwell_photo(_interaction: Dictionary) -> void:
-	var unlocked_document_count_before := GameState.unlocked_documents.size()
+	var inventory_before := _capture_inventory_ids()
+	var document_ids_before := _capture_document_ids()
 	SceneRouter.apply_interaction("photo")
-	var gained_new_document := GameState.unlocked_documents.size() > unlocked_document_count_before
+	var new_items := _collect_new_entries(inventory_before, _capture_inventory_ids())
+	var new_documents := _collect_new_entries(document_ids_before, _capture_document_ids())
+	var gained_new_document := not new_documents.is_empty()
 	if gained_new_document:
 		_play_ui_sound("doc")
 
@@ -384,6 +418,7 @@ func _handle_back_stairwell_photo(_interaction: Dictionary) -> void:
 	GameState.set_message("What was that just now...? The blacked-out face in the photo looked like it moved.")
 	_refresh_room(GameState.current_room_id)
 	_refresh_hud()
+	_announce_rail_updates(new_items, new_documents)
 
 
 func _play_photo_jumpscare() -> void:
@@ -488,6 +523,26 @@ func _apply_background(texture_path: String) -> void:
 		background_texture.texture = null
 		return
 	background_texture.texture = load(texture_path)
+
+
+func _resolve_background_path(room_id: String, room: Dictionary) -> String:
+	if room_id == "mailbox_closeup":
+		if bool(GameState.flags.get("mailbox_opened", false)):
+			return "res://godot/asserts/images/letterbox open.png"
+		return String(room.get("background", ""))
+
+	if room_id == "trunk_closeup":
+		var letter_taken := bool(GameState.flags.get("trunk_letter_taken", false))
+		var ketchup_taken := bool(GameState.flags.get("trunk_ketchup_taken", false))
+		if letter_taken and ketchup_taken:
+			return "res://godot/asserts/images/truck 3.jpg"
+		if letter_taken:
+			return "res://godot/asserts/images/truck 1.jpg"
+		if ketchup_taken:
+			return "res://godot/asserts/images/truck 2.jpg"
+		return "res://godot/asserts/images/truck.jpg"
+
+	return String(room.get("background", ""))
 
 func _build_web_ui_overlays() -> void:
 	var grain_overlay := ColorRect.new()
@@ -938,17 +993,25 @@ func _refresh_ending_overlay(room: Dictionary) -> void:
 
 func _apply_web_ui_theme() -> void:
 	$Background.color = Color(0.03, 0.04, 0.06, 1)
-	$RootMargin/Layout/CenterColumn/TopBar.add_theme_stylebox_override("panel", _build_panel_style(Color(0.06, 0.08, 0.11, 0.88), Color(0.73, 0.84, 1.0, 0.12), 24))
-	$RootMargin/Layout/CenterColumn/RoomViewport.add_theme_stylebox_override("panel", _build_panel_style(Color(0.06, 0.08, 0.11, 0.88), Color(0.73, 0.84, 1.0, 0.12), 24))
-	$RootMargin/Layout/CenterColumn/MessagePanel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.08, 0.10, 0.14, 0.96), Color(0.85, 0.76, 0.60, 0.42), 18))
-	$RootMargin/Layout/RightRail.add_theme_stylebox_override("panel", _build_panel_style(Color(0.06, 0.08, 0.11, 0.88), Color(0.73, 0.84, 1.0, 0.12), 24))
-	$RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame.add_theme_stylebox_override("panel", _build_panel_style(Color(0.03, 0.04, 0.05, 0.96), Color(0.73, 0.84, 1.0, 0.08), 22))
+	$RootMargin/Layout/CenterColumn/TopBar.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.07, 0.10, 0.90), Color(0.85, 0.76, 0.60, 0.14), 18))
+	$RootMargin/Layout/CenterColumn/RoomViewport.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.92), Color(0.73, 0.84, 1.0, 0.04), 12))
+	$RootMargin/Layout/CenterColumn/MessagePanel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.08, 0.10, 0.14, 0.96), Color(0.85, 0.76, 0.60, 0.28), 14))
+	$RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame.add_theme_stylebox_override("panel", _build_panel_style(Color(0.03, 0.04, 0.05, 0.99), Color(0.73, 0.84, 1.0, 0.03), 8))
+	$RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail.add_theme_stylebox_override("panel", _build_panel_style(Color(0.035, 0.045, 0.06, 0.74), Color(0.73, 0.84, 1.0, 0.04), 12))
+	room_hint_bar.add_theme_stylebox_override("panel", _build_panel_style(Color(0.03, 0.04, 0.05, 0.84), Color(0.73, 0.84, 1.0, 0.03), 10))
 
 	room_name_label.add_theme_color_override("font_color", Color(0.93, 0.95, 0.97, 1))
-	room_hint_label.add_theme_color_override("default_color", Color(0.59, 0.64, 0.71, 1))
+	room_hint_label.add_theme_color_override("default_color", Color(0.72, 0.76, 0.82, 0.94))
 	message_label.add_theme_color_override("default_color", Color(0.93, 0.95, 0.97, 0.96))
 	objective_value_label.add_theme_color_override("default_color", Color(0.93, 0.95, 0.97, 0.96))
 	document_text_label.add_theme_color_override("default_color", Color(0.94, 0.93, 0.88, 0.98))
+	inventory_title_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.94, 1))
+	rail_documents_title_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.94, 1))
+	inventory_notice_label.add_theme_color_override("font_color", Color(0.85, 0.76, 0.60, 0.98))
+	rail_documents_notice_label.add_theme_color_override("font_color", Color(0.73, 0.84, 1.0, 0.98))
+	rail_document_title_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.94, 1))
+	rail_document_source_label.add_theme_color_override("font_color", Color(0.85, 0.76, 0.60, 0.92))
+	rail_document_body_label.add_theme_color_override("default_color", Color(0.90, 0.93, 0.97, 0.95))
 
 	_style_button(objective_button, false)
 	_style_button(documents_button, false)
@@ -970,9 +1033,13 @@ func _apply_web_ui_theme() -> void:
 	_style_overlay_panel(main_menu_shell, 26)
 	main_menu_home_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	hotspot_editor_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.07, 0.10, 0.94), Color(0.95, 0.90, 0.76, 0.32), 16))
+	inventory_section.add_theme_stylebox_override("panel", _build_panel_style(Color(0.045, 0.055, 0.07, 0.48), Color(0.85, 0.76, 0.60, 0.05), 18))
+	rail_documents_section.add_theme_stylebox_override("panel", _build_panel_style(Color(0.045, 0.055, 0.07, 0.48), Color(0.73, 0.84, 1.0, 0.05), 18))
+	rail_document_preview_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.38), Color(0.73, 0.84, 1.0, 0.04), 16))
 
 	documents_list.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.72), Color(0.73, 0.84, 1.0, 0.08), 14))
-	$RootMargin/Layout/RightRail/HUDMargin/HUDStack/InventoryValue.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.72), Color(0.73, 0.84, 1.0, 0.08), 14))
+	inventory_list.add_theme_stylebox_override("panel", _build_panel_style(Color(0.035, 0.045, 0.06, 0.34), Color(0.85, 0.76, 0.60, 0.04), 14))
+	rail_documents_list.add_theme_stylebox_override("panel", _build_panel_style(Color(0.035, 0.045, 0.06, 0.34), Color(0.73, 0.84, 1.0, 0.04), 14))
 	code_input.add_theme_stylebox_override("normal", _build_panel_style(Color(0.04, 0.05, 0.07, 0.92), Color(0.85, 0.76, 0.60, 0.34), 12))
 	code_input.add_theme_stylebox_override("focus", _build_panel_style(Color(0.05, 0.06, 0.08, 0.96), Color(0.85, 0.76, 0.60, 0.58), 12))
 	code_input.add_theme_color_override("font_color", Color(0.96, 0.96, 0.95, 1))
@@ -1998,27 +2065,78 @@ func _hide_objective_overlay() -> void:
 	objective_overlay.visible = false
 
 
+func _refresh_inventory_list() -> void:
+	inventory_list.clear()
+	for item_id: String in GameState.inventory:
+		inventory_list.add_item(I18n.item_name(item_id))
+
+	if GameState.inventory.is_empty():
+		inventory_list.add_item(I18n.t("ui.inventory.empty"))
+		inventory_list.deselect_all()
+		return
+
+	if GameState.selected_inventory_item == "":
+		inventory_list.deselect_all()
+		return
+
+	var selected_index := GameState.inventory.find(GameState.selected_inventory_item)
+	if selected_index >= 0:
+		inventory_list.select(selected_index)
+	else:
+		inventory_list.deselect_all()
+
+
+func _on_inventory_item_clicked(index: int, _at_position: Vector2, mouse_button_index: int) -> void:
+	if mouse_button_index != MOUSE_BUTTON_LEFT:
+		return
+	if index < 0 or index >= GameState.inventory.size():
+		return
+
+	var item_id := GameState.inventory[index]
+	var was_selected := GameState.is_item_selected(item_id)
+	GameState.toggle_selected_item(item_id)
+	if was_selected:
+		GameState.set_message(I18n.t("ui.unselected_item", {"item": I18n.item_name(item_id)}))
+	else:
+		GameState.set_message(I18n.t("ui.selected_item", {"item": I18n.item_name(item_id)}))
+	_refresh_hud()
+
+
 func _refresh_documents_list() -> void:
 	documents_list.clear()
+	rail_documents_list.clear()
 	for document: Dictionary in GameState.unlocked_documents:
-		documents_list.add_item(_document_text(document, "title", "Untitled"))
+		var title := _document_text(document, "title", "Untitled")
+		documents_list.add_item(title)
+		rail_documents_list.add_item(title)
 
 	if GameState.unlocked_documents.is_empty():
 		selected_document_index = -1
 		document_title_label.text = I18n.t("ui.documents.empty_title")
 		document_source_label.text = I18n.t("ui.documents.empty_source")
 		document_text_label.text = ""
+		rail_documents_list.add_item(I18n.t("ui.documents.empty_title"))
+		rail_documents_list.deselect_all()
+		_set_rail_document_empty_state()
 		return
 
 	if selected_document_index < 0 or selected_document_index >= GameState.unlocked_documents.size():
 		selected_document_index = GameState.unlocked_documents.size() - 1
 
 	documents_list.select(selected_document_index)
+	rail_documents_list.select(selected_document_index)
 	_show_document(selected_document_index)
 
 
 func _on_document_selected(index: int) -> void:
 	selected_document_index = index
+	rail_documents_list.select(index)
+	_show_document(index)
+
+
+func _on_rail_document_selected(index: int) -> void:
+	selected_document_index = index
+	documents_list.select(index)
 	_show_document(index)
 
 
@@ -2030,6 +2148,99 @@ func _show_document(index: int) -> void:
 	document_title_label.text = _document_text(document, "title", "Untitled")
 	document_source_label.text = _document_text(document, "source", "")
 	document_text_label.text = _document_text(document, "body", "")
+	rail_document_title_label.text = _document_text(document, "title", "Untitled")
+	rail_document_source_label.text = _document_text(document, "source", "")
+	rail_document_body_label.text = _document_text(document, "body", "")
+
+
+func _set_rail_document_empty_state() -> void:
+	rail_document_title_label.text = I18n.t("ui.documents.rail.empty_title")
+	rail_document_source_label.text = I18n.t("ui.documents.rail.empty_source")
+	rail_document_body_label.text = I18n.t("ui.documents.rail.empty_body")
+
+
+func _capture_inventory_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for item_id: String in GameState.inventory:
+		ids.append(item_id)
+	return ids
+
+
+func _capture_document_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for document: Dictionary in GameState.unlocked_documents:
+		ids.append(String(document.get("id", "")))
+	return ids
+
+
+func _collect_new_entries(before: Array[String], after: Array[String]) -> Array[String]:
+	var new_entries: Array[String] = []
+	for entry in after:
+		if not before.has(entry):
+			new_entries.append(entry)
+	return new_entries
+
+
+func _announce_rail_updates(new_items: Array[String], new_documents: Array[String]) -> void:
+	if not new_items.is_empty():
+		var item_names: Array[String] = []
+		for item_id in new_items:
+			item_names.append(I18n.item_name(item_id))
+		_show_rail_notice(inventory_section, inventory_notice_label, I18n.t("ui.rail.item_notice", {"items": ", ".join(item_names)}), Color(0.86, 0.76, 0.58, 1.0), true)
+
+	if not new_documents.is_empty():
+		selected_document_index = GameState.unlocked_documents.size() - 1
+		_refresh_documents_list()
+		var document_titles: Array[String] = []
+		for document_id in new_documents:
+			document_titles.append(_find_document_title(document_id))
+		_show_rail_notice(rail_documents_section, rail_documents_notice_label, I18n.t("ui.rail.document_notice", {"documents": ", ".join(document_titles)}), Color(0.73, 0.84, 1.0, 1.0), false)
+
+
+func _find_document_title(document_id: String) -> String:
+	for document: Dictionary in GameState.unlocked_documents:
+		if String(document.get("id", "")) == document_id:
+			return _document_text(document, "title", "Untitled")
+	return "Untitled"
+
+
+func _show_rail_notice(section_panel: PanelContainer, notice_label: Label, text: String, accent: Color, is_inventory_section: bool) -> void:
+	notice_label.text = text
+	notice_label.modulate = Color(accent.r, accent.g, accent.b, 1.0)
+
+	var highlight_color := Color(
+		lerp(1.0, accent.r, 0.20),
+		lerp(1.0, accent.g, 0.20),
+		lerp(1.0, accent.b, 0.20),
+		1.0
+	)
+	section_panel.self_modulate = highlight_color
+
+	var notice_tween := inventory_notice_tween if is_inventory_section else documents_notice_tween
+	if notice_tween != null:
+		notice_tween.kill()
+	notice_tween = create_tween()
+	notice_tween.tween_interval(2.1)
+	notice_tween.tween_property(notice_label, "modulate", Color(accent.r, accent.g, accent.b, 0.0), 0.35)
+	notice_tween.finished.connect(func() -> void:
+		notice_label.text = " "
+		notice_label.modulate = Color(1, 1, 1, 0)
+	)
+	if is_inventory_section:
+		inventory_notice_tween = notice_tween
+	else:
+		documents_notice_tween = notice_tween
+
+	var highlight_tween := inventory_highlight_tween if is_inventory_section else documents_highlight_tween
+	if highlight_tween != null:
+		highlight_tween.kill()
+	highlight_tween = create_tween()
+	highlight_tween.tween_property(section_panel, "self_modulate", Color(1, 1, 1, 1), 0.55)
+	if is_inventory_section:
+		inventory_highlight_tween = highlight_tween
+	else:
+		documents_highlight_tween = highlight_tween
+
 
 
 func _build_hotspot_style(background_color: Color, border_color: Color, corner_radius: int = 8) -> StyleBoxFlat:

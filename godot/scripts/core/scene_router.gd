@@ -2,6 +2,7 @@ extends Node
 
 const ROOM_SOURCES := [
 	preload("res://godot/scripts/rooms/parking_lot_room.gd"),
+	preload("res://godot/scripts/rooms/trunk_closeup_room.gd"),
 	preload("res://godot/scripts/rooms/apartment_entrance_room.gd"),
 	preload("res://godot/scripts/rooms/stairwell_room.gd"),
 	preload("res://godot/scripts/rooms/car_closeup_room.gd"),
