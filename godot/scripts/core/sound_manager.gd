@@ -22,6 +22,7 @@ var bgm_player: AudioStreamPlayer
 var eating_ambient_player: AudioStreamPlayer
 var footstep_ambient_player: AudioStreamPlayer
 var transition_player: AudioStreamPlayer
+var feedback_player: AudioStreamPlayer
 var ui_sound_player: AudioStreamPlayer
 
 
@@ -31,6 +32,7 @@ func _ready() -> void:
 	eating_ambient_player = _create_player("EatingAmbientPlayer", -7.8)
 	footstep_ambient_player = _create_player("FootstepAmbientPlayer", -6.6)
 	transition_player = _create_player("TransitionPlayer", 0.0)
+	feedback_player = _create_player("FeedbackPlayer", 0.0)
 	ui_sound_player = _create_player("UISoundPlayer", 0.0)
 	bgm_player.stream = AUDIO_SOURCES["bgm"]
 	eating_ambient_player.stream = AUDIO_SOURCES["eating"]
@@ -64,9 +66,17 @@ func stop_bgm() -> void:
 
 
 func sync_scene_ambient(room_id: String) -> void:
-	var should_play_eating := room_id == "thirdFloorResidential"
-	var footsteps_active := bool(GameState.flags.get("stairwellPhotoFootstepsActive", false))
-	var should_play_footsteps := footsteps_active and not ["thirdFloorHall", "thirdFloorResidential"].has(room_id)
+	var should_play_eating := room_id == "third_floor_residential" or room_id == "thirdFloorResidential"
+	var footsteps_active := bool(
+		GameState.flags.get("stairwell_photo_footsteps_active", false)
+		or GameState.flags.get("stairwellPhotoFootstepsActive", false)
+	)
+	var should_play_footsteps := footsteps_active and not [
+		"third_floor_hall",
+		"third_floor_residential",
+		"thirdFloorHall",
+		"thirdFloorResidential"
+	].has(room_id)
 
 	if should_play_eating:
 		if not eating_ambient_player.playing:
@@ -103,9 +113,9 @@ func play_feedback_sound(audio_key: String, volume: float = 0.42, wait_for_compl
 	var stream: AudioStream = AUDIO_SOURCES.get(audio_key)
 	if stream == null:
 		return
-	transition_player.stream = stream
-	transition_player.volume_db = linear_to_db(volume)
-	transition_player.play()
+	feedback_player.stream = stream
+	feedback_player.volume_db = linear_to_db(volume)
+	feedback_player.play()
 	if wait_for_completion:
 		await get_tree().create_timer(wait_ms).timeout
 

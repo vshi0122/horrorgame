@@ -18,7 +18,7 @@ static func build() -> Dictionary:
 				"id": "back-to-third-question",
 				"label": "回三楼？",
 				"message": "你从那股味道里退开，但下方的空气也已经不再干净了。",
-				"goto_room": "fake_third",
+				"goto_room": "third_floor_hall",
 				"hotspot_rect": Rect2(0.18, 0.76, 0.26, 0.12)
 			},
 			{

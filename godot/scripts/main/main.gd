@@ -23,9 +23,20 @@ const MENU_CREDITS := [
 	{"role": "Special Thanks", "names": ["Everyone who stepped into this nightmare."]}
 ]
 const MENU_BACKDROP := preload("res://godot/asserts/images/parkinglot.jpg")
+const JUMPSCARE_IMAGE := preload("res://godot/asserts/images/js.jpg")
+const FLASHLIGHT_ROOMS := [
+	"back_stairwell",
+	"fake_third",
+	"smell_room",
+	"third_floor_hall",
+	"third_floor_residential",
+	"third_floor_run",
+	"escape_stairwell"
+]
 
 @onready var room_name_label: Label = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn/RoomName
 @onready var room_hint_label: RichTextLabel = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomHint
+@onready var room_visual_layer: Control = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame/RoomVisualLayer
 @onready var background_texture: TextureRect = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame/RoomVisualLayer/BackgroundTexture
 @onready var hotspot_layer: Control = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisual/RoomVisualFrame/RoomVisualLayer/HotspotLayer
 @onready var interaction_list: VBoxContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/InteractionList
@@ -66,6 +77,7 @@ var active_code_interaction_id: String = ""
 var active_code_data: Dictionary = {}
 var scene_keypad_input: String = ""
 var hotspot_edit_mode: bool = false
+var is_room_sequence_locked: bool = false
 var hotspot_editor_overlay: Control
 var hotspot_editor_panel: PanelContainer
 var hotspot_editor_status_label: Label
@@ -82,6 +94,14 @@ var ending_summary_label: RichTextLabel
 var ending_order_value_label: Label
 var ending_endings_value_label: Label
 var ending_documents_value_label: Label
+var room_effect_overlay: Control
+var room_blackout_cover: ColorRect
+var room_flashlight_darkness: ColorRect
+var room_flashlight_glow: TextureRect
+var room_flashlight_material: ShaderMaterial
+var jumpscare_overlay: Control
+var jumpscare_flash: ColorRect
+var jumpscare_image: TextureRect
 var main_menu_overlay: ColorRect
 var main_menu_content: VBoxContainer
 var main_menu_title_label: Label
@@ -108,6 +128,7 @@ func _ready() -> void:
 	GameState.room_changed.connect(_refresh_room)
 	GameState.hud_changed.connect(_refresh_hud)
 	hotspot_layer.resized.connect(_rebuild_hotspots)
+	set_process(true)
 	top_menu_button.pressed.connect(_show_main_menu_home)
 	top_restart_button.pressed.connect(_restart_from_topbar)
 	documents_button.pressed.connect(_show_documents_overlay)
@@ -130,6 +151,10 @@ func _ready() -> void:
 	_refresh_room(GameState.current_room_id)
 	_refresh_hud()
 	_show_main_menu_home()
+
+
+func _process(_delta: float) -> void:
+	_update_flashlight_position()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -172,11 +197,16 @@ func _apply_static_translations() -> void:
 
 func _refresh_room(room_id: String) -> void:
 	var room: Dictionary = SceneRouter.get_room(room_id)
+	if room_id == "hallway_normal":
+		_end_flashlight_sequence()
+	if ["third_floor_hall", "third_floor_residential"].has(room_id):
+		GameState.flags["stairwell_photo_footsteps_active"] = false
 	room_name_label.text = _text(room, "title", I18n.t("ui.room.unknown"))
 	room_hint_label.text = _text(room, "hint", "")
 	_apply_background(room.get("background", ""))
 	_track_ending_unlock(room_id, room)
 	_sync_scene_ambient(room_id)
+	_update_room_effects(room_id)
 	
 	# Handle special room entries
 	if room_id == "monsterCaughtIntro":
@@ -189,13 +219,6 @@ func _refresh_room(room_id: String) -> void:
 		await get_tree().create_timer(3.0).timeout
 		GameState.set_room("failedEscapeEnding")
 		return
-	elif room_id == "thirdFloorHallBlackout":
-		_play_feedback_sound("cry", 0.92)
-		# Add other logic if needed
-	elif room_id == "thirdFloorHallFlashlight":
-		_play_feedback_sound("scream", 0.96)
-	elif room_id == "blockedStairwellPhoto":
-		_play_feedback_sound("jumpscare", 0.95)
 
 	for child: Node in interaction_list.get_children():
 		child.queue_free()
@@ -219,6 +242,12 @@ func _refresh_room(room_id: String) -> void:
 
 	_rebuild_hotspots()
 	_refresh_ending_overlay(room)
+	if room_id == "fake_third":
+		await _maybe_play_fake_third_blackout_intro()
+
+
+func _end_flashlight_sequence() -> void:
+	GameState.flags["third_floor_flashlight_enabled"] = false
 
 
 func _refresh_hud() -> void:
@@ -240,6 +269,8 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 		return
 	if is_transitioning:
 		return
+	if is_room_sequence_locked:
+		return
 
 	var interaction: Dictionary = SceneRouter.get_interaction(GameState.current_room_id, interaction_id)
 	if interaction.is_empty():
@@ -247,6 +278,13 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	if not SceneRouter.is_interaction_ready(interaction):
 		GameState.set_message(SceneRouter.get_interaction_block_message(interaction))
 		_refresh_hud()
+		return
+
+	if GameState.current_room_id == "back_stairwell" and interaction_id == "photo":
+		await _handle_back_stairwell_photo(interaction)
+		return
+	if GameState.current_room_id == "back_stairwell" and interaction_id == "to-3f":
+		await _handle_back_stairwell_to_third_floor(interaction)
 		return
 
 	var inspect_data: Dictionary = interaction.get("inspect", {})
@@ -313,6 +351,138 @@ func _play_feedback_sound(audio_key: String, volume: float = 0.42, wait_for_comp
 func _play_scene_transition_sound(audio_key: String = "footstep", volume: float = 0.38, wait_for_completion: bool = false, wait_ms: float = 6.0) -> void:
 	await SoundManager.play_scene_transition_sound(audio_key, volume, wait_for_completion, wait_ms)
 
+
+func _handle_back_stairwell_to_third_floor(interaction: Dictionary) -> void:
+	var should_skip_fake_third := bool(GameState.flags.get("first_fake_third_floor_seen", false))
+	var target_room := "third_floor_hall" if should_skip_fake_third else String(interaction.get("goto_room", "fake_third"))
+	var transition_audio = interaction.get("transition_sound", "footstep")
+	await _play_blink_transition(func():
+		GameState.set_objective(_text(interaction, "objective", GameState.objective_text))
+		GameState.set_message(_text(interaction, "message", GameState.message_text))
+		GameState.set_room(target_room)
+		_refresh_room(GameState.current_room_id)
+		_play_scene_transition_sound(transition_audio)
+	)
+	_refresh_hud()
+
+
+func _handle_back_stairwell_photo(_interaction: Dictionary) -> void:
+	var unlocked_document_count_before := GameState.unlocked_documents.size()
+	SceneRouter.apply_interaction("photo")
+	var gained_new_document := GameState.unlocked_documents.size() > unlocked_document_count_before
+	if gained_new_document:
+		_play_ui_sound("doc")
+
+	var should_play_jumpscare := not bool(GameState.flags.get("stairwell_photo_jumpscare_played", false))
+	GameState.flags["stairwell_photo_footsteps_active"] = true
+	if should_play_jumpscare:
+		GameState.flags["stairwell_photo_jumpscare_played"] = true
+		GameState.flags["stairwell_photo_reaction_pending"] = true
+		await _play_photo_jumpscare()
+
+	GameState.flags["stairwell_photo_reaction_pending"] = false
+	GameState.set_message("What was that just now...? The blacked-out face in the photo looked like it moved.")
+	_refresh_room(GameState.current_room_id)
+	_refresh_hud()
+
+
+func _play_photo_jumpscare() -> void:
+	if jumpscare_overlay == null:
+		return
+
+	is_room_sequence_locked = true
+	jumpscare_overlay.visible = true
+	jumpscare_image.texture = JUMPSCARE_IMAGE
+	jumpscare_image.modulate = Color(1, 1, 1, 0)
+	jumpscare_flash.color = Color(1, 1, 1, 0)
+
+	await get_tree().create_timer(0.22).timeout
+	_play_feedback_sound("jumpscare", 0.95)
+
+	var image_in_tween := create_tween()
+	image_in_tween.set_trans(Tween.TRANS_SINE)
+	image_in_tween.set_ease(Tween.EASE_OUT)
+	image_in_tween.tween_property(jumpscare_image, "modulate", Color(1, 1, 1, 1), 0.05)
+	await image_in_tween.finished
+
+	for _index in range(2):
+		jumpscare_flash.color = Color(1, 1, 1, 0)
+		var flash_tween := create_tween()
+		flash_tween.tween_property(jumpscare_flash, "color", Color(1, 1, 1, 0.92), 0.06)
+		flash_tween.tween_property(jumpscare_flash, "color", Color(1, 1, 1, 0), 0.10)
+		await flash_tween.finished
+		await get_tree().create_timer(0.08).timeout
+
+	await get_tree().create_timer(0.12).timeout
+	jumpscare_overlay.visible = false
+	is_room_sequence_locked = false
+
+
+func _maybe_play_fake_third_blackout_intro() -> void:
+	var intro_already_played := bool(GameState.flags.get("third_floor_blackout_intro_played", false))
+	var flashlight_enabled := bool(GameState.flags.get("third_floor_flashlight_enabled", false))
+	var photo_route_active := bool(GameState.flags.get("stairwell_photo_jumpscare_played", false))
+	if intro_already_played or flashlight_enabled or not photo_route_active:
+		_update_room_effects(GameState.current_room_id)
+		return
+
+	is_room_sequence_locked = true
+	GameState.flags["third_floor_blackout_intro_played"] = true
+	GameState.flags["first_fake_third_floor_seen"] = true
+	GameState.flags["third_floor_flashlight_enabled"] = false
+	_update_room_effects("fake_third")
+	_play_feedback_sound("cry", 0.92)
+	GameState.set_message("")
+	_refresh_hud()
+
+	await get_tree().create_timer(0.9).timeout
+	GameState.set_message("The whole building suddenly loses power. A baby is crying somewhere in the dark, so you switch on your phone flashlight.")
+	_refresh_hud()
+
+	await get_tree().create_timer(0.9).timeout
+	GameState.flags["third_floor_flashlight_enabled"] = true
+	is_room_sequence_locked = false
+	_update_room_effects(GameState.current_room_id)
+	_refresh_hud()
+
+
+func _update_room_effects(room_id: String) -> void:
+	if room_effect_overlay == null:
+		return
+
+	var flashlight_enabled := bool(GameState.flags.get("third_floor_flashlight_enabled", false))
+	var show_blackout_cover := room_id == "fake_third" and not flashlight_enabled and bool(GameState.flags.get("third_floor_blackout_intro_played", false))
+	var show_flashlight := flashlight_enabled and FLASHLIGHT_ROOMS.has(room_id)
+
+	room_effect_overlay.visible = show_blackout_cover or show_flashlight
+	room_blackout_cover.visible = show_blackout_cover
+	room_flashlight_darkness.visible = show_flashlight
+	room_flashlight_glow.visible = false
+	if show_flashlight:
+		_update_flashlight_position()
+
+
+func _update_flashlight_position() -> void:
+	if room_effect_overlay == null or room_flashlight_material == null:
+		return
+	if not room_flashlight_darkness.visible:
+		return
+
+	var overlay_size := room_visual_layer.size
+	if overlay_size == Vector2.ZERO:
+		return
+
+	var local_mouse := room_visual_layer.get_local_mouse_position()
+	local_mouse.x = clampf(local_mouse.x, 0.0, overlay_size.x)
+	local_mouse.y = clampf(local_mouse.y, 0.0, overlay_size.y)
+
+	var normalized := Vector2(
+		local_mouse.x / overlay_size.x,
+		local_mouse.y / overlay_size.y
+	)
+	room_flashlight_material.set_shader_parameter("light_pos", normalized)
+	room_flashlight_glow.position = local_mouse - (room_flashlight_glow.size * 0.5)
+
 func _apply_background(texture_path: String) -> void:
 	if texture_path == "":
 		background_texture.texture = null
@@ -327,6 +497,93 @@ func _build_web_ui_overlays() -> void:
 	grain_overlay.color = Color(1, 1, 1, 0.03)
 	add_child(grain_overlay)
 	move_child(grain_overlay, 1)
+
+	room_effect_overlay = Control.new()
+	room_effect_overlay.name = "RoomEffectOverlay"
+	room_effect_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	room_effect_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	room_effect_overlay.visible = false
+	room_visual_layer.add_child(room_effect_overlay)
+
+	room_blackout_cover = ColorRect.new()
+	room_blackout_cover.name = "BlackoutCover"
+	room_blackout_cover.set_anchors_preset(Control.PRESET_FULL_RECT)
+	room_blackout_cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	room_blackout_cover.color = Color(0, 0, 0, 0.96)
+	room_effect_overlay.add_child(room_blackout_cover)
+
+	room_flashlight_darkness = ColorRect.new()
+	room_flashlight_darkness.name = "FlashlightDarkness"
+	room_flashlight_darkness.set_anchors_preset(Control.PRESET_FULL_RECT)
+	room_flashlight_darkness.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	room_flashlight_darkness.color = Color(0, 0, 0, 0.76)
+	var flashlight_shader := Shader.new()
+	flashlight_shader.code = """
+shader_type canvas_item;
+
+uniform vec2 light_pos = vec2(0.5, 0.5);
+uniform float radius = 0.18;
+uniform float softness = 0.12;
+uniform float darkness_alpha = 0.92;
+
+void fragment() {
+	float dist = distance(UV, light_pos);
+	float alpha = smoothstep(radius, radius + softness, dist) * darkness_alpha;
+	COLOR = vec4(0.0, 0.0, 0.0, alpha);
+}
+"""
+	room_flashlight_material = ShaderMaterial.new()
+	room_flashlight_material.shader = flashlight_shader
+	room_flashlight_darkness.material = room_flashlight_material
+	room_effect_overlay.add_child(room_flashlight_darkness)
+
+	var flashlight_gradient := Gradient.new()
+	flashlight_gradient.colors = PackedColorArray([
+		Color(1, 1, 1, 0.96),
+		Color(1, 1, 1, 0.34),
+		Color(1, 1, 1, 0.0)
+	])
+	flashlight_gradient.offsets = PackedFloat32Array([0.0, 0.42, 1.0])
+
+	var flashlight_texture := GradientTexture2D.new()
+	flashlight_texture.width = 1024
+	flashlight_texture.height = 1024
+	flashlight_texture.fill = GradientTexture2D.FILL_RADIAL
+	flashlight_texture.gradient = flashlight_gradient
+
+	room_flashlight_glow = TextureRect.new()
+	room_flashlight_glow.name = "FlashlightGlow"
+	room_flashlight_glow.texture = flashlight_texture
+	room_flashlight_glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	room_flashlight_glow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	room_flashlight_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	room_flashlight_glow.custom_minimum_size = Vector2(520, 520)
+	room_flashlight_glow.size = Vector2(520, 520)
+	room_flashlight_glow.modulate = Color(0.92, 0.97, 1.0, 0.16)
+	room_effect_overlay.add_child(room_flashlight_glow)
+
+	jumpscare_overlay = Control.new()
+	jumpscare_overlay.name = "JumpscareOverlay"
+	jumpscare_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	jumpscare_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	jumpscare_overlay.visible = false
+	add_child(jumpscare_overlay)
+	move_child(jumpscare_overlay, get_child_count() - 1)
+
+	jumpscare_image = TextureRect.new()
+	jumpscare_image.name = "Image"
+	jumpscare_image.set_anchors_preset(Control.PRESET_FULL_RECT)
+	jumpscare_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	jumpscare_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	jumpscare_image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	jumpscare_overlay.add_child(jumpscare_image)
+
+	jumpscare_flash = ColorRect.new()
+	jumpscare_flash.name = "Flash"
+	jumpscare_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	jumpscare_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	jumpscare_flash.color = Color(1, 1, 1, 0)
+	jumpscare_overlay.add_child(jumpscare_flash)
 
 	ending_overlay = ColorRect.new()
 	ending_overlay.name = "EndingOverlay"
@@ -1655,6 +1912,8 @@ func _submit_code_input() -> void:
 
 func _submit_code_value(entered_code: String) -> void:
 	if is_transitioning:
+		return
+	if is_room_sequence_locked:
 		return
 
 	var expected_code := String(active_code_data.get("solution", ""))
