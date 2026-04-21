@@ -25,7 +25,9 @@ const ROOM_STAGE_REFERENCE_SIZE := Vector2(1120, 692)
 const LEFT_RAIL_WIDTH := 220.0
 const RIGHT_RAIL_WIDTH := 176.0
 const RAIL_GAP := 26.0
-const IN_SCENE_MENU_SIZE := Vector2(320, 42)
+const IN_SCENE_MENU_BUTTON_SIZE := Vector2(56, 56)
+const IN_SCENE_DOCUMENTS_BUTTON_SIZE := Vector2(56, 56)
+const IN_SCENE_BUTTON_GAP := 12.0
 const IN_SCENE_MESSAGE_HEIGHT := 72.0
 const SCREEN_MARGIN := Vector2(28, 18)
 const FLASHLIGHT_ROOMS := [
@@ -90,7 +92,10 @@ const FLASHLIGHT_ROOMS := [
 @onready var blink_overlay: Control = $BlinkOverlay
 @onready var blink_flash: ColorRect = $BlinkOverlay/Flash
 @onready var documents_overlay: ColorRect = $DocumentsOverlay
+@onready var documents_panel: PanelContainer = $DocumentsOverlay/DocumentsCenter/DocumentsPanel
+@onready var documents_body: HBoxContainer = $DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody
 @onready var documents_list: ItemList = $DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentsList
+@onready var document_viewer_panel: PanelContainer = $DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer
 @onready var document_title_label: Label = $DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack/DocumentTitle
 @onready var document_source_label: Label = $DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack/DocumentSource
 @onready var document_text_label: RichTextLabel = $DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack/DocumentText
@@ -131,6 +136,14 @@ var pause_overlay: ColorRect
 var pause_continue_button: Button
 var pause_save_button: Button
 var pause_main_menu_button: Button
+var new_document_overlay: ColorRect
+var new_document_panel: PanelContainer
+var new_document_title_label: Label
+var new_document_source_label: Label
+var new_document_body_label: RichTextLabel
+var new_document_close_button: Button
+var new_document_open_archive_button: Button
+var new_document_tween: Tween
 var room_effect_overlay: Control
 var room_blackout_cover: ColorRect
 var room_flashlight_darkness: ColorRect
@@ -166,6 +179,7 @@ var documents_highlight_tween: Tween
 var fixed_game_layer: Control
 var left_documents_rail: PanelContainer
 var message_popup_tween: Tween
+var documents_overlay_tween: Tween
 
 
 func _ready() -> void:
@@ -173,7 +187,7 @@ func _ready() -> void:
 	GameState.hud_changed.connect(_refresh_hud)
 	hotspot_layer.resized.connect(_rebuild_hotspots)
 	set_process(true)
-	top_menu_button.pressed.connect(_show_main_menu_home)
+	top_menu_button.pressed.connect(_toggle_pause_menu)
 	top_restart_button.pressed.connect(_restart_from_topbar)
 	documents_button.pressed.connect(_show_documents_overlay)
 	objective_button.pressed.connect(_show_objective_overlay)
@@ -227,20 +241,17 @@ func _apply_rust_lake_layout() -> void:
 
 	fixed_game_layer = _ensure_fixed_game_layer()
 	title_column.visible = false
-	documents_button.visible = false
+	documents_button.visible = true
+	top_restart_button.visible = false
 	top_actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_actions.alignment = BoxContainer.ALIGNMENT_END
 	room_hint_bar.visible = false
 	message_label.scroll_active = false
 
-	var left_rail: PanelContainer = _ensure_left_documents_rail()
-	if rail_documents_section.get_parent() != left_rail:
-		rail_documents_section.reparent(left_rail, false)
-
-	if top_bar.get_parent() != fixed_game_layer:
-		top_bar.reparent(fixed_game_layer, false)
-	if left_rail.get_parent() != fixed_game_layer:
-		left_rail.reparent(fixed_game_layer, false)
+	if top_menu_button.get_parent() != fixed_game_layer:
+		top_menu_button.reparent(fixed_game_layer, false)
+	if documents_button.get_parent() != fixed_game_layer:
+		documents_button.reparent(fixed_game_layer, false)
 	if room_visual.get_parent() != fixed_game_layer:
 		room_visual.reparent(fixed_game_layer, false)
 	if right_rail.get_parent() != fixed_game_layer:
@@ -249,23 +260,31 @@ func _apply_rust_lake_layout() -> void:
 		message_panel.reparent(fixed_game_layer, false)
 
 	root_layout.visible = false
-	top_bar.visible = true
-	left_rail.visible = true
+	top_bar.visible = false
+	top_menu_button.visible = true
+	documents_button.visible = true
+	top_menu_button.disabled = false
+	documents_button.disabled = false
+	top_menu_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	documents_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	room_visual.visible = true
 	right_rail.visible = true
 	message_panel.visible = false
 	message_panel.modulate = Color(1, 1, 1, 0)
+	top_menu_button.z_index = 34
+	documents_button.z_index = 35
+	right_rail.z_index = 20
+	message_panel.z_index = 25
+	fixed_game_layer.move_child(top_menu_button, fixed_game_layer.get_child_count() - 1)
+	fixed_game_layer.move_child(documents_button, fixed_game_layer.get_child_count() - 1)
 
 	room_visual.ratio = ROOM_STAGE_REFERENCE_SIZE.x / ROOM_STAGE_REFERENCE_SIZE.y
 	room_visual.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	room_visual.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	rail_documents_section.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	rail_documents_section.size_flags_horizontal = Control.SIZE_FILL
+	rail_documents_section.visible = false
 	inventory_section.size_flags_horizontal = Control.SIZE_FILL
 	inventory_section.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	inventory_list.custom_minimum_size = Vector2(0, 360)
-	rail_documents_list.custom_minimum_size = Vector2(0, 210)
-	rail_document_preview_panel.custom_minimum_size = Vector2(0, 260)
 	_stabilize_side_rail_text()
 	_sync_fixed_game_layout()
 
@@ -275,23 +294,22 @@ func _sync_fixed_game_layout() -> void:
 		return
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var ratio: float = ROOM_STAGE_REFERENCE_SIZE.x / ROOM_STAGE_REFERENCE_SIZE.y
-	var available_width: float = maxf(640.0, viewport_size.x - SCREEN_MARGIN.x * 2.0 - LEFT_RAIL_WIDTH - RIGHT_RAIL_WIDTH - RAIL_GAP * 2.0)
+	var available_width: float = maxf(640.0, viewport_size.x - SCREEN_MARGIN.x * 2.0 - RIGHT_RAIL_WIDTH - RAIL_GAP)
 	var available_height: float = maxf(420.0, viewport_size.y - SCREEN_MARGIN.y * 2.0)
 	var stage_height: float = minf(available_height, available_width / ratio)
 	var stage_width: float = stage_height * ratio
 	var stage_size: Vector2 = Vector2(floorf(stage_width), floorf(stage_height))
-	var total_width: float = LEFT_RAIL_WIDTH + RAIL_GAP + stage_size.x + RAIL_GAP + RIGHT_RAIL_WIDTH
+	var total_width: float = stage_size.x + RAIL_GAP + RIGHT_RAIL_WIDTH
 	var total_height: float = stage_size.y
 	var origin: Vector2 = Vector2(
 		floorf((viewport_size.x - total_width) * 0.5),
 		floorf((viewport_size.y - total_height) * 0.5)
 	)
 	var stage_y: float = origin.y
-	var stage_x: float = origin.x + LEFT_RAIL_WIDTH + RAIL_GAP
-	var left_rail: PanelContainer = _ensure_left_documents_rail()
+	var stage_x: float = origin.x
 
-	_pin_control(top_bar, Vector2(stage_x + stage_size.x - IN_SCENE_MENU_SIZE.x - 18.0, stage_y + 14.0), IN_SCENE_MENU_SIZE)
-	_pin_control(left_rail, Vector2(origin.x, stage_y), Vector2(LEFT_RAIL_WIDTH, stage_size.y))
+	_pin_control(top_menu_button, Vector2(stage_x + stage_size.x - IN_SCENE_MENU_BUTTON_SIZE.x - IN_SCENE_DOCUMENTS_BUTTON_SIZE.x - IN_SCENE_BUTTON_GAP - 18.0, stage_y + 18.0), IN_SCENE_MENU_BUTTON_SIZE)
+	_pin_control(documents_button, Vector2(stage_x + stage_size.x - IN_SCENE_DOCUMENTS_BUTTON_SIZE.x - 18.0, stage_y + 18.0), IN_SCENE_DOCUMENTS_BUTTON_SIZE)
 	_pin_control(room_visual, Vector2(stage_x, stage_y), stage_size)
 	_pin_control(right_rail, Vector2(stage_x + stage_size.x + RAIL_GAP, stage_y), Vector2(RIGHT_RAIL_WIDTH, stage_size.y))
 	_pin_control(message_panel, Vector2(stage_x + 28.0, stage_y + stage_size.y - IN_SCENE_MESSAGE_HEIGHT - 24.0), Vector2(stage_size.x - 56.0, IN_SCENE_MESSAGE_HEIGHT))
@@ -381,10 +399,9 @@ func _document_text(data: Dictionary, field: String, fallback: String = "") -> S
 func _apply_static_translations() -> void:
 	var title_label := title_column.get_node("Title") as Label
 	title_label.text = I18n.t("game.title")
-	top_menu_button.text = I18n.t("ui.top.menu")
+	top_menu_button.text = "⚙"
 	top_restart_button.text = I18n.t("ui.top.restart")
 	objective_button.text = I18n.t("ui.top.goal")
-	documents_button.text = I18n.t("ui.top.files")
 	inventory_title_label.text = I18n.t("ui.inventory.title")
 	rail_documents_title_label.text = I18n.t("ui.documents.title")
 	inventory_notice_label.text = " "
@@ -400,6 +417,11 @@ func _apply_static_translations() -> void:
 	$CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeTitle.text = I18n.t("ui.code.title")
 	code_cancel_button.text = I18n.t("ui.code.cancel")
 	code_confirm_button.text = I18n.t("ui.code.confirm")
+	if new_document_open_archive_button != null:
+		new_document_open_archive_button.text = I18n.t("ui.top.files")
+	if new_document_close_button != null:
+		new_document_close_button.text = I18n.t("ui.menu.close")
+	_refresh_documents_button()
 	_set_rail_document_empty_state()
 
 
@@ -463,6 +485,7 @@ func _refresh_hud() -> void:
 	objective_value_label.text = GameState.objective_text
 	_refresh_inventory_list()
 	_refresh_documents_list()
+	_refresh_documents_button()
 	if ending_overlay != null and ending_overlay.visible:
 		ending_documents_value_label.text = I18n.t("ui.files.count_short", {"count": GameState.unlocked_documents.size()})
 	if is_main_menu_open and main_menu_overlay != null and main_menu_overlay.visible:
@@ -730,6 +753,7 @@ func _update_flashlight_position() -> void:
 	room_flashlight_material.set_shader_parameter("light_pos", normalized)
 	room_flashlight_glow.position = local_mouse - (room_flashlight_glow.size * 0.5)
 
+
 func _apply_background(texture_path: String) -> void:
 	if texture_path == "":
 		background_texture.texture = null
@@ -987,6 +1011,85 @@ void fragment() {
 	pause_main_menu_button.custom_minimum_size = Vector2(0, 48)
 	pause_main_menu_button.pressed.connect(_return_to_main_menu_from_pause)
 	pause_stack.add_child(pause_main_menu_button)
+
+	new_document_overlay = ColorRect.new()
+	new_document_overlay.name = "NewDocumentOverlay"
+	new_document_overlay.visible = false
+	new_document_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	new_document_overlay.color = Color(0.01, 0.015, 0.02, 0.0)
+	new_document_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(new_document_overlay)
+	move_child(new_document_overlay, get_child_count() - 1)
+
+	var document_center := CenterContainer.new()
+	document_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	new_document_overlay.add_child(document_center)
+
+	new_document_panel = PanelContainer.new()
+	new_document_panel.custom_minimum_size = Vector2(640, 0)
+	document_center.add_child(new_document_panel)
+
+	var document_margin := MarginContainer.new()
+	document_margin.add_theme_constant_override("margin_left", 28)
+	document_margin.add_theme_constant_override("margin_top", 30)
+	document_margin.add_theme_constant_override("margin_right", 28)
+	document_margin.add_theme_constant_override("margin_bottom", 24)
+	new_document_panel.add_child(document_margin)
+
+	var document_stack := VBoxContainer.new()
+	document_stack.add_theme_constant_override("separation", 12)
+	document_margin.add_child(document_stack)
+
+	var document_kicker := Label.new()
+	document_kicker.text = "NEW FILE"
+	document_kicker.add_theme_font_override("font", ACCENT_FONT)
+	document_kicker.add_theme_font_size_override("font_size", 14)
+	document_kicker.add_theme_color_override("font_color", Color(0.58, 0.48, 0.33, 0.92))
+	document_stack.add_child(document_kicker)
+
+	new_document_title_label = Label.new()
+	new_document_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	new_document_title_label.add_theme_font_override("font", DISPLAY_FONT)
+	new_document_title_label.add_theme_font_size_override("font_size", 26)
+	new_document_title_label.add_theme_color_override("font_color", Color(0.18, 0.15, 0.11, 1.0))
+	document_stack.add_child(new_document_title_label)
+
+	new_document_source_label = Label.new()
+	new_document_source_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	new_document_source_label.add_theme_font_size_override("font_size", 14)
+	new_document_source_label.add_theme_color_override("font_color", Color(0.44, 0.36, 0.25, 0.92))
+	document_stack.add_child(new_document_source_label)
+
+	var document_divider := ColorRect.new()
+	document_divider.custom_minimum_size = Vector2(0, 2)
+	document_divider.color = Color(0.65, 0.56, 0.41, 0.24)
+	document_stack.add_child(document_divider)
+
+	new_document_body_label = RichTextLabel.new()
+	new_document_body_label.bbcode_enabled = true
+	new_document_body_label.scroll_active = true
+	new_document_body_label.fit_content = false
+	new_document_body_label.custom_minimum_size = Vector2(0, 280)
+	new_document_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	new_document_body_label.add_theme_color_override("default_color", Color(0.16, 0.13, 0.10, 0.96))
+	document_stack.add_child(new_document_body_label)
+
+	var document_actions := HBoxContainer.new()
+	document_actions.alignment = BoxContainer.ALIGNMENT_END
+	document_actions.add_theme_constant_override("separation", 12)
+	document_stack.add_child(document_actions)
+
+	new_document_open_archive_button = Button.new()
+	new_document_open_archive_button.text = I18n.t("ui.top.files")
+	new_document_open_archive_button.custom_minimum_size = Vector2(120, 44)
+	new_document_open_archive_button.pressed.connect(_open_archive_from_new_document)
+	document_actions.add_child(new_document_open_archive_button)
+
+	new_document_close_button = Button.new()
+	new_document_close_button.text = I18n.t("ui.menu.close")
+	new_document_close_button.custom_minimum_size = Vector2(120, 44)
+	new_document_close_button.pressed.connect(_hide_new_document_overlay)
+	document_actions.add_child(new_document_close_button)
 
 	main_menu_overlay = ColorRect.new()
 	main_menu_overlay.name = "MainMenuOverlay"
@@ -1281,21 +1384,21 @@ func _refresh_ending_overlay(room: Dictionary) -> void:
 
 func _apply_web_ui_theme() -> void:
 	var empty_style := StyleBoxEmpty.new()
-	var left_rail: PanelContainer = _ensure_left_documents_rail()
 	$Background.color = Color(0, 0, 0, 1)
 	top_bar.add_theme_stylebox_override("panel", empty_style)
 	room_viewport.add_theme_stylebox_override("panel", empty_style)
 	message_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0, 0, 0, 0.58), Color(1, 1, 1, 0.10), 3))
 	room_visual_frame.add_theme_stylebox_override("panel", empty_style)
 	right_rail.add_theme_stylebox_override("panel", empty_style)
-	left_rail.add_theme_stylebox_override("panel", empty_style)
 	room_hint_bar.add_theme_stylebox_override("panel", _build_panel_style(Color(0.03, 0.04, 0.05, 0.84), Color(0.73, 0.84, 1.0, 0.03), 10))
 
 	room_name_label.add_theme_color_override("font_color", Color(0.93, 0.95, 0.97, 1))
 	room_hint_label.add_theme_color_override("default_color", Color(0.72, 0.76, 0.82, 0.94))
 	message_label.add_theme_color_override("default_color", Color(0.93, 0.95, 0.97, 0.96))
 	objective_value_label.add_theme_color_override("default_color", Color(0.93, 0.95, 0.97, 0.96))
-	document_text_label.add_theme_color_override("default_color", Color(0.94, 0.93, 0.88, 0.98))
+	document_title_label.add_theme_color_override("font_color", Color(0.18, 0.15, 0.11, 1.0))
+	document_source_label.add_theme_color_override("font_color", Color(0.44, 0.36, 0.25, 0.92))
+	document_text_label.add_theme_color_override("default_color", Color(0.16, 0.13, 0.10, 0.96))
 	inventory_title_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.94, 1))
 	rail_documents_title_label.add_theme_color_override("font_color", Color(0.95, 0.95, 0.94, 1))
 	inventory_notice_label.add_theme_color_override("font_color", Color(0.85, 0.76, 0.60, 0.98))
@@ -1313,6 +1416,8 @@ func _apply_web_ui_theme() -> void:
 	_style_button(inspect_confirm_button, true)
 	_style_button(code_cancel_button, false)
 	_style_button(code_confirm_button, true)
+	_style_button(new_document_open_archive_button, false)
+	_style_button(new_document_close_button, true)
 	_style_button(main_menu_close_button, false)
 	_style_button(ending_restart_button, true)
 	_style_button(ending_menu_button, false)
@@ -1322,21 +1427,23 @@ func _apply_web_ui_theme() -> void:
 
 	_style_overlay_panel($InspectOverlay/InspectCenter/InspectPanel)
 	_style_overlay_panel($CodeOverlay/CodeCenter/CodePanel)
-	_style_overlay_panel($DocumentsOverlay/DocumentsCenter/DocumentsPanel)
+	documents_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.84, 0.79, 0.70, 0.98), Color(0.58, 0.48, 0.33, 0.30), 18))
 	_style_overlay_panel($ObjectiveOverlay/ObjectiveCenter/ObjectivePanel)
-	_style_overlay_panel($DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer)
+	document_viewer_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.93, 0.89, 0.79, 0.98), Color(0.58, 0.48, 0.33, 0.22), 12))
 	_style_overlay_panel($InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame, 18)
+	new_document_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.93, 0.89, 0.79, 0.98), Color(0.58, 0.48, 0.33, 0.30), 12))
 	_style_overlay_panel(main_menu_shell, 26)
 	_style_overlay_panel(pause_overlay.get_child(0).get_child(0) as PanelContainer, 18)
 	main_menu_home_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	hotspot_editor_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.07, 0.10, 0.94), Color(0.95, 0.90, 0.76, 0.32), 16))
 	inventory_section.add_theme_stylebox_override("panel", empty_style)
-	rail_documents_section.add_theme_stylebox_override("panel", empty_style)
-	rail_document_preview_panel.add_theme_stylebox_override("panel", empty_style)
 
-	documents_list.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.72), Color(0.73, 0.84, 1.0, 0.08), 14))
+	documents_list.add_theme_stylebox_override("panel", _build_panel_style(Color(0.88, 0.84, 0.75, 0.96), Color(0.58, 0.48, 0.33, 0.14), 12))
+	documents_list.add_theme_color_override("font_color", Color(0.22, 0.19, 0.14, 0.96))
+	documents_list.add_theme_color_override("font_selected_color", Color(0.14, 0.11, 0.08, 1.0))
 	_make_item_list_transparent(inventory_list)
-	_make_item_list_transparent(rail_documents_list)
+	documents_list.add_theme_stylebox_override("selected", _build_panel_style(Color(0.72, 0.62, 0.46, 0.22), Color(0.72, 0.62, 0.46, 0.0), 8))
+	documents_list.add_theme_stylebox_override("selected_focus", _build_panel_style(Color(0.72, 0.62, 0.46, 0.30), Color(0.72, 0.62, 0.46, 0.0), 8))
 	code_input.add_theme_stylebox_override("normal", _build_panel_style(Color(0.04, 0.05, 0.07, 0.92), Color(0.85, 0.76, 0.60, 0.34), 12))
 	code_input.add_theme_stylebox_override("focus", _build_panel_style(Color(0.05, 0.06, 0.08, 0.96), Color(0.85, 0.76, 0.60, 0.58), 12))
 	code_input.add_theme_color_override("font_color", Color(0.96, 0.96, 0.95, 1))
@@ -1360,13 +1467,44 @@ func _make_item_list_transparent(list: ItemList) -> void:
 func _add_menu_button() -> void:
 	_style_button(top_menu_button, false)
 	_style_button(top_restart_button, false)
+	_style_in_scene_icon_button(top_menu_button, false)
+	_style_in_scene_icon_button(documents_button, true)
+
+
+func _style_in_scene_icon_button(button: Button, paper_style: bool) -> void:
+	var normal_bg := Color(0, 0, 0, 0.0)
+	var hover_bg := Color(0, 0, 0, 0.0)
+	var pressed_bg := Color(0, 0, 0, 0.0)
+	var border := Color(0, 0, 0, 0.0)
+	var font_color := Color(0.93, 0.95, 0.97, 1.0)
+	var font_size := 28
+	if paper_style:
+		normal_bg = Color(0, 0, 0, 0.0)
+		hover_bg = Color(0, 0, 0, 0.0)
+		pressed_bg = Color(0, 0, 0, 0.0)
+		border = Color(0, 0, 0, 0.0)
+		font_color = Color(0.20, 0.16, 0.12, 1.0)
+		font_size = 28
+	button.add_theme_stylebox_override("normal", _build_panel_style(normal_bg, border, 12))
+	button.add_theme_stylebox_override("hover", _build_panel_style(hover_bg, border, 12))
+	button.add_theme_stylebox_override("pressed", _build_panel_style(pressed_bg, border, 12))
+	button.add_theme_stylebox_override("focus", _build_panel_style(hover_bg, border, 12))
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", font_color)
+	button.add_theme_color_override("font_hover_color", font_color)
+	button.add_theme_color_override("font_pressed_color", font_color)
+	button.add_theme_color_override("font_focus_color", font_color)
+	button.add_theme_constant_override("h_separation", 4)
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.flat = true
 
 
 func _hide_secondary_overlays() -> void:
-	documents_overlay.visible = false
+	_hide_documents_overlay(true)
 	objective_overlay.visible = false
 	inspect_overlay.visible = false
 	code_overlay.visible = false
+	_hide_new_document_overlay(true)
 	_hide_pause_menu()
 
 
@@ -1381,7 +1519,7 @@ func _toggle_pause_menu() -> void:
 		return
 	if is_main_menu_open or ending_overlay != null and ending_overlay.visible:
 		return
-	if documents_overlay.visible or objective_overlay.visible or inspect_overlay.visible or code_overlay.visible:
+	if documents_overlay.visible or objective_overlay.visible or inspect_overlay.visible or code_overlay.visible or new_document_overlay != null and new_document_overlay.visible:
 		_hide_secondary_overlays()
 		return
 	if pause_overlay.visible:
@@ -2455,13 +2593,124 @@ func _play_blink_transition(callback: Callable = Callable()) -> void:
 	blink_overlay.visible = false
 	blink_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	is_transitioning = false
+
+
 func _show_documents_overlay() -> void:
 	_refresh_documents_list()
+	_refresh_documents_button()
+	if documents_overlay_tween != null:
+		documents_overlay_tween.kill()
 	documents_overlay.visible = true
+	documents_overlay.color = Color(0.01, 0.015, 0.02, 0.0)
+	documents_panel.modulate = Color(1, 1, 1, 0.0)
+	documents_panel.scale = Vector2(0.92, 0.98)
+	documents_panel.rotation_degrees = -1.0
+
+	documents_overlay_tween = create_tween()
+	documents_overlay_tween.set_parallel(true)
+	documents_overlay_tween.set_trans(Tween.TRANS_CUBIC)
+	documents_overlay_tween.set_ease(Tween.EASE_OUT)
+	documents_overlay_tween.tween_property(documents_overlay, "color", Color(0.01, 0.015, 0.02, 0.72), 0.18)
+	documents_overlay_tween.tween_property(documents_panel, "modulate", Color(1, 1, 1, 1), 0.14)
+	documents_overlay_tween.tween_property(documents_panel, "scale", Vector2(1.0, 1.0), 0.22)
+	documents_overlay_tween.tween_property(documents_panel, "rotation_degrees", 0.0, 0.20)
 
 
-func _hide_documents_overlay() -> void:
-	documents_overlay.visible = false
+func _hide_documents_overlay(immediate: bool = false) -> void:
+	if documents_overlay_tween != null:
+		documents_overlay_tween.kill()
+
+	if immediate:
+		documents_overlay.visible = false
+		documents_overlay.color = Color(0.01, 0.015, 0.02, 0.0)
+		documents_panel.modulate = Color(1, 1, 1, 1)
+		documents_panel.scale = Vector2(1.0, 1.0)
+		documents_panel.rotation_degrees = 0.0
+		return
+
+	if not documents_overlay.visible:
+		return
+
+	documents_overlay_tween = create_tween()
+	documents_overlay_tween.set_parallel(true)
+	documents_overlay_tween.set_trans(Tween.TRANS_CUBIC)
+	documents_overlay_tween.set_ease(Tween.EASE_IN)
+	documents_overlay_tween.tween_property(documents_overlay, "color", Color(0.01, 0.015, 0.02, 0.0), 0.14)
+	documents_overlay_tween.tween_property(documents_panel, "modulate", Color(1, 1, 1, 0.0), 0.10)
+	documents_overlay_tween.tween_property(documents_panel, "scale", Vector2(0.98, 0.99), 0.14)
+	documents_overlay_tween.finished.connect(func() -> void:
+		documents_overlay.visible = false
+		documents_panel.modulate = Color(1, 1, 1, 1)
+		documents_panel.scale = Vector2(1.0, 1.0)
+		documents_panel.rotation_degrees = 0.0
+	)
+
+
+func _show_new_document_overlay(document: Dictionary) -> void:
+	if document.is_empty() or new_document_overlay == null or new_document_panel == null:
+		return
+
+	if new_document_tween != null:
+		new_document_tween.kill()
+
+	new_document_title_label.text = _document_text(document, "title", "Untitled")
+	new_document_source_label.text = _document_text(document, "source", "")
+	new_document_body_label.text = _document_text(document, "body", "")
+	new_document_body_label.scroll_to_line(0)
+
+	new_document_overlay.visible = true
+	new_document_overlay.color = Color(0.01, 0.015, 0.02, 0.0)
+	new_document_panel.modulate = Color(1, 1, 1, 0.0)
+	new_document_panel.scale = Vector2(0.08, 1.0)
+	new_document_panel.rotation_degrees = -4.0
+	var page_height := maxf(new_document_panel.size.y, new_document_panel.custom_minimum_size.y)
+	if page_height <= 0.0:
+		page_height = 360.0
+	new_document_panel.pivot_offset = Vector2(0, page_height * 0.5)
+
+	new_document_tween = create_tween()
+	new_document_tween.set_parallel(true)
+	new_document_tween.set_trans(Tween.TRANS_CUBIC)
+	new_document_tween.set_ease(Tween.EASE_OUT)
+	new_document_tween.tween_property(new_document_overlay, "color", Color(0.01, 0.015, 0.02, 0.72), 0.18)
+	new_document_tween.tween_property(new_document_panel, "modulate", Color(1, 1, 1, 1), 0.14)
+	new_document_tween.tween_property(new_document_panel, "scale", Vector2(1.0, 1.0), 0.26)
+	new_document_tween.tween_property(new_document_panel, "rotation_degrees", 0.0, 0.24)
+
+
+func _hide_new_document_overlay(immediate: bool = false) -> void:
+	if new_document_overlay == null or not new_document_overlay.visible:
+		return
+
+	if new_document_tween != null:
+		new_document_tween.kill()
+
+	if immediate:
+		new_document_overlay.visible = false
+		new_document_overlay.color = Color(0.01, 0.015, 0.02, 0.0)
+		new_document_panel.modulate = Color(1, 1, 1, 1)
+		new_document_panel.scale = Vector2(1.0, 1.0)
+		new_document_panel.rotation_degrees = 0.0
+		return
+
+	new_document_tween = create_tween()
+	new_document_tween.set_parallel(true)
+	new_document_tween.set_trans(Tween.TRANS_CUBIC)
+	new_document_tween.set_ease(Tween.EASE_IN)
+	new_document_tween.tween_property(new_document_overlay, "color", Color(0.01, 0.015, 0.02, 0.0), 0.14)
+	new_document_tween.tween_property(new_document_panel, "modulate", Color(1, 1, 1, 0.0), 0.12)
+	new_document_tween.tween_property(new_document_panel, "scale", Vector2(0.98, 1.0), 0.14)
+	new_document_tween.finished.connect(func() -> void:
+		new_document_overlay.visible = false
+		new_document_panel.modulate = Color(1, 1, 1, 1)
+		new_document_panel.scale = Vector2(1.0, 1.0)
+		new_document_panel.rotation_degrees = 0.0
+	)
+
+
+func _open_archive_from_new_document() -> void:
+	_hide_new_document_overlay(true)
+	_show_documents_overlay()
 
 
 func _show_objective_overlay() -> void:
@@ -2512,33 +2761,27 @@ func _on_inventory_item_clicked(index: int, _at_position: Vector2, mouse_button_
 
 func _refresh_documents_list() -> void:
 	documents_list.clear()
-	rail_documents_list.clear()
 	for document: Dictionary in GameState.unlocked_documents:
 		var title := _document_text(document, "title", "Untitled")
 		documents_list.add_item(title)
-		rail_documents_list.add_item(title)
 
 	if GameState.unlocked_documents.is_empty():
 		selected_document_index = -1
 		document_title_label.text = I18n.t("ui.documents.empty_title")
 		document_source_label.text = I18n.t("ui.documents.empty_source")
 		document_text_label.text = ""
-		rail_documents_list.add_item(I18n.t("ui.documents.empty_title"))
-		rail_documents_list.deselect_all()
 		_set_rail_document_empty_state()
 		return
 
 	if selected_document_index < 0 or selected_document_index >= GameState.unlocked_documents.size():
-		selected_document_index = GameState.unlocked_documents.size() - 1
+		selected_document_index = 0
 
 	documents_list.select(selected_document_index)
-	rail_documents_list.select(selected_document_index)
 	_show_document(selected_document_index)
 
 
 func _on_document_selected(index: int) -> void:
 	selected_document_index = index
-	rail_documents_list.select(index)
 	_show_document(index)
 
 
@@ -2559,6 +2802,10 @@ func _show_document(index: int) -> void:
 	rail_document_title_label.text = _document_text(document, "title", "Untitled")
 	rail_document_source_label.text = _document_text(document, "source", "")
 	rail_document_body_label.text = _document_text(document, "body", "")
+
+
+func _refresh_documents_button() -> void:
+	documents_button.text = "⧉"
 
 
 func _set_rail_document_empty_state() -> void:
@@ -2597,12 +2844,18 @@ func _announce_rail_updates(new_items: Array[String], new_documents: Array[Strin
 		_show_rail_notice(inventory_section, inventory_notice_label, I18n.t("ui.rail.item_notice", {"items": ", ".join(item_names)}), Color(0.86, 0.76, 0.58, 1.0), true)
 
 	if not new_documents.is_empty():
-		selected_document_index = GameState.unlocked_documents.size() - 1
+		selected_document_index = 0
 		_refresh_documents_list()
-		var document_titles: Array[String] = []
-		for document_id in new_documents:
-			document_titles.append(_find_document_title(document_id))
-		_show_rail_notice(rail_documents_section, rail_documents_notice_label, I18n.t("ui.rail.document_notice", {"documents": ", ".join(document_titles)}), Color(0.73, 0.84, 1.0, 1.0), false)
+		var latest_document := _find_document(String(new_documents[0]))
+		if not latest_document.is_empty():
+			_show_new_document_overlay(latest_document)
+
+
+func _find_document(document_id: String) -> Dictionary:
+	for document: Dictionary in GameState.unlocked_documents:
+		if String(document.get("id", "")) == document_id:
+			return document
+	return {}
 
 
 func _find_document_title(document_id: String) -> String:
