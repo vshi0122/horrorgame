@@ -21,6 +21,13 @@ const MENU_BACKDROP := preload("res://godot/asserts/images/parkinglot.jpg")
 const JUMPSCARE_IMAGE := preload("res://godot/asserts/images/js.jpg")
 const DISPLAY_FONT := preload("res://godot/asserts/font/Colorfiction - Messy.otf")
 const ACCENT_FONT := preload("res://godot/asserts/font/Colorfiction - Messy.otf")
+const ROOM_STAGE_REFERENCE_SIZE := Vector2(1120, 692)
+const LEFT_RAIL_WIDTH := 220.0
+const RIGHT_RAIL_WIDTH := 176.0
+const RAIL_GAP := 26.0
+const IN_SCENE_MENU_SIZE := Vector2(320, 42)
+const IN_SCENE_MESSAGE_HEIGHT := 72.0
+const SCREEN_MARGIN := Vector2(28, 18)
 const FLASHLIGHT_ROOMS := [
 	"back_stairwell",
 	"fake_third",
@@ -34,13 +41,27 @@ const FLASHLIGHT_ROOMS := [
 @onready var room_name_label: Label = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn/RoomName
 @onready var room_hint_bar: PanelContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomHintBar
 @onready var room_hint_label: RichTextLabel = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomHintBar/RoomHintMargin/RoomHint
+@onready var root_layout: VBoxContainer = $RootMargin/Layout
+@onready var center_column: VBoxContainer = $RootMargin/Layout/CenterColumn
+@onready var top_bar: PanelContainer = $RootMargin/Layout/CenterColumn/TopBar
+@onready var title_column: VBoxContainer = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn
+@onready var top_actions: HBoxContainer = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions
+@onready var room_viewport: PanelContainer = $RootMargin/Layout/CenterColumn/RoomViewport
+@onready var room_content: MarginContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent
+@onready var room_stack: VBoxContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack
+@onready var room_visual_row: HBoxContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow
+@onready var room_visual: AspectRatioContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual
+@onready var room_visual_frame: PanelContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame
 @onready var room_visual_layer: Control = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer
 @onready var background_texture: TextureRect = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer/BackgroundTexture
 @onready var hotspot_layer: Control = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer/HotspotLayer
 @onready var interaction_list: VBoxContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/InteractionList
+@onready var message_panel: PanelContainer = $RootMargin/Layout/CenterColumn/MessagePanel
 @onready var message_label: RichTextLabel = $RootMargin/Layout/CenterColumn/MessagePanel/MessageMargin/MessageValue
 @onready var documents_button: Button = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/DocumentsButton
 @onready var objective_button: Button = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/ObjectiveButton
+@onready var right_rail: PanelContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail
+@onready var hud_stack: VBoxContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack
 @onready var inventory_section: PanelContainer = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection
 @onready var inventory_title_label: Label = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryHeader/InventoryTitle
 @onready var inventory_notice_label: Label = $RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryHeader/InventoryNotice
@@ -106,6 +127,10 @@ var ending_endings_value_label: Label
 var ending_documents_value_label: Label
 var ending_restart_button: Button
 var ending_menu_button: Button
+var pause_overlay: ColorRect
+var pause_continue_button: Button
+var pause_save_button: Button
+var pause_main_menu_button: Button
 var room_effect_overlay: Control
 var room_blackout_cover: ColorRect
 var room_flashlight_darkness: ColorRect
@@ -138,6 +163,9 @@ var inventory_notice_tween: Tween
 var documents_notice_tween: Tween
 var inventory_highlight_tween: Tween
 var documents_highlight_tween: Tween
+var fixed_game_layer: Control
+var left_documents_rail: PanelContainer
+var message_popup_tween: Tween
 
 
 func _ready() -> void:
@@ -165,6 +193,7 @@ func _ready() -> void:
 	# Start BGM
 	SoundManager.play_bgm()
 	_sync_scene_ambient(GameState.current_room_id)
+	_apply_rust_lake_layout()
 	_build_web_ui_overlays()
 	_apply_web_ui_theme()
 	_apply_static_translations()
@@ -174,11 +203,163 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	_sync_fixed_game_layout()
 	_update_flashlight_position()
+
+
+func _apply_rust_lake_layout() -> void:
+	gameplay_root.offset_left = 0
+	gameplay_root.offset_top = 0
+	gameplay_root.offset_right = 0
+	gameplay_root.offset_bottom = 0
+	root_layout.add_theme_constant_override("separation", 0)
+	center_column.add_theme_constant_override("separation", 0)
+	room_stack.add_theme_constant_override("separation", 0)
+	room_visual_row.add_theme_constant_override("separation", 26)
+	center_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	room_stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	room_visual_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	room_viewport.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	room_content.add_theme_constant_override("margin_left", 0)
+	room_content.add_theme_constant_override("margin_top", 0)
+	room_content.add_theme_constant_override("margin_right", 0)
+	room_content.add_theme_constant_override("margin_bottom", 0)
+
+	fixed_game_layer = _ensure_fixed_game_layer()
+	title_column.visible = false
+	documents_button.visible = false
+	top_actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_actions.alignment = BoxContainer.ALIGNMENT_END
+	room_hint_bar.visible = false
+	message_label.scroll_active = false
+
+	var left_rail: PanelContainer = _ensure_left_documents_rail()
+	if rail_documents_section.get_parent() != left_rail:
+		rail_documents_section.reparent(left_rail, false)
+
+	if top_bar.get_parent() != fixed_game_layer:
+		top_bar.reparent(fixed_game_layer, false)
+	if left_rail.get_parent() != fixed_game_layer:
+		left_rail.reparent(fixed_game_layer, false)
+	if room_visual.get_parent() != fixed_game_layer:
+		room_visual.reparent(fixed_game_layer, false)
+	if right_rail.get_parent() != fixed_game_layer:
+		right_rail.reparent(fixed_game_layer, false)
+	if message_panel.get_parent() != fixed_game_layer:
+		message_panel.reparent(fixed_game_layer, false)
+
+	root_layout.visible = false
+	top_bar.visible = true
+	left_rail.visible = true
+	room_visual.visible = true
+	right_rail.visible = true
+	message_panel.visible = false
+	message_panel.modulate = Color(1, 1, 1, 0)
+
+	room_visual.ratio = ROOM_STAGE_REFERENCE_SIZE.x / ROOM_STAGE_REFERENCE_SIZE.y
+	room_visual.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	room_visual.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	rail_documents_section.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	rail_documents_section.size_flags_horizontal = Control.SIZE_FILL
+	inventory_section.size_flags_horizontal = Control.SIZE_FILL
+	inventory_section.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	inventory_list.custom_minimum_size = Vector2(0, 360)
+	rail_documents_list.custom_minimum_size = Vector2(0, 210)
+	rail_document_preview_panel.custom_minimum_size = Vector2(0, 260)
+	_stabilize_side_rail_text()
+	_sync_fixed_game_layout()
+
+
+func _sync_fixed_game_layout() -> void:
+	if fixed_game_layer == null:
+		return
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var ratio: float = ROOM_STAGE_REFERENCE_SIZE.x / ROOM_STAGE_REFERENCE_SIZE.y
+	var available_width: float = maxf(640.0, viewport_size.x - SCREEN_MARGIN.x * 2.0 - LEFT_RAIL_WIDTH - RIGHT_RAIL_WIDTH - RAIL_GAP * 2.0)
+	var available_height: float = maxf(420.0, viewport_size.y - SCREEN_MARGIN.y * 2.0)
+	var stage_height: float = minf(available_height, available_width / ratio)
+	var stage_width: float = stage_height * ratio
+	var stage_size: Vector2 = Vector2(floorf(stage_width), floorf(stage_height))
+	var total_width: float = LEFT_RAIL_WIDTH + RAIL_GAP + stage_size.x + RAIL_GAP + RIGHT_RAIL_WIDTH
+	var total_height: float = stage_size.y
+	var origin: Vector2 = Vector2(
+		floorf((viewport_size.x - total_width) * 0.5),
+		floorf((viewport_size.y - total_height) * 0.5)
+	)
+	var stage_y: float = origin.y
+	var stage_x: float = origin.x + LEFT_RAIL_WIDTH + RAIL_GAP
+	var left_rail: PanelContainer = _ensure_left_documents_rail()
+
+	_pin_control(top_bar, Vector2(stage_x + stage_size.x - IN_SCENE_MENU_SIZE.x - 18.0, stage_y + 14.0), IN_SCENE_MENU_SIZE)
+	_pin_control(left_rail, Vector2(origin.x, stage_y), Vector2(LEFT_RAIL_WIDTH, stage_size.y))
+	_pin_control(room_visual, Vector2(stage_x, stage_y), stage_size)
+	_pin_control(right_rail, Vector2(stage_x + stage_size.x + RAIL_GAP, stage_y), Vector2(RIGHT_RAIL_WIDTH, stage_size.y))
+	_pin_control(message_panel, Vector2(stage_x + 28.0, stage_y + stage_size.y - IN_SCENE_MESSAGE_HEIGHT - 24.0), Vector2(stage_size.x - 56.0, IN_SCENE_MESSAGE_HEIGHT))
+
+
+func _pin_control(control: Control, target_position: Vector2, target_size: Vector2) -> void:
+	control.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	control.position = target_position
+	control.size = target_size
+	control.custom_minimum_size = target_size
+
+
+func _ensure_fixed_game_layer() -> Control:
+	var existing_layer: Node = gameplay_root.get_node_or_null("FixedGameLayer")
+	if existing_layer is Control:
+		return existing_layer as Control
+
+	var layer := Control.new()
+	layer.name = "FixedGameLayer"
+	layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.mouse_filter = Control.MOUSE_FILTER_PASS
+	gameplay_root.add_child(layer)
+	return layer
+
+
+func _ensure_left_documents_rail() -> PanelContainer:
+	if left_documents_rail != null and is_instance_valid(left_documents_rail):
+		return left_documents_rail
+
+	if fixed_game_layer != null:
+		var existing_fixed_rail: Node = fixed_game_layer.get_node_or_null("LeftDocumentsRail")
+		if existing_fixed_rail is PanelContainer:
+			left_documents_rail = existing_fixed_rail as PanelContainer
+			return left_documents_rail
+
+	var existing_left_rail: Node = room_visual_row.get_node_or_null("LeftDocumentsRail")
+	if existing_left_rail is PanelContainer:
+		left_documents_rail = existing_left_rail as PanelContainer
+		return left_documents_rail
+
+	var left_rail := PanelContainer.new()
+	left_rail.name = "LeftDocumentsRail"
+	left_rail.mouse_filter = Control.MOUSE_FILTER_PASS
+	room_visual_row.add_child(left_rail)
+	room_visual_row.move_child(left_rail, 0)
+	left_documents_rail = left_rail
+	return left_documents_rail
+
+
+func _stabilize_side_rail_text() -> void:
+	inventory_notice_label.visible = false
+	inventory_notice_label.text = ""
+	inventory_notice_label.custom_minimum_size = Vector2.ZERO
+	rail_documents_notice_label.visible = false
+	rail_documents_notice_label.text = ""
+	rail_documents_notice_label.custom_minimum_size = Vector2.ZERO
+	inventory_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rail_documents_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inventory_list.max_columns = 1
+	rail_documents_list.max_columns = 1
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE:
+			_toggle_pause_menu()
+			get_viewport().set_input_as_handled()
+			return
 		if event.keycode == KEY_F2:
 			_toggle_hotspot_edit_mode()
 			get_viewport().set_input_as_handled()
@@ -198,9 +379,10 @@ func _document_text(data: Dictionary, field: String, fallback: String = "") -> S
 
 
 func _apply_static_translations() -> void:
-	$RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn/Title.text = I18n.t("game.title")
-	$RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/MenuButton.text = I18n.t("ui.top.menu")
-	$RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/RestartButton.text = I18n.t("ui.top.restart")
+	var title_label := title_column.get_node("Title") as Label
+	title_label.text = I18n.t("game.title")
+	top_menu_button.text = I18n.t("ui.top.menu")
+	top_restart_button.text = I18n.t("ui.top.restart")
 	objective_button.text = I18n.t("ui.top.goal")
 	documents_button.text = I18n.t("ui.top.files")
 	inventory_title_label.text = I18n.t("ui.inventory.title")
@@ -287,6 +469,36 @@ func _refresh_hud() -> void:
 		_refresh_main_menu_view()
 
 
+func _refresh_hud_with_message(duration: float = 3.2) -> void:
+	_refresh_hud()
+	_show_message_popup(duration)
+
+
+func _show_message_popup(duration: float = 3.2) -> void:
+	if GameState.message_text.strip_edges() == "":
+		_hide_message_popup()
+		return
+	if message_popup_tween != null:
+		message_popup_tween.kill()
+
+	message_panel.visible = true
+	message_panel.modulate = Color(1, 1, 1, 0)
+	message_popup_tween = create_tween()
+	message_popup_tween.tween_property(message_panel, "modulate", Color(1, 1, 1, 1), 0.12)
+	message_popup_tween.tween_interval(duration)
+	message_popup_tween.tween_property(message_panel, "modulate", Color(1, 1, 1, 0), 0.28)
+	message_popup_tween.finished.connect(func() -> void:
+		message_panel.visible = false
+	)
+
+
+func _hide_message_popup() -> void:
+	if message_popup_tween != null:
+		message_popup_tween.kill()
+	message_panel.visible = false
+	message_panel.modulate = Color(1, 1, 1, 0)
+
+
 func _on_interaction_requested(interaction_id: String) -> void:
 	_on_interaction_pressed(interaction_id)
 
@@ -304,7 +516,7 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 		return
 	if not SceneRouter.is_interaction_ready(interaction):
 		GameState.set_message(SceneRouter.get_interaction_block_message(interaction))
-		_refresh_hud()
+		_refresh_hud_with_message()
 		return
 
 	if GameState.current_room_id == "back_stairwell" and interaction_id == "photo":
@@ -318,7 +530,7 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	if not inspect_data.is_empty():
 		SceneRouter.apply_interaction(interaction_id)
 		_refresh_room(GameState.current_room_id)
-		_refresh_hud()
+		_refresh_hud_with_message()
 		_show_inspect_overlay(inspect_data)
 		return
 
@@ -327,7 +539,7 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 		active_code_interaction_id = interaction_id
 		active_code_data = code_input_data
 		GameState.set_message(_text(interaction, "message", GameState.message_text))
-		_refresh_hud()
+		_refresh_hud_with_message()
 		_show_code_overlay(code_input_data)
 		return
 
@@ -349,7 +561,7 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 		_refresh_room(GameState.current_room_id)
 	
 
-	_refresh_hud()
+	_refresh_hud_with_message()
 	var new_items := _collect_new_entries(inventory_before, _capture_inventory_ids())
 	var new_documents := _collect_new_entries(document_ids_before, _capture_document_ids())
 	var gained_new_document := not new_documents.is_empty()
@@ -393,7 +605,7 @@ func _handle_back_stairwell_to_third_floor(interaction: Dictionary) -> void:
 		_refresh_room(GameState.current_room_id)
 		_play_scene_transition_sound(transition_audio)
 	)
-	_refresh_hud()
+	_refresh_hud_with_message()
 
 
 func _handle_back_stairwell_photo(_interaction: Dictionary) -> void:
@@ -416,7 +628,7 @@ func _handle_back_stairwell_photo(_interaction: Dictionary) -> void:
 	GameState.flags["stairwell_photo_reaction_pending"] = false
 	GameState.set_message("刚才那是什么……？照片里那张被涂黑的脸，好像动了一下。")
 	_refresh_room(GameState.current_room_id)
-	_refresh_hud()
+	_refresh_hud_with_message()
 	_announce_rail_updates(new_items, new_documents)
 
 
@@ -468,16 +680,17 @@ func _maybe_play_fake_third_blackout_intro() -> void:
 	_play_feedback_sound("cry", 0.92)
 	GameState.set_message("")
 	_refresh_hud()
+	_hide_message_popup()
 
 	await get_tree().create_timer(0.9).timeout
 	GameState.set_message("The whole building suddenly loses power. A baby is crying somewhere in the dark, so you switch on your phone flashlight.")
-	_refresh_hud()
+	_refresh_hud_with_message(4.2)
 
 	await get_tree().create_timer(0.9).timeout
 	GameState.flags["third_floor_flashlight_enabled"] = true
 	is_room_sequence_locked = false
 	_update_room_effects(GameState.current_room_id)
-	_refresh_hud()
+	_refresh_hud_with_message(2.8)
 
 
 func _update_room_effects(room_id: String) -> void:
@@ -721,6 +934,59 @@ void fragment() {
 	ending_menu_button.custom_minimum_size = Vector2(0, 48)
 	ending_menu_button.pressed.connect(_show_main_menu_home)
 	ending_actions.add_child(ending_menu_button)
+
+	pause_overlay = ColorRect.new()
+	pause_overlay.name = "PauseOverlay"
+	pause_overlay.visible = false
+	pause_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pause_overlay.color = Color(0, 0, 0, 0.54)
+	pause_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(pause_overlay)
+	move_child(pause_overlay, get_child_count() - 1)
+
+	var pause_center := CenterContainer.new()
+	pause_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	pause_overlay.add_child(pause_center)
+
+	var pause_card := PanelContainer.new()
+	pause_card.custom_minimum_size = Vector2(360, 0)
+	pause_center.add_child(pause_card)
+
+	var pause_margin := MarginContainer.new()
+	pause_margin.add_theme_constant_override("margin_left", 24)
+	pause_margin.add_theme_constant_override("margin_top", 22)
+	pause_margin.add_theme_constant_override("margin_right", 24)
+	pause_margin.add_theme_constant_override("margin_bottom", 22)
+	pause_card.add_child(pause_margin)
+
+	var pause_stack := VBoxContainer.new()
+	pause_stack.add_theme_constant_override("separation", 12)
+	pause_margin.add_child(pause_stack)
+
+	var pause_title := Label.new()
+	pause_title.text = "PAUSED"
+	pause_title.add_theme_font_override("font", ACCENT_FONT)
+	pause_title.add_theme_font_size_override("font_size", 28)
+	pause_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pause_stack.add_child(pause_title)
+
+	pause_continue_button = Button.new()
+	pause_continue_button.text = "继续"
+	pause_continue_button.custom_minimum_size = Vector2(0, 48)
+	pause_continue_button.pressed.connect(_hide_pause_menu)
+	pause_stack.add_child(pause_continue_button)
+
+	pause_save_button = Button.new()
+	pause_save_button.text = "保存"
+	pause_save_button.custom_minimum_size = Vector2(0, 48)
+	pause_save_button.pressed.connect(_save_from_pause_menu)
+	pause_stack.add_child(pause_save_button)
+
+	pause_main_menu_button = Button.new()
+	pause_main_menu_button.text = "主菜单"
+	pause_main_menu_button.custom_minimum_size = Vector2(0, 48)
+	pause_main_menu_button.pressed.connect(_return_to_main_menu_from_pause)
+	pause_stack.add_child(pause_main_menu_button)
 
 	main_menu_overlay = ColorRect.new()
 	main_menu_overlay.name = "MainMenuOverlay"
@@ -1014,12 +1280,15 @@ func _refresh_ending_overlay(room: Dictionary) -> void:
 
 
 func _apply_web_ui_theme() -> void:
-	$Background.color = Color(0.03, 0.04, 0.06, 1)
-	$RootMargin/Layout/CenterColumn/TopBar.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.07, 0.10, 0.90), Color(0.85, 0.76, 0.60, 0.14), 18))
-	$RootMargin/Layout/CenterColumn/RoomViewport.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.92), Color(0.73, 0.84, 1.0, 0.04), 12))
-	$RootMargin/Layout/CenterColumn/MessagePanel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.08, 0.10, 0.14, 0.96), Color(0.85, 0.76, 0.60, 0.28), 14))
-	$RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame.add_theme_stylebox_override("panel", _build_panel_style(Color(0.03, 0.04, 0.05, 0.99), Color(0.73, 0.84, 1.0, 0.03), 8))
-	$RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail.add_theme_stylebox_override("panel", _build_panel_style(Color(0.035, 0.045, 0.06, 0.74), Color(0.73, 0.84, 1.0, 0.04), 12))
+	var empty_style := StyleBoxEmpty.new()
+	var left_rail: PanelContainer = _ensure_left_documents_rail()
+	$Background.color = Color(0, 0, 0, 1)
+	top_bar.add_theme_stylebox_override("panel", empty_style)
+	room_viewport.add_theme_stylebox_override("panel", empty_style)
+	message_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0, 0, 0, 0.58), Color(1, 1, 1, 0.10), 3))
+	room_visual_frame.add_theme_stylebox_override("panel", empty_style)
+	right_rail.add_theme_stylebox_override("panel", empty_style)
+	left_rail.add_theme_stylebox_override("panel", empty_style)
 	room_hint_bar.add_theme_stylebox_override("panel", _build_panel_style(Color(0.03, 0.04, 0.05, 0.84), Color(0.73, 0.84, 1.0, 0.03), 10))
 
 	room_name_label.add_theme_color_override("font_color", Color(0.93, 0.95, 0.97, 1))
@@ -1047,6 +1316,9 @@ func _apply_web_ui_theme() -> void:
 	_style_button(main_menu_close_button, false)
 	_style_button(ending_restart_button, true)
 	_style_button(ending_menu_button, false)
+	_style_button(pause_continue_button, true)
+	_style_button(pause_save_button, false)
+	_style_button(pause_main_menu_button, false)
 
 	_style_overlay_panel($InspectOverlay/InspectCenter/InspectPanel)
 	_style_overlay_panel($CodeOverlay/CodeCenter/CodePanel)
@@ -1055,15 +1327,16 @@ func _apply_web_ui_theme() -> void:
 	_style_overlay_panel($DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer)
 	_style_overlay_panel($InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame, 18)
 	_style_overlay_panel(main_menu_shell, 26)
+	_style_overlay_panel(pause_overlay.get_child(0).get_child(0) as PanelContainer, 18)
 	main_menu_home_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	hotspot_editor_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.07, 0.10, 0.94), Color(0.95, 0.90, 0.76, 0.32), 16))
-	inventory_section.add_theme_stylebox_override("panel", _build_panel_style(Color(0.045, 0.055, 0.07, 0.48), Color(0.85, 0.76, 0.60, 0.05), 18))
-	rail_documents_section.add_theme_stylebox_override("panel", _build_panel_style(Color(0.045, 0.055, 0.07, 0.48), Color(0.73, 0.84, 1.0, 0.05), 18))
-	rail_document_preview_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.38), Color(0.73, 0.84, 1.0, 0.04), 16))
+	inventory_section.add_theme_stylebox_override("panel", empty_style)
+	rail_documents_section.add_theme_stylebox_override("panel", empty_style)
+	rail_document_preview_panel.add_theme_stylebox_override("panel", empty_style)
 
 	documents_list.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.72), Color(0.73, 0.84, 1.0, 0.08), 14))
-	inventory_list.add_theme_stylebox_override("panel", _build_panel_style(Color(0.035, 0.045, 0.06, 0.34), Color(0.85, 0.76, 0.60, 0.04), 14))
-	rail_documents_list.add_theme_stylebox_override("panel", _build_panel_style(Color(0.035, 0.045, 0.06, 0.34), Color(0.73, 0.84, 1.0, 0.04), 14))
+	_make_item_list_transparent(inventory_list)
+	_make_item_list_transparent(rail_documents_list)
 	code_input.add_theme_stylebox_override("normal", _build_panel_style(Color(0.04, 0.05, 0.07, 0.92), Color(0.85, 0.76, 0.60, 0.34), 12))
 	code_input.add_theme_stylebox_override("focus", _build_panel_style(Color(0.05, 0.06, 0.08, 0.96), Color(0.85, 0.76, 0.60, 0.58), 12))
 	code_input.add_theme_color_override("font_color", Color(0.96, 0.96, 0.95, 1))
@@ -1076,6 +1349,14 @@ func _style_overlay_panel(panel: PanelContainer, radius: int = 20) -> void:
 	panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.07, 0.10, 0.96), Color(0.85, 0.76, 0.60, 0.22), radius))
 
 
+func _make_item_list_transparent(list: ItemList) -> void:
+	var empty_style := StyleBoxEmpty.new()
+	list.add_theme_stylebox_override("panel", empty_style)
+	list.add_theme_stylebox_override("focus", empty_style)
+	list.add_theme_stylebox_override("selected", _build_panel_style(Color(0.85, 0.76, 0.60, 0.18), Color(0.85, 0.76, 0.60, 0.0), 2))
+	list.add_theme_stylebox_override("selected_focus", _build_panel_style(Color(0.85, 0.76, 0.60, 0.24), Color(0.85, 0.76, 0.60, 0.0), 2))
+
+
 func _add_menu_button() -> void:
 	_style_button(top_menu_button, false)
 	_style_button(top_restart_button, false)
@@ -1086,12 +1367,73 @@ func _hide_secondary_overlays() -> void:
 	objective_overlay.visible = false
 	inspect_overlay.visible = false
 	code_overlay.visible = false
+	_hide_pause_menu()
 
 
 func _set_gameplay_ui_visible(visible: bool) -> void:
 	gameplay_root.visible = visible
 	if ending_overlay != null:
 		ending_overlay.visible = visible and not SceneRouter.get_room(GameState.current_room_id).get("ending_data", {}).is_empty()
+
+
+func _toggle_pause_menu() -> void:
+	if pause_overlay == null:
+		return
+	if is_main_menu_open or ending_overlay != null and ending_overlay.visible:
+		return
+	if documents_overlay.visible or objective_overlay.visible or inspect_overlay.visible or code_overlay.visible:
+		_hide_secondary_overlays()
+		return
+	if pause_overlay.visible:
+		_hide_pause_menu()
+	else:
+		_show_pause_menu()
+
+
+func _show_pause_menu() -> void:
+	if pause_overlay == null:
+		return
+	pause_overlay.visible = true
+	_hide_message_popup()
+
+
+func _hide_pause_menu() -> void:
+	if pause_overlay != null:
+		pause_overlay.visible = false
+
+
+func _return_to_main_menu_from_pause() -> void:
+	_hide_pause_menu()
+	_show_main_menu_home()
+
+
+func _save_from_pause_menu() -> void:
+	var error_code: int = _save_current_run()
+	if error_code == OK:
+		GameState.set_message("已保存。")
+		pause_save_button.text = "已保存"
+	else:
+		GameState.set_message("保存失败。")
+		pause_save_button.text = "保存失败"
+	var restore_timer := get_tree().create_timer(1.2)
+	restore_timer.timeout.connect(func() -> void:
+		if pause_save_button != null:
+			pause_save_button.text = "保存"
+	)
+
+
+func _save_current_run() -> int:
+	var config := ConfigFile.new()
+	config.set_value("run", "current_room_id", GameState.current_room_id)
+	config.set_value("run", "objective_text", GameState.objective_text)
+	config.set_value("run", "message_text", GameState.message_text)
+	config.set_value("run", "inventory", GameState.inventory)
+	config.set_value("run", "selected_inventory_item", GameState.selected_inventory_item)
+	config.set_value("run", "unlocked_documents", GameState.unlocked_documents)
+	config.set_value("run", "flags", GameState.flags)
+	config.set_value("run", "has_started_run", has_started_run)
+	config.set_value("run", "last_recorded_ending_room_id", last_recorded_ending_room_id)
+	return config.save("user://manual_save.cfg")
 
 
 func _open_main_menu(tab: String) -> void:
@@ -2060,13 +2402,13 @@ func _submit_code_value(entered_code: String) -> void:
 			scene_keypad_input = ""
 			_refresh_room(GameState.current_room_id)
 		)
-		_refresh_hud()
+		_refresh_hud_with_message()
 		return
 
 	var failure_message := _text(active_code_data, "failure_message", "That code does not work.")
 	code_feedback_label.text = failure_message
 	GameState.set_message(failure_message)
-	_refresh_hud()
+	_refresh_hud_with_message()
 	_play_feedback_sound("wrong_password", 0.42)
 	var failure_room := String(active_code_data.get("failure_room", ""))
 	if failure_room != "":
@@ -2078,7 +2420,7 @@ func _submit_code_value(entered_code: String) -> void:
 			GameState.set_room(failure_room)
 			_refresh_room(GameState.current_room_id)
 		)
-		_refresh_hud()
+		_refresh_hud_with_message()
 		return
 	scene_keypad_input = ""
 	if code_overlay.visible:
@@ -2165,7 +2507,7 @@ func _on_inventory_item_clicked(index: int, _at_position: Vector2, mouse_button_
 		GameState.set_message(I18n.t("ui.unselected_item", {"item": I18n.item_name(item_id)}))
 	else:
 		GameState.set_message(I18n.t("ui.selected_item", {"item": I18n.item_name(item_id)}))
-	_refresh_hud()
+	_refresh_hud_with_message()
 
 
 func _refresh_documents_list() -> void:
@@ -2271,8 +2613,12 @@ func _find_document_title(document_id: String) -> String:
 
 
 func _show_rail_notice(section_panel: PanelContainer, notice_label: Label, text: String, accent: Color, is_inventory_section: bool) -> void:
-	notice_label.text = text
-	notice_label.modulate = Color(accent.r, accent.g, accent.b, 1.0)
+	notice_label.text = ""
+	notice_label.visible = false
+	notice_label.modulate = Color(accent.r, accent.g, accent.b, 0.0)
+	# Keep the feedback out of layout flow so rail text never shifts.
+	if text == "":
+		return
 
 	var highlight_color := Color(
 		lerp(1.0, accent.r, 0.20),
@@ -2287,9 +2633,9 @@ func _show_rail_notice(section_panel: PanelContainer, notice_label: Label, text:
 		notice_tween.kill()
 	notice_tween = create_tween()
 	notice_tween.tween_interval(2.1)
-	notice_tween.tween_property(notice_label, "modulate", Color(accent.r, accent.g, accent.b, 0.0), 0.35)
 	notice_tween.finished.connect(func() -> void:
-		notice_label.text = " "
+		notice_label.visible = false
+		notice_label.text = ""
 		notice_label.modulate = Color(1, 1, 1, 0)
 	)
 	if is_inventory_section:
