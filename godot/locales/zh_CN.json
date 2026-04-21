@@ -34,7 +34,7 @@
   "ui.menu.nav.documents": "文件",
   "ui.menu.nav.credits": "制作",
   "ui.menu.endings.title": "结局档案",
-  "ui.menu.endings.body": "尝试不同路线来解锁更多结局。尚未移植到 Godot 的内容会暂时保持锁定。",
+  "ui.menu.endings.body": "尝试不同路线来解锁第一章的全部结局。",
   "ui.menu.endings.stats": "已解锁结局：{count}/{total}",
   "ui.menu.endings.locked_name": "???",
   "ui.menu.endings.locked_body": "这个结局还没有解锁。",

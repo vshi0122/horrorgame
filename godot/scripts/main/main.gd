@@ -1,18 +1,13 @@
 extends Control
 
-const MENU_ENDING_TOTAL := 10
+const MENU_ENDING_TOTAL := 5
 const MENU_DOCUMENT_TOTAL := 35
 const MENU_ENDING_CATALOG := [
-	{"id": "bad_ending", "order": "1/10", "name": "Trapped", "teaser": "You lingered in the residential corridor too long and never made it back out."},
-	{"id": "failed_escape_ending", "order": "2/10", "name": "Outside the Door", "teaser": "You reached the first floor, but not in a way that let you leave."},
-	{"id": "normal_ending", "order": "3/10", "name": "Leave", "teaser": "You escaped alive, but the truth did not leave with you."},
-	{"id": "good_ending_question", "order": "4/10", "name": "Wake Up?", "teaser": "You reached the deepest layer, but it is still unclear whether you woke up or sank further in."},
-	{"id": "flee_ending", "order": "5/10", "name": "Flee", "teaser": "You chose not to enter the building at all."},
-	{"id": "chapter2_uneasy_reunion", "order": "6/10", "name": "Uneasy Reunion", "teaser": "Locked in Godot for now."},
-	{"id": "chapter2_wait_wife", "order": "7/10", "name": "Wait", "teaser": "Locked in Godot for now."},
-	{"id": "chapter2_blood_cradle", "order": "8/10", "name": "Blood Cradle", "teaser": "Locked in Godot for now."},
-	{"id": "chapter2_monster_return", "order": "9/10", "name": "Old Shadow", "teaser": "Locked in Godot for now."},
-	{"id": "chapter2_gun", "order": "10/10", "name": "Gun", "teaser": "Locked in Godot for now."}
+	{"id": "bad_ending", "order": "1/5", "name": "失陷", "teaser": "你在居民区停留得太久，最终没能活着离开。"},
+	{"id": "failed_escape_ending", "order": "2/5", "name": "门外", "teaser": "你抵达了一楼，却没能以正确的方式离开。"},
+	{"id": "normal_ending", "order": "3/5", "name": "离开", "teaser": "你活着逃出了公寓，但真相没有跟着你一起出去。"},
+	{"id": "good_ending_question", "order": "4/5", "name": "醒来？", "teaser": "你抵达了最深的一层。至于这是醒来，还是陷得更深，还没有答案。"},
+	{"id": "flee_ending", "order": "5/5", "name": "逃离", "teaser": "你选择没有进入那栋楼。"}
 ]
 const MENU_CREDITS := [
 	{"role": "Created By", "names": ["prophet"]},
@@ -24,6 +19,8 @@ const MENU_CREDITS := [
 ]
 const MENU_BACKDROP := preload("res://godot/asserts/images/parkinglot.jpg")
 const JUMPSCARE_IMAGE := preload("res://godot/asserts/images/js.jpg")
+const DISPLAY_FONT := preload("res://godot/asserts/font/Colorfiction - Messy.otf")
+const ACCENT_FONT := preload("res://godot/asserts/font/Colorfiction - Messy.otf")
 const FLASHLIGHT_ROOMS := [
 	"back_stairwell",
 	"fake_third",
@@ -107,6 +104,8 @@ var ending_summary_label: RichTextLabel
 var ending_order_value_label: Label
 var ending_endings_value_label: Label
 var ending_documents_value_label: Label
+var ending_restart_button: Button
+var ending_menu_button: Button
 var room_effect_overlay: Control
 var room_blackout_cover: ColorRect
 var room_flashlight_darkness: ColorRect
@@ -336,7 +335,7 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	var document_ids_before := _capture_document_ids()
 
 	if interaction.get("goto_room", "") != "":
-		var transition_audio = interaction.get("transition_sound", "footstep")
+		var transition_audio: String = String(interaction.get("transition_sound", "footstep"))
 		await _play_blink_transition(func():
 			SceneRouter.apply_interaction(interaction_id)
 			_refresh_room(GameState.current_room_id)
@@ -356,7 +355,7 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	var gained_new_document := not new_documents.is_empty()
 	
 	# Play UI sounds based on interaction
-	var sound_kind = interaction.get("sound", "")
+	var sound_kind: String = String(interaction.get("sound", ""))
 	if sound_kind == "doc":
 		if gained_new_document:
 			_play_ui_sound(sound_kind)
@@ -385,8 +384,8 @@ func _play_scene_transition_sound(audio_key: String = "footstep", volume: float 
 
 func _handle_back_stairwell_to_third_floor(interaction: Dictionary) -> void:
 	var should_skip_fake_third := bool(GameState.flags.get("first_fake_third_floor_seen", false))
-	var target_room := "third_floor_hall" if should_skip_fake_third else String(interaction.get("goto_room", "fake_third"))
-	var transition_audio = interaction.get("transition_sound", "footstep")
+	var target_room: String = "third_floor_hall" if should_skip_fake_third else String(interaction.get("goto_room", "fake_third"))
+	var transition_audio: String = String(interaction.get("transition_sound", "footstep"))
 	await _play_blink_transition(func():
 		GameState.set_objective(_text(interaction, "objective", GameState.objective_text))
 		GameState.set_message(_text(interaction, "message", GameState.message_text))
@@ -415,7 +414,7 @@ func _handle_back_stairwell_photo(_interaction: Dictionary) -> void:
 		await _play_photo_jumpscare()
 
 	GameState.flags["stairwell_photo_reaction_pending"] = false
-	GameState.set_message("What was that just now...? The blacked-out face in the photo looked like it moved.")
+	GameState.set_message("刚才那是什么……？照片里那张被涂黑的脸，好像动了一下。")
 	_refresh_room(GameState.current_room_id)
 	_refresh_hud()
 	_announce_rail_updates(new_items, new_documents)
@@ -645,7 +644,7 @@ void fragment() {
 	ending_overlay.visible = false
 	ending_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	ending_overlay.color = Color(0.02, 0.025, 0.035, 0.42)
-	ending_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ending_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(ending_overlay)
 	move_child(ending_overlay, get_child_count() - 1)
 
@@ -670,6 +669,7 @@ void fragment() {
 
 	var kicker := Label.new()
 	kicker.text = "ENDING"
+	kicker.add_theme_font_override("font", ACCENT_FONT)
 	kicker.add_theme_font_size_override("font_size", 12)
 	kicker.add_theme_color_override("font_color", Color(0.847, 0.765, 0.604, 0.92))
 	ending_stack.add_child(kicker)
@@ -703,6 +703,24 @@ void fragment() {
 	var stat3 := _build_ending_stat(I18n.t("ui.ending.documents"))
 	ending_documents_value_label = stat3.get_node("Margin/Stack/Value") as Label
 	stats.add_child(stat3)
+
+	var ending_actions := HBoxContainer.new()
+	ending_actions.add_theme_constant_override("separation", 10)
+	ending_stack.add_child(ending_actions)
+
+	ending_restart_button = Button.new()
+	ending_restart_button.text = "再次醒来"
+	ending_restart_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ending_restart_button.custom_minimum_size = Vector2(0, 48)
+	ending_restart_button.pressed.connect(_restart_from_ending)
+	ending_actions.add_child(ending_restart_button)
+
+	ending_menu_button = Button.new()
+	ending_menu_button.text = "回主界面"
+	ending_menu_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ending_menu_button.custom_minimum_size = Vector2(0, 48)
+	ending_menu_button.pressed.connect(_show_main_menu_home)
+	ending_actions.add_child(ending_menu_button)
 
 	main_menu_overlay = ColorRect.new()
 	main_menu_overlay.name = "MainMenuOverlay"
@@ -761,6 +779,7 @@ void fragment() {
 
 	var menu_kicker := Label.new()
 	menu_kicker.text = "A POINT & CLICK HORROR"
+	menu_kicker.add_theme_font_override("font", ACCENT_FONT)
 	menu_kicker.add_theme_font_size_override("font_size", 12)
 	menu_kicker.add_theme_color_override("font_color", Color(0.847, 0.765, 0.604, 0.84))
 	menu_kicker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -768,6 +787,7 @@ void fragment() {
 
 	main_menu_title_label = Label.new()
 	main_menu_title_label.text = "Day Of Arrival"
+	main_menu_title_label.add_theme_font_override("font", DISPLAY_FONT)
 	main_menu_title_label.add_theme_font_size_override("font_size", 62)
 	main_menu_title_label.add_theme_color_override("font_color", Color(0.97, 0.96, 0.92, 1))
 	main_menu_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -934,6 +954,7 @@ func _build_ending_stat(title: String) -> PanelContainer:
 	var value := Label.new()
 	value.name = "Value"
 	value.text = "-"
+	value.add_theme_font_override("font", DISPLAY_FONT)
 	value.add_theme_font_size_override("font_size", 24)
 	value.add_theme_color_override("font_color", Color(0.95, 0.93, 0.88, 1))
 	stack.add_child(value)
@@ -951,6 +972,7 @@ func _build_menu_footer_stat() -> VBoxContainer:
 	var value := Label.new()
 	value.name = "Value"
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value.add_theme_font_override("font", DISPLAY_FONT)
 	value.add_theme_font_size_override("font_size", 22)
 	value.add_theme_color_override("font_color", Color(0.847, 0.765, 0.604, 0.98))
 	stack.add_child(value)
@@ -1023,6 +1045,8 @@ func _apply_web_ui_theme() -> void:
 	_style_button(code_cancel_button, false)
 	_style_button(code_confirm_button, true)
 	_style_button(main_menu_close_button, false)
+	_style_button(ending_restart_button, true)
+	_style_button(ending_menu_button, false)
 
 	_style_overlay_panel($InspectOverlay/InspectCenter/InspectPanel)
 	_style_overlay_panel($CodeOverlay/CodeCenter/CodePanel)
@@ -1273,6 +1297,20 @@ func _restart_from_topbar() -> void:
 	GameState.reset()
 	has_started_run = true
 	_hide_secondary_overlays()
+	main_menu_overlay.visible = false
+	is_main_menu_open = false
+	_set_gameplay_ui_visible(true)
+	_refresh_room(GameState.current_room_id)
+	_refresh_hud()
+
+
+func _restart_from_ending() -> void:
+	selected_menu_document_id = ""
+	GameState.reset()
+	has_started_run = true
+	last_recorded_ending_room_id = ""
+	_hide_secondary_overlays()
+	ending_overlay.visible = false
 	main_menu_overlay.visible = false
 	is_main_menu_open = false
 	_set_gameplay_ui_visible(true)
@@ -1567,6 +1605,9 @@ func _add_hotspot_button(interaction: Dictionary) -> void:
 		button.add_theme_color_override("font_hover_color", Color(1, 0.98, 0.92, 1.0))
 		button.add_theme_color_override("font_pressed_color", Color(1, 0.98, 0.92, 1.0))
 		button.add_theme_color_override("font_focus_color", Color(1, 0.98, 0.92, 1.0))
+	button.mouse_entered.connect(_animate_hotspot_hover.bind(button, true))
+	button.mouse_exited.connect(_animate_hotspot_hover.bind(button, false))
+	button.pressed.connect(_animate_hotspot_press.bind(button))
 	button.pressed.connect(_on_interaction_requested.bind(interaction.get("id", "")))
 
 	var parent_size := hotspot_layer.size
@@ -1575,7 +1616,32 @@ func _add_hotspot_button(interaction: Dictionary) -> void:
 
 	button.position = Vector2(hotspot_rect.position.x * parent_size.x, hotspot_rect.position.y * parent_size.y)
 	button.size = Vector2(hotspot_rect.size.x * parent_size.x, hotspot_rect.size.y * parent_size.y)
+	button.pivot_offset = button.size * 0.5
 	hotspot_layer.add_child(button)
+
+
+func _animate_hotspot_hover(button: Button, hovered: bool) -> void:
+	if not is_instance_valid(button):
+		return
+
+	var target_scale: Vector2 = Vector2(1.035, 1.035) if hovered else Vector2.ONE
+	var target_modulate: Color = Color(1.08, 1.03, 0.95, 1.0) if hovered else Color(1, 1, 1, 1)
+	var hover_tween: Tween = create_tween()
+	hover_tween.set_trans(Tween.TRANS_SINE)
+	hover_tween.set_ease(Tween.EASE_OUT)
+	hover_tween.tween_property(button, "scale", target_scale, 0.1)
+	hover_tween.parallel().tween_property(button, "modulate", target_modulate, 0.1)
+
+
+func _animate_hotspot_press(button: Button) -> void:
+	if not is_instance_valid(button):
+		return
+
+	var press_tween: Tween = create_tween()
+	press_tween.set_trans(Tween.TRANS_BACK)
+	press_tween.set_ease(Tween.EASE_OUT)
+	press_tween.tween_property(button, "scale", Vector2(0.96, 0.96), 0.045)
+	press_tween.tween_property(button, "scale", Vector2(1.035, 1.035), 0.12)
 
 
 func _rebuild_hotspots() -> void:
