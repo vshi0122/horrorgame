@@ -1,5 +1,68 @@
 extends Control
 
+class CursorOverlay:
+	extends Control
+
+	var cursor_style: String = "default"
+	var pulse_amount: float = 0.0
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		set_anchors_preset(Control.PRESET_TOP_LEFT)
+		size = Vector2(44, 44)
+		custom_minimum_size = size
+		z_index = 200
+
+	func set_cursor_style(next_style: String) -> void:
+		if cursor_style == next_style:
+			return
+		cursor_style = next_style
+		queue_redraw()
+
+	func set_pulse(amount: float) -> void:
+		pulse_amount = amount
+		queue_redraw()
+
+	func _draw() -> void:
+		var center := size * 0.5
+		var pulse_scale := 1.0 + pulse_amount * 0.34
+		var dot_radius := 3.2 * pulse_scale
+		var ring_radius := 13.0 * pulse_scale
+		var ring_width := 2.4
+		var ring_color := Color(0.0, 0.0, 0.0, 1.0)
+		var dot_color := Color(0.0, 0.0, 0.0, 1.0)
+
+		match cursor_style:
+			"hover":
+				ring_radius = 17.0 * pulse_scale
+				ring_width = 2.8
+				ring_color = Color(0.0, 0.0, 0.0, 1.0)
+				dot_color = Color(0.0, 0.0, 0.0, 1.0)
+			"back":
+				ring_radius = 17.0 * pulse_scale
+				ring_width = 2.8
+				ring_color = Color(0.0, 0.0, 0.0, 1.0)
+				dot_color = Color(0.0, 0.0, 0.0, 1.0)
+			"document":
+				ring_radius = 17.0 * pulse_scale
+				ring_width = 2.8
+				ring_color = Color(0.0, 0.0, 0.0, 1.0)
+				dot_color = Color(0.0, 0.0, 0.0, 0.0)
+
+		draw_circle(center, dot_radius, dot_color)
+		draw_arc(center, ring_radius, 0.0, TAU, 48, ring_color, ring_width)
+
+		if cursor_style == "back":
+			var arrow_color := Color(0.0, 0.0, 0.0, 0.98)
+			draw_line(center + Vector2(7, 0), center + Vector2(-6, 0), arrow_color, 2.6)
+			draw_line(center + Vector2(-6, 0), center + Vector2(-1, -5), arrow_color, 2.6)
+			draw_line(center + Vector2(-6, 0), center + Vector2(-1, 5), arrow_color, 2.6)
+		elif cursor_style == "document":
+			var paper_color := Color(0.0, 0.0, 0.0, 0.98)
+			draw_rect(Rect2(center + Vector2(-5, -6), Vector2(10, 12)), paper_color, false, 2.0)
+			draw_line(center + Vector2(-3, -1), center + Vector2(3, -1), paper_color, 1.8)
+			draw_line(center + Vector2(-3, 3), center + Vector2(3, 3), paper_color, 1.8)
+
 const MENU_ENDING_TOTAL := 5
 const MENU_DOCUMENT_TOTAL := 35
 const MENU_ENDING_CATALOG := [
@@ -23,7 +86,7 @@ const DISPLAY_FONT := preload("res://godot/asserts/font/Colorfiction - Messy.otf
 const ACCENT_FONT := preload("res://godot/asserts/font/Colorfiction - Messy.otf")
 const ROOM_STAGE_REFERENCE_SIZE := Vector2(1120, 692)
 const LEFT_RAIL_WIDTH := 220.0
-const RIGHT_RAIL_WIDTH := 176.0
+const RIGHT_RAIL_WIDTH := 264.0
 const RAIL_GAP := 26.0
 const IN_SCENE_MENU_BUTTON_SIZE := Vector2(56, 56)
 const IN_SCENE_DOCUMENTS_BUTTON_SIZE := Vector2(56, 56)
@@ -145,6 +208,7 @@ var new_document_close_button: Button
 var new_document_open_archive_button: Button
 var new_document_tween: Tween
 var room_effect_overlay: Control
+var room_vignette_overlay: ColorRect
 var room_blackout_cover: ColorRect
 var room_flashlight_darkness: ColorRect
 var room_flashlight_glow: TextureRect
@@ -180,6 +244,12 @@ var fixed_game_layer: Control
 var left_documents_rail: PanelContainer
 var message_popup_tween: Tween
 var documents_overlay_tween: Tween
+var custom_cursor: CursorOverlay
+var current_cursor_style: String = "default"
+var cursor_pulse_tween: Tween
+var inventory_slot_texture: Texture2D
+var inventory_gain_layer: Control
+var pending_inventory_gain_origin: Vector2 = Vector2(-10000, -10000)
 
 
 func _ready() -> void:
@@ -206,6 +276,7 @@ func _ready() -> void:
 	
 	# Start BGM
 	SoundManager.play_bgm()
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	_sync_scene_ambient(GameState.current_room_id)
 	_apply_rust_lake_layout()
 	_build_web_ui_overlays()
@@ -219,6 +290,8 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	_sync_fixed_game_layout()
 	_update_flashlight_position()
+	_update_room_vignette()
+	_update_custom_cursor()
 
 
 func _apply_rust_lake_layout() -> void:
@@ -283,8 +356,14 @@ func _apply_rust_lake_layout() -> void:
 	room_visual.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	rail_documents_section.visible = false
 	inventory_section.size_flags_horizontal = Control.SIZE_FILL
-	inventory_section.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	inventory_list.custom_minimum_size = Vector2(0, 360)
+	inventory_section.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	inventory_list.custom_minimum_size = Vector2(0, 560)
+	inventory_list.max_columns = 2
+	inventory_list.same_column_width = true
+	inventory_list.fixed_column_width = 122
+	inventory_list.fixed_icon_size = Vector2i(102, 102)
+	inventory_list.icon_mode = ItemList.ICON_MODE_TOP
+	inventory_list.max_text_lines = 1
 	_stabilize_side_rail_text()
 	_sync_fixed_game_layout()
 
@@ -368,7 +447,7 @@ func _stabilize_side_rail_text() -> void:
 	rail_documents_notice_label.custom_minimum_size = Vector2.ZERO
 	inventory_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rail_documents_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inventory_list.max_columns = 1
+	inventory_list.max_columns = 2
 	rail_documents_list.max_columns = 1
 
 
@@ -467,6 +546,9 @@ func _refresh_room(room_id: String) -> void:
 		button.text = _text(interaction, "label", I18n.t("ui.interaction.default"))
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.focus_mode = Control.FOCUS_NONE
+		button.pressed.connect(func() -> void:
+			_set_pending_inventory_gain_origin_from_control(button)
+		)
 		button.pressed.connect(_on_interaction_requested.bind(interaction.get("id", "")))
 		interaction_list.add_child(button)
 
@@ -523,6 +605,7 @@ func _hide_message_popup() -> void:
 
 
 func _on_interaction_requested(interaction_id: String) -> void:
+	_set_pending_inventory_gain_origin(get_viewport().get_mouse_position())
 	_on_interaction_pressed(interaction_id)
 
 
@@ -601,7 +684,7 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	if interaction_id == "mailbox" and gained_new_document:
 		_play_ui_sound("doc")
 
-	_announce_rail_updates(new_items, new_documents)
+	await _announce_rail_updates(new_items, new_documents)
 
 
 func _sync_scene_ambient(room_id: String) -> void:
@@ -615,6 +698,73 @@ func _play_feedback_sound(audio_key: String, volume: float = 0.42, wait_for_comp
 
 func _play_scene_transition_sound(audio_key: String = "footstep", volume: float = 0.38, wait_for_completion: bool = false, wait_ms: float = 6.0) -> void:
 	await SoundManager.play_scene_transition_sound(audio_key, volume, wait_for_completion, wait_ms)
+
+
+func _set_pending_inventory_gain_origin(origin: Vector2) -> void:
+	pending_inventory_gain_origin = origin
+
+
+func _set_pending_inventory_gain_origin_from_control(control: Control) -> void:
+	if control == null:
+		return
+	var control_rect := control.get_global_rect()
+	_set_pending_inventory_gain_origin(control_rect.position + control_rect.size * 0.5)
+
+
+func _consume_inventory_gain_origin() -> Vector2:
+	var origin := pending_inventory_gain_origin
+	if origin.x <= -9999.0:
+		origin = get_viewport().get_mouse_position()
+	pending_inventory_gain_origin = Vector2(-10000, -10000)
+	return origin
+
+
+func _set_cursor_style(next_style: String) -> void:
+	current_cursor_style = next_style
+	if custom_cursor != null:
+		custom_cursor.set_cursor_style(next_style)
+
+
+func _pulse_cursor(amount: float = 1.0, duration: float = 0.22) -> void:
+	if custom_cursor == null:
+		return
+	if cursor_pulse_tween != null:
+		cursor_pulse_tween.kill()
+	custom_cursor.set_pulse(amount)
+	cursor_pulse_tween = create_tween()
+	cursor_pulse_tween.tween_method(func(value: float) -> void:
+		if custom_cursor != null:
+			custom_cursor.set_pulse(value)
+	, amount, 0.0, duration)
+
+
+func _update_custom_cursor() -> void:
+	if custom_cursor == null:
+		return
+	var mouse_position := get_viewport().get_mouse_position()
+	custom_cursor.position = mouse_position - (custom_cursor.size * 0.5)
+
+
+func _cursor_style_for_interaction(interaction: Dictionary) -> String:
+	if not interaction.get("documents", []).is_empty():
+		return "document"
+	if String(interaction.get("ui_style", "")) == "corner_back":
+		return "back"
+	var interaction_id := String(interaction.get("id", ""))
+	if interaction_id.begins_with("back") or interaction_id.contains("back"):
+		return "back"
+	return "hover"
+
+
+func _on_hotspot_hover_entered(interaction: Dictionary, button: Button) -> void:
+	_animate_hotspot_hover(button, true)
+	_set_cursor_style(_cursor_style_for_interaction(interaction))
+	_pulse_cursor(0.55, 0.18)
+
+
+func _on_hotspot_hover_exited(button: Button) -> void:
+	_animate_hotspot_hover(button, false)
+	_set_cursor_style("default")
 
 
 func _handle_back_stairwell_to_third_floor(interaction: Dictionary) -> void:
@@ -652,7 +802,7 @@ func _handle_back_stairwell_photo(_interaction: Dictionary) -> void:
 	GameState.set_message("刚才那是什么……？照片里那张被涂黑的脸，好像动了一下。")
 	_refresh_room(GameState.current_room_id)
 	_refresh_hud_with_message()
-	_announce_rail_updates(new_items, new_documents)
+	await _announce_rail_updates(new_items, new_documents)
 
 
 func _play_photo_jumpscare() -> void:
@@ -754,6 +904,33 @@ func _update_flashlight_position() -> void:
 	room_flashlight_glow.position = local_mouse - (room_flashlight_glow.size * 0.5)
 
 
+func _update_room_vignette() -> void:
+	if room_vignette_overlay == null:
+		return
+	if room_vignette_overlay.material == null:
+		return
+
+	var overlay_size := room_visual_layer.size
+	if overlay_size.x <= 0.0 or overlay_size.y <= 0.0:
+		return
+
+	var vignette_material := room_vignette_overlay.material as ShaderMaterial
+	if vignette_material == null:
+		return
+
+	var aspect := overlay_size.x / maxf(overlay_size.y, 1.0)
+	var intensity := 0.18
+	var inner_radius := 0.54
+
+	if bool(GameState.flags.get("third_floor_flashlight_enabled", false)) and FLASHLIGHT_ROOMS.has(GameState.current_room_id):
+		intensity = 0.26
+		inner_radius = 0.48
+
+	vignette_material.set_shader_parameter("aspect", aspect)
+	vignette_material.set_shader_parameter("intensity", intensity)
+	vignette_material.set_shader_parameter("inner_radius", inner_radius)
+
+
 func _apply_background(texture_path: String) -> void:
 	if texture_path == "":
 		background_texture.texture = null
@@ -789,12 +966,53 @@ func _build_web_ui_overlays() -> void:
 	add_child(grain_overlay)
 	move_child(grain_overlay, 1)
 
+	custom_cursor = CursorOverlay.new()
+	add_child(custom_cursor)
+	move_child(custom_cursor, get_child_count() - 1)
+	_set_cursor_style("default")
+
+	inventory_gain_layer = Control.new()
+	inventory_gain_layer.name = "InventoryGainLayer"
+	inventory_gain_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	inventory_gain_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inventory_gain_layer.z_index = 180
+	add_child(inventory_gain_layer)
+	move_child(inventory_gain_layer, get_child_count() - 1)
+
 	room_effect_overlay = Control.new()
 	room_effect_overlay.name = "RoomEffectOverlay"
 	room_effect_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	room_effect_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	room_effect_overlay.visible = false
 	room_visual_layer.add_child(room_effect_overlay)
+
+	room_vignette_overlay = ColorRect.new()
+	room_vignette_overlay.name = "RoomVignetteOverlay"
+	room_vignette_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	room_vignette_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	room_vignette_overlay.color = Color(1, 1, 1, 1)
+	var vignette_shader := Shader.new()
+	vignette_shader.code = """
+shader_type canvas_item;
+
+uniform float intensity = 0.18;
+uniform float inner_radius = 0.54;
+uniform float outer_radius = 0.97;
+uniform float aspect = 1.62;
+
+void fragment() {
+	vec2 centered_uv = UV - vec2(0.5);
+	centered_uv.x *= aspect;
+	float dist = length(centered_uv) * 2.0;
+	float alpha = smoothstep(inner_radius, outer_radius, dist) * intensity;
+	COLOR = vec4(0.0, 0.0, 0.0, alpha);
+}
+"""
+	var vignette_material := ShaderMaterial.new()
+	vignette_material.shader = vignette_shader
+	room_vignette_overlay.material = vignette_material
+	room_visual_layer.add_child(room_vignette_overlay)
+	room_visual_layer.move_child(room_vignette_overlay, room_visual_layer.get_child_count() - 1)
 
 	room_blackout_cover = ColorRect.new()
 	room_blackout_cover.name = "BlackoutCover"
@@ -1442,6 +1660,11 @@ func _apply_web_ui_theme() -> void:
 	documents_list.add_theme_color_override("font_color", Color(0.22, 0.19, 0.14, 0.96))
 	documents_list.add_theme_color_override("font_selected_color", Color(0.14, 0.11, 0.08, 1.0))
 	_make_item_list_transparent(inventory_list)
+	inventory_list.add_theme_color_override("font_color", Color(0.95, 0.95, 0.94, 0.98))
+	inventory_list.add_theme_color_override("font_selected_color", Color(1, 1, 1, 1))
+	inventory_list.add_theme_font_size_override("font_size", 11)
+	inventory_list.add_theme_stylebox_override("selected", _build_panel_style(Color(0.85, 0.76, 0.60, 0.20), Color(0.85, 0.76, 0.60, 0.20), 14))
+	inventory_list.add_theme_stylebox_override("selected_focus", _build_panel_style(Color(0.85, 0.76, 0.60, 0.28), Color(0.85, 0.76, 0.60, 0.30), 14))
 	documents_list.add_theme_stylebox_override("selected", _build_panel_style(Color(0.72, 0.62, 0.46, 0.22), Color(0.72, 0.62, 0.46, 0.0), 8))
 	documents_list.add_theme_stylebox_override("selected_focus", _build_panel_style(Color(0.72, 0.62, 0.46, 0.30), Color(0.72, 0.62, 0.46, 0.0), 8))
 	code_input.add_theme_stylebox_override("normal", _build_panel_style(Color(0.04, 0.05, 0.07, 0.92), Color(0.85, 0.76, 0.60, 0.34), 12))
@@ -2058,7 +2281,7 @@ func _add_hotspot_button(interaction: Dictionary) -> void:
 	button.flat = false
 	var ui_style: String = interaction.get("ui_style", "")
 	button.modulate = Color(1, 1, 1, 1)
-	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.mouse_default_cursor_shape = Control.CURSOR_ARROW
 	button.clip_text = true
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -2085,9 +2308,15 @@ func _add_hotspot_button(interaction: Dictionary) -> void:
 		button.add_theme_color_override("font_hover_color", Color(1, 0.98, 0.92, 1.0))
 		button.add_theme_color_override("font_pressed_color", Color(1, 0.98, 0.92, 1.0))
 		button.add_theme_color_override("font_focus_color", Color(1, 0.98, 0.92, 1.0))
-	button.mouse_entered.connect(_animate_hotspot_hover.bind(button, true))
-	button.mouse_exited.connect(_animate_hotspot_hover.bind(button, false))
+	button.mouse_entered.connect(_on_hotspot_hover_entered.bind(interaction, button))
+	button.mouse_exited.connect(_on_hotspot_hover_exited.bind(button))
 	button.pressed.connect(_animate_hotspot_press.bind(button))
+	button.pressed.connect(func() -> void:
+		_set_pending_inventory_gain_origin_from_control(button)
+	)
+	button.pressed.connect(func() -> void:
+		_pulse_cursor(1.15, 0.24)
+	)
 	button.pressed.connect(_on_interaction_requested.bind(interaction.get("id", "")))
 
 	var parent_size := hotspot_layer.size
@@ -2125,6 +2354,7 @@ func _animate_hotspot_press(button: Button) -> void:
 
 
 func _rebuild_hotspots() -> void:
+	_set_cursor_style("default")
 	for child: Node in hotspot_layer.get_children():
 		if child == hotspot_editor_overlay:
 			for editor_child: Node in hotspot_editor_overlay.get_children():
@@ -2193,7 +2423,17 @@ func _build_scene_keypad(room: Dictionary) -> void:
 		var button := Button.new()
 		button.text = key_value
 		button.focus_mode = Control.FOCUS_NONE
+		button.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		button.pressed.connect(_on_scene_keypad_pressed.bind(key_value))
+		button.mouse_entered.connect(func() -> void:
+			_set_cursor_style("hover")
+		)
+		button.mouse_exited.connect(func() -> void:
+			_set_cursor_style("default")
+		)
+		button.pressed.connect(func() -> void:
+			_pulse_cursor(1.15, 0.24)
+		)
 		button.add_theme_stylebox_override("normal", _build_panel_style(Color(0.08, 0.12, 0.16, 0.82), Color(0.82, 0.88, 0.95, 0.18), 8))
 		button.add_theme_stylebox_override("hover", _build_panel_style(Color(0.12, 0.16, 0.22, 0.92), Color(0.95, 0.90, 0.76, 0.42), 8))
 		button.add_theme_stylebox_override("pressed", _build_panel_style(Color(0.16, 0.22, 0.28, 0.98), Color(0.95, 0.90, 0.76, 0.60), 8))
@@ -2722,13 +2962,157 @@ func _hide_objective_overlay() -> void:
 	objective_overlay.visible = false
 
 
+func _ensure_inventory_slot_texture() -> Texture2D:
+	if inventory_slot_texture != null:
+		return inventory_slot_texture
+
+	var image := Image.create(112, 112, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0.11, 0.12, 0.14, 0.06))
+	image.fill_rect(Rect2i(4, 4, 104, 104), Color(0.03, 0.04, 0.06, 0.58))
+	image.fill_rect(Rect2i(8, 8, 96, 96), Color(0.07, 0.08, 0.10, 0.82))
+	image.fill_rect(Rect2i(14, 14, 84, 84), Color(0.95, 0.95, 0.94, 0.05))
+	image.fill_rect(Rect2i(14, 86, 84, 12), Color(0.95, 0.95, 0.94, 0.08))
+
+	for x: int in range(4, 108):
+		image.set_pixel(x, 4, Color(0.88, 0.80, 0.65, 0.52))
+		image.set_pixel(x, 107, Color(0.0, 0.0, 0.0, 0.36))
+
+	for y: int in range(4, 108):
+		image.set_pixel(4, y, Color(0.88, 0.80, 0.65, 0.52))
+		image.set_pixel(107, y, Color(0.0, 0.0, 0.0, 0.36))
+
+	inventory_slot_texture = ImageTexture.create_from_image(image)
+	return inventory_slot_texture
+
+
+func _inventory_icon_for_item(_item_id: String) -> Texture2D:
+	return _ensure_inventory_slot_texture()
+
+
+func _inventory_item_rect(index: int) -> Rect2:
+	if index < 0 or index >= inventory_list.get_item_count():
+		return Rect2(inventory_list.global_position, Vector2(inventory_list.fixed_column_width, inventory_list.fixed_column_width))
+	var item_rect := inventory_list.get_item_rect(index)
+	return Rect2(inventory_list.global_position + item_rect.position, item_rect.size)
+
+
+func _create_inventory_gain_card(item_id: String) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(124, 124)
+	card.size = card.custom_minimum_size
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.modulate = Color(1, 1, 1, 0.0)
+	card.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.06, 0.08, 0.96), Color(0.88, 0.80, 0.65, 0.38), 18))
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	card.add_child(margin)
+
+	var stack := VBoxContainer.new()
+	stack.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stack.add_theme_constant_override("separation", 8)
+	margin.add_child(stack)
+
+	var icon_rect := TextureRect.new()
+	icon_rect.texture = _inventory_icon_for_item(item_id)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.custom_minimum_size = Vector2(92, 92)
+	icon_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	stack.add_child(icon_rect)
+
+	var label := Label.new()
+	label.text = I18n.item_name(item_id)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = true
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color(0.96, 0.95, 0.93, 0.98))
+	stack.add_child(label)
+
+	return card
+
+
+func _pulse_inventory_section() -> void:
+	if inventory_highlight_tween != null:
+		inventory_highlight_tween.kill()
+	inventory_section.self_modulate = Color(1.0, 0.97, 0.90, 1.0)
+	inventory_highlight_tween = create_tween()
+	inventory_highlight_tween.set_trans(Tween.TRANS_SINE)
+	inventory_highlight_tween.set_ease(Tween.EASE_OUT)
+	inventory_highlight_tween.tween_property(inventory_section, "self_modulate", Color(1, 1, 1, 1), 0.45)
+
+
+func _play_inventory_gain_animation(new_items: Array[String]) -> void:
+	if inventory_gain_layer == null or new_items.is_empty():
+		return
+
+	var base_origin := _consume_inventory_gain_origin()
+
+	for item_id: String in new_items:
+		var item_index := GameState.inventory.find(item_id)
+		if item_index < 0:
+			continue
+
+		var target_rect := _inventory_item_rect(item_index)
+		var card := _create_inventory_gain_card(item_id)
+		inventory_gain_layer.add_child(card)
+
+		var start_size := Vector2(132, 132)
+		var end_size := Vector2(maxf(target_rect.size.x + 6.0, 108.0), maxf(target_rect.size.y + 6.0, 108.0))
+		var start_position := base_origin - start_size * 0.5
+		start_position.x = clampf(start_position.x, SCREEN_MARGIN.x + 24.0, get_viewport_rect().size.x - start_size.x - SCREEN_MARGIN.x - 24.0)
+		start_position.y = clampf(start_position.y, SCREEN_MARGIN.y + 24.0, get_viewport_rect().size.y - start_size.y - SCREEN_MARGIN.y - 24.0)
+		var end_position := target_rect.position + (target_rect.size - end_size) * 0.5
+
+		card.position = start_position
+		card.scale = Vector2(1.0, 1.0)
+		card.rotation_degrees = -6.0
+		card.size = start_size
+		card.custom_minimum_size = start_size
+
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.set_trans(Tween.TRANS_CUBIC)
+		tween.set_ease(Tween.EASE_OUT)
+		tween.tween_property(card, "modulate", Color(1, 1, 1, 1), 0.10)
+		tween.tween_property(card, "position", end_position, 0.42)
+		tween.tween_property(card, "size", end_size, 0.42)
+		tween.tween_property(card, "custom_minimum_size", end_size, 0.42)
+		tween.tween_property(card, "scale", Vector2(0.88, 0.88), 0.42)
+		tween.tween_property(card, "rotation_degrees", 0.0, 0.36)
+		await tween.finished
+
+		_pulse_inventory_section()
+		var settle_tween := create_tween()
+		settle_tween.set_parallel(true)
+		settle_tween.set_trans(Tween.TRANS_SINE)
+		settle_tween.set_ease(Tween.EASE_IN)
+		settle_tween.tween_property(card, "modulate", Color(1, 1, 1, 0.0), 0.12)
+		settle_tween.tween_property(card, "scale", Vector2(0.78, 0.78), 0.12)
+		await settle_tween.finished
+		card.queue_free()
+		base_origin += Vector2(18.0, -10.0)
+		await get_tree().create_timer(0.04).timeout
+
+
 func _refresh_inventory_list() -> void:
 	inventory_list.clear()
 	for item_id: String in GameState.inventory:
-		inventory_list.add_item(I18n.item_name(item_id))
+		inventory_list.add_item(I18n.item_name(item_id), _inventory_icon_for_item(item_id))
+		var item_index := inventory_list.get_item_count() - 1
+		inventory_list.set_item_tooltip_enabled(item_index, false)
 
 	if GameState.inventory.is_empty():
-		inventory_list.add_item(I18n.t("ui.inventory.empty"))
+		inventory_list.add_item(I18n.t("ui.inventory.empty"), _ensure_inventory_slot_texture())
+		var empty_index := inventory_list.get_item_count() - 1
+		inventory_list.set_item_disabled(empty_index, true)
+		inventory_list.set_item_tooltip_enabled(empty_index, false)
 		inventory_list.deselect_all()
 		return
 
@@ -2842,6 +3226,7 @@ func _announce_rail_updates(new_items: Array[String], new_documents: Array[Strin
 		for item_id in new_items:
 			item_names.append(I18n.item_name(item_id))
 		_show_rail_notice(inventory_section, inventory_notice_label, I18n.t("ui.rail.item_notice", {"items": ", ".join(item_names)}), Color(0.86, 0.76, 0.58, 1.0), true)
+		await _play_inventory_gain_animation(new_items)
 
 	if not new_documents.is_empty():
 		selected_document_index = 0
