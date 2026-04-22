@@ -1,67 +1,8 @@
 extends Control
 
-class CursorOverlay:
-	extends Control
-
-	var cursor_style: String = "default"
-	var pulse_amount: float = 0.0
-
-	func _init() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		set_anchors_preset(Control.PRESET_TOP_LEFT)
-		size = Vector2(44, 44)
-		custom_minimum_size = size
-		z_index = 200
-
-	func set_cursor_style(next_style: String) -> void:
-		if cursor_style == next_style:
-			return
-		cursor_style = next_style
-		queue_redraw()
-
-	func set_pulse(amount: float) -> void:
-		pulse_amount = amount
-		queue_redraw()
-
-	func _draw() -> void:
-		var center := size * 0.5
-		var pulse_scale := 1.0 + pulse_amount * 0.34
-		var dot_radius := 3.2 * pulse_scale
-		var ring_radius := 13.0 * pulse_scale
-		var ring_width := 2.4
-		var ring_color := Color(0.0, 0.0, 0.0, 1.0)
-		var dot_color := Color(0.0, 0.0, 0.0, 1.0)
-
-		match cursor_style:
-			"hover":
-				ring_radius = 17.0 * pulse_scale
-				ring_width = 2.8
-				ring_color = Color(0.0, 0.0, 0.0, 1.0)
-				dot_color = Color(0.0, 0.0, 0.0, 1.0)
-			"back":
-				ring_radius = 17.0 * pulse_scale
-				ring_width = 2.8
-				ring_color = Color(0.0, 0.0, 0.0, 1.0)
-				dot_color = Color(0.0, 0.0, 0.0, 1.0)
-			"document":
-				ring_radius = 17.0 * pulse_scale
-				ring_width = 2.8
-				ring_color = Color(0.0, 0.0, 0.0, 1.0)
-				dot_color = Color(0.0, 0.0, 0.0, 0.0)
-
-		draw_circle(center, dot_radius, dot_color)
-		draw_arc(center, ring_radius, 0.0, TAU, 48, ring_color, ring_width)
-
-		if cursor_style == "back":
-			var arrow_color := Color(0.0, 0.0, 0.0, 0.98)
-			draw_line(center + Vector2(7, 0), center + Vector2(-6, 0), arrow_color, 2.6)
-			draw_line(center + Vector2(-6, 0), center + Vector2(-1, -5), arrow_color, 2.6)
-			draw_line(center + Vector2(-6, 0), center + Vector2(-1, 5), arrow_color, 2.6)
-		elif cursor_style == "document":
-			var paper_color := Color(0.0, 0.0, 0.0, 0.98)
-			draw_rect(Rect2(center + Vector2(-5, -6), Vector2(10, 12)), paper_color, false, 2.0)
-			draw_line(center + Vector2(-3, -1), center + Vector2(3, -1), paper_color, 1.8)
-			draw_line(center + Vector2(-3, 3), center + Vector2(3, 3), paper_color, 1.8)
+const MainDocumentsController := preload("res://godot/scripts/main/main_documents.gd")
+const MainEffectsController := preload("res://godot/scripts/main/main_effects.gd")
+const MainCursorController := preload("res://godot/scripts/main/main_cursor.gd")
 
 const MENU_ENDING_TOTAL := 5
 const MENU_DOCUMENT_TOTAL := 35
@@ -170,7 +111,6 @@ const FLASHLIGHT_ROOMS := [
 @onready var top_menu_button: Button = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/MenuButton
 @onready var top_restart_button: Button = $RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions/RestartButton
 
-var selected_document_index: int = -1
 var active_inspect_data: Dictionary = {}
 var active_code_interaction_id: String = ""
 var active_code_data: Dictionary = {}
@@ -206,7 +146,6 @@ var new_document_source_label: Label
 var new_document_body_label: RichTextLabel
 var new_document_close_button: Button
 var new_document_open_archive_button: Button
-var new_document_tween: Tween
 var room_effect_overlay: Control
 var room_vignette_overlay: ColorRect
 var room_blackout_cover: ColorRect
@@ -243,13 +182,10 @@ var documents_highlight_tween: Tween
 var fixed_game_layer: Control
 var left_documents_rail: PanelContainer
 var message_popup_tween: Tween
-var documents_overlay_tween: Tween
-var custom_cursor: CursorOverlay
-var current_cursor_style: String = "default"
-var cursor_pulse_tween: Tween
-var inventory_slot_texture: Texture2D
 var inventory_gain_layer: Control
-var pending_inventory_gain_origin: Vector2 = Vector2(-10000, -10000)
+var documents_controller: MainDocumentsController
+var effects_controller: MainEffectsController
+var cursor_controller: MainCursorController
 
 
 func _ready() -> void:
@@ -259,15 +195,27 @@ func _ready() -> void:
 	set_process(true)
 	top_menu_button.pressed.connect(_toggle_pause_menu)
 	top_restart_button.pressed.connect(_restart_from_topbar)
-	documents_button.pressed.connect(_show_documents_overlay)
+	documents_button.pressed.connect(func() -> void:
+		if documents_controller != null:
+			documents_controller.show_documents_overlay()
+	)
 	objective_button.pressed.connect(_show_objective_overlay)
-	documents_close_button.pressed.connect(_hide_documents_overlay)
+	documents_close_button.pressed.connect(func() -> void:
+		if documents_controller != null:
+			documents_controller.hide_documents_overlay()
+	)
 	objective_close_button.pressed.connect(_hide_objective_overlay)
-	documents_list.item_selected.connect(_on_document_selected)
+	documents_list.item_selected.connect(func(index: int) -> void:
+		if documents_controller != null:
+			documents_controller.on_document_selected(index)
+	)
 	inventory_list.allow_reselect = true
 	inventory_list.item_clicked.connect(_on_inventory_item_clicked)
 	rail_documents_list.allow_reselect = true
-	rail_documents_list.item_selected.connect(_on_rail_document_selected)
+	rail_documents_list.item_selected.connect(func(index: int) -> void:
+		if documents_controller != null:
+			documents_controller.on_rail_document_selected(index)
+	)
 	inspect_close_button.pressed.connect(_hide_inspect_overlay)
 	inspect_confirm_button.pressed.connect(_on_inspect_confirm_pressed)
 	code_cancel_button.pressed.connect(_hide_code_overlay)
@@ -276,10 +224,12 @@ func _ready() -> void:
 	
 	# Start BGM
 	SoundManager.play_bgm()
-	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 	_sync_scene_ambient(GameState.current_room_id)
 	_apply_rust_lake_layout()
+	_setup_cursor_controller()
 	_build_web_ui_overlays()
+	_setup_documents_controller()
+	_setup_effects_controller()
 	_apply_web_ui_theme()
 	_apply_static_translations()
 	_refresh_room(GameState.current_room_id)
@@ -292,6 +242,54 @@ func _process(_delta: float) -> void:
 	_update_flashlight_position()
 	_update_room_vignette()
 	_update_custom_cursor()
+
+
+func _setup_documents_controller() -> void:
+	documents_controller = MainDocumentsController.new()
+	documents_controller.setup(self, {
+		"documents_button": documents_button,
+		"documents_overlay": documents_overlay,
+		"documents_panel": documents_panel,
+		"documents_list": documents_list,
+		"document_title_label": document_title_label,
+		"document_source_label": document_source_label,
+		"document_text_label": document_text_label,
+		"rail_document_title_label": rail_document_title_label,
+		"rail_document_source_label": rail_document_source_label,
+		"rail_document_body_label": rail_document_body_label,
+		"new_document_overlay": new_document_overlay,
+		"new_document_panel": new_document_panel,
+		"new_document_title_label": new_document_title_label,
+		"new_document_source_label": new_document_source_label,
+		"new_document_body_label": new_document_body_label
+	})
+
+
+func _setup_effects_controller() -> void:
+	effects_controller = MainEffectsController.new()
+	effects_controller.setup(self, {
+		"room_visual_layer": room_visual_layer,
+		"inventory_list": inventory_list,
+		"inventory_section": inventory_section,
+		"inventory_gain_layer": inventory_gain_layer,
+		"room_effect_overlay": room_effect_overlay,
+		"room_vignette_overlay": room_vignette_overlay,
+		"room_blackout_cover": room_blackout_cover,
+		"room_flashlight_darkness": room_flashlight_darkness,
+		"room_flashlight_glow": room_flashlight_glow,
+		"room_flashlight_material": room_flashlight_material,
+		"jumpscare_overlay": jumpscare_overlay,
+		"jumpscare_flash": jumpscare_flash,
+		"jumpscare_image": jumpscare_image,
+		"jumpscare_texture": JUMPSCARE_IMAGE,
+		"screen_margin": SCREEN_MARGIN,
+		"flash_rooms": FLASHLIGHT_ROOMS
+	})
+
+
+func _setup_cursor_controller() -> void:
+	cursor_controller = MainCursorController.new()
+	cursor_controller.setup(self)
 
 
 func _apply_rust_lake_layout() -> void:
@@ -500,8 +498,9 @@ func _apply_static_translations() -> void:
 		new_document_open_archive_button.text = I18n.t("ui.top.files")
 	if new_document_close_button != null:
 		new_document_close_button.text = I18n.t("ui.menu.close")
-	_refresh_documents_button()
-	_set_rail_document_empty_state()
+	if documents_controller != null:
+		documents_controller.refresh_documents_button()
+		documents_controller.set_rail_document_empty_state()
 
 
 func _refresh_room(room_id: String) -> void:
@@ -566,8 +565,9 @@ func _refresh_hud() -> void:
 	message_label.text = GameState.message_text
 	objective_value_label.text = GameState.objective_text
 	_refresh_inventory_list()
-	_refresh_documents_list()
-	_refresh_documents_button()
+	if documents_controller != null:
+		documents_controller.refresh_documents_list()
+		documents_controller.refresh_documents_button()
 	if ending_overlay != null and ending_overlay.visible:
 		ending_documents_value_label.text = I18n.t("ui.files.count_short", {"count": GameState.unlocked_documents.size()})
 	if is_main_menu_open and main_menu_overlay != null and main_menu_overlay.visible:
@@ -701,70 +701,18 @@ func _play_scene_transition_sound(audio_key: String = "footstep", volume: float 
 
 
 func _set_pending_inventory_gain_origin(origin: Vector2) -> void:
-	pending_inventory_gain_origin = origin
+	if effects_controller != null:
+		effects_controller.set_pending_inventory_gain_origin(origin)
 
 
 func _set_pending_inventory_gain_origin_from_control(control: Control) -> void:
-	if control == null:
-		return
-	var control_rect := control.get_global_rect()
-	_set_pending_inventory_gain_origin(control_rect.position + control_rect.size * 0.5)
-
-
-func _consume_inventory_gain_origin() -> Vector2:
-	var origin := pending_inventory_gain_origin
-	if origin.x <= -9999.0:
-		origin = get_viewport().get_mouse_position()
-	pending_inventory_gain_origin = Vector2(-10000, -10000)
-	return origin
-
-
-func _set_cursor_style(next_style: String) -> void:
-	current_cursor_style = next_style
-	if custom_cursor != null:
-		custom_cursor.set_cursor_style(next_style)
-
-
-func _pulse_cursor(amount: float = 1.0, duration: float = 0.22) -> void:
-	if custom_cursor == null:
-		return
-	if cursor_pulse_tween != null:
-		cursor_pulse_tween.kill()
-	custom_cursor.set_pulse(amount)
-	cursor_pulse_tween = create_tween()
-	cursor_pulse_tween.tween_method(func(value: float) -> void:
-		if custom_cursor != null:
-			custom_cursor.set_pulse(value)
-	, amount, 0.0, duration)
+	if effects_controller != null:
+		effects_controller.set_pending_inventory_gain_origin_from_control(control)
 
 
 func _update_custom_cursor() -> void:
-	if custom_cursor == null:
-		return
-	var mouse_position := get_viewport().get_mouse_position()
-	custom_cursor.position = mouse_position - (custom_cursor.size * 0.5)
-
-
-func _cursor_style_for_interaction(interaction: Dictionary) -> String:
-	if not interaction.get("documents", []).is_empty():
-		return "document"
-	if String(interaction.get("ui_style", "")) == "corner_back":
-		return "back"
-	var interaction_id := String(interaction.get("id", ""))
-	if interaction_id.begins_with("back") or interaction_id.contains("back"):
-		return "back"
-	return "hover"
-
-
-func _on_hotspot_hover_entered(interaction: Dictionary, button: Button) -> void:
-	_animate_hotspot_hover(button, true)
-	_set_cursor_style(_cursor_style_for_interaction(interaction))
-	_pulse_cursor(0.55, 0.18)
-
-
-func _on_hotspot_hover_exited(button: Button) -> void:
-	_animate_hotspot_hover(button, false)
-	_set_cursor_style("default")
+	if cursor_controller != null:
+		cursor_controller.update_custom_cursor()
 
 
 func _handle_back_stairwell_to_third_floor(interaction: Dictionary) -> void:
@@ -806,129 +754,28 @@ func _handle_back_stairwell_photo(_interaction: Dictionary) -> void:
 
 
 func _play_photo_jumpscare() -> void:
-	if jumpscare_overlay == null:
-		return
-
-	is_room_sequence_locked = true
-	jumpscare_overlay.visible = true
-	jumpscare_image.texture = JUMPSCARE_IMAGE
-	jumpscare_image.modulate = Color(1, 1, 1, 0)
-	jumpscare_flash.color = Color(1, 1, 1, 0)
-
-	await get_tree().create_timer(0.22).timeout
-	_play_feedback_sound("jumpscare", 0.95)
-
-	var image_in_tween := create_tween()
-	image_in_tween.set_trans(Tween.TRANS_SINE)
-	image_in_tween.set_ease(Tween.EASE_OUT)
-	image_in_tween.tween_property(jumpscare_image, "modulate", Color(1, 1, 1, 1), 0.05)
-	await image_in_tween.finished
-
-	for _index in range(2):
-		jumpscare_flash.color = Color(1, 1, 1, 0)
-		var flash_tween := create_tween()
-		flash_tween.tween_property(jumpscare_flash, "color", Color(1, 1, 1, 0.92), 0.06)
-		flash_tween.tween_property(jumpscare_flash, "color", Color(1, 1, 1, 0), 0.10)
-		await flash_tween.finished
-		await get_tree().create_timer(0.08).timeout
-
-	await get_tree().create_timer(0.12).timeout
-	jumpscare_overlay.visible = false
-	is_room_sequence_locked = false
+	if effects_controller != null:
+		await effects_controller.play_photo_jumpscare()
 
 
 func _maybe_play_fake_third_blackout_intro() -> void:
-	var intro_already_played := bool(GameState.flags.get("third_floor_blackout_intro_played", false))
-	var flashlight_enabled := bool(GameState.flags.get("third_floor_flashlight_enabled", false))
-	var photo_route_active := bool(GameState.flags.get("stairwell_photo_jumpscare_played", false))
-	if intro_already_played or flashlight_enabled or not photo_route_active:
-		_update_room_effects(GameState.current_room_id)
-		return
-
-	is_room_sequence_locked = true
-	GameState.flags["third_floor_blackout_intro_played"] = true
-	GameState.flags["first_fake_third_floor_seen"] = true
-	GameState.flags["third_floor_flashlight_enabled"] = false
-	_update_room_effects("fake_third")
-	_play_feedback_sound("cry", 0.92)
-	GameState.set_message("")
-	_refresh_hud()
-	_hide_message_popup()
-
-	await get_tree().create_timer(0.9).timeout
-	GameState.set_message("The whole building suddenly loses power. A baby is crying somewhere in the dark, so you switch on your phone flashlight.")
-	_refresh_hud_with_message(4.2)
-
-	await get_tree().create_timer(0.9).timeout
-	GameState.flags["third_floor_flashlight_enabled"] = true
-	is_room_sequence_locked = false
-	_update_room_effects(GameState.current_room_id)
-	_refresh_hud_with_message(2.8)
+	if effects_controller != null:
+		await effects_controller.maybe_play_fake_third_blackout_intro(GameState.current_room_id)
 
 
 func _update_room_effects(room_id: String) -> void:
-	if room_effect_overlay == null:
-		return
-
-	var flashlight_enabled := bool(GameState.flags.get("third_floor_flashlight_enabled", false))
-	var show_blackout_cover := room_id == "fake_third" and not flashlight_enabled and bool(GameState.flags.get("third_floor_blackout_intro_played", false))
-	var show_flashlight := flashlight_enabled and FLASHLIGHT_ROOMS.has(room_id)
-
-	room_effect_overlay.visible = show_blackout_cover or show_flashlight
-	room_blackout_cover.visible = show_blackout_cover
-	room_flashlight_darkness.visible = show_flashlight
-	room_flashlight_glow.visible = false
-	if show_flashlight:
-		_update_flashlight_position()
+	if effects_controller != null:
+		effects_controller.update_room_effects(room_id)
 
 
 func _update_flashlight_position() -> void:
-	if room_effect_overlay == null or room_flashlight_material == null:
-		return
-	if not room_flashlight_darkness.visible:
-		return
-
-	var overlay_size := room_visual_layer.size
-	if overlay_size == Vector2.ZERO:
-		return
-
-	var local_mouse := room_visual_layer.get_local_mouse_position()
-	local_mouse.x = clampf(local_mouse.x, 0.0, overlay_size.x)
-	local_mouse.y = clampf(local_mouse.y, 0.0, overlay_size.y)
-
-	var normalized := Vector2(
-		local_mouse.x / overlay_size.x,
-		local_mouse.y / overlay_size.y
-	)
-	room_flashlight_material.set_shader_parameter("light_pos", normalized)
-	room_flashlight_glow.position = local_mouse - (room_flashlight_glow.size * 0.5)
+	if effects_controller != null:
+		effects_controller.update_flashlight_position()
 
 
 func _update_room_vignette() -> void:
-	if room_vignette_overlay == null:
-		return
-	if room_vignette_overlay.material == null:
-		return
-
-	var overlay_size := room_visual_layer.size
-	if overlay_size.x <= 0.0 or overlay_size.y <= 0.0:
-		return
-
-	var vignette_material := room_vignette_overlay.material as ShaderMaterial
-	if vignette_material == null:
-		return
-
-	var aspect := overlay_size.x / maxf(overlay_size.y, 1.0)
-	var intensity := 0.18
-	var inner_radius := 0.54
-
-	if bool(GameState.flags.get("third_floor_flashlight_enabled", false)) and FLASHLIGHT_ROOMS.has(GameState.current_room_id):
-		intensity = 0.26
-		inner_radius = 0.48
-
-	vignette_material.set_shader_parameter("aspect", aspect)
-	vignette_material.set_shader_parameter("intensity", intensity)
-	vignette_material.set_shader_parameter("inner_radius", inner_radius)
+	if effects_controller != null:
+		effects_controller.update_room_vignette(GameState.current_room_id)
 
 
 func _apply_background(texture_path: String) -> void:
@@ -966,10 +813,10 @@ func _build_web_ui_overlays() -> void:
 	add_child(grain_overlay)
 	move_child(grain_overlay, 1)
 
-	custom_cursor = CursorOverlay.new()
-	add_child(custom_cursor)
-	move_child(custom_cursor, get_child_count() - 1)
-	_set_cursor_style("default")
+	var custom_cursor := cursor_controller.build_overlay() if cursor_controller != null else null
+	if custom_cursor != null:
+		add_child(custom_cursor)
+		move_child(custom_cursor, get_child_count() - 1)
 
 	inventory_gain_layer = Control.new()
 	inventory_gain_layer.name = "InventoryGainLayer"
@@ -1013,6 +860,8 @@ void fragment() {
 	room_vignette_overlay.material = vignette_material
 	room_visual_layer.add_child(room_vignette_overlay)
 	room_visual_layer.move_child(room_vignette_overlay, room_visual_layer.get_child_count() - 1)
+	if effects_controller != null:
+		effects_controller.set_room_vignette_overlay(room_vignette_overlay)
 
 	room_blackout_cover = ColorRect.new()
 	room_blackout_cover.name = "BlackoutCover"
@@ -1300,13 +1149,19 @@ void fragment() {
 	new_document_open_archive_button = Button.new()
 	new_document_open_archive_button.text = I18n.t("ui.top.files")
 	new_document_open_archive_button.custom_minimum_size = Vector2(120, 44)
-	new_document_open_archive_button.pressed.connect(_open_archive_from_new_document)
+	new_document_open_archive_button.pressed.connect(func() -> void:
+		if documents_controller != null:
+			documents_controller.open_archive_from_new_document()
+	)
 	document_actions.add_child(new_document_open_archive_button)
 
 	new_document_close_button = Button.new()
 	new_document_close_button.text = I18n.t("ui.menu.close")
 	new_document_close_button.custom_minimum_size = Vector2(120, 44)
-	new_document_close_button.pressed.connect(_hide_new_document_overlay)
+	new_document_close_button.pressed.connect(func() -> void:
+		if documents_controller != null:
+			documents_controller.hide_new_document_overlay()
+	)
 	document_actions.add_child(new_document_close_button)
 
 	main_menu_overlay = ColorRect.new()
@@ -1723,11 +1578,13 @@ func _style_in_scene_icon_button(button: Button, paper_style: bool) -> void:
 
 
 func _hide_secondary_overlays() -> void:
-	_hide_documents_overlay(true)
+	if documents_controller != null:
+		documents_controller.hide_documents_overlay(true)
 	objective_overlay.visible = false
 	inspect_overlay.visible = false
 	code_overlay.visible = false
-	_hide_new_document_overlay(true)
+	if documents_controller != null:
+		documents_controller.hide_new_document_overlay(true)
 	_hide_pause_menu()
 
 
@@ -2308,14 +2165,21 @@ func _add_hotspot_button(interaction: Dictionary) -> void:
 		button.add_theme_color_override("font_hover_color", Color(1, 0.98, 0.92, 1.0))
 		button.add_theme_color_override("font_pressed_color", Color(1, 0.98, 0.92, 1.0))
 		button.add_theme_color_override("font_focus_color", Color(1, 0.98, 0.92, 1.0))
-	button.mouse_entered.connect(_on_hotspot_hover_entered.bind(interaction, button))
-	button.mouse_exited.connect(_on_hotspot_hover_exited.bind(button))
+	button.mouse_entered.connect(func() -> void:
+		if cursor_controller != null:
+			cursor_controller.on_hotspot_hover_entered(interaction, button)
+	)
+	button.mouse_exited.connect(func() -> void:
+		if cursor_controller != null:
+			cursor_controller.on_hotspot_hover_exited(button)
+	)
 	button.pressed.connect(_animate_hotspot_press.bind(button))
 	button.pressed.connect(func() -> void:
 		_set_pending_inventory_gain_origin_from_control(button)
 	)
 	button.pressed.connect(func() -> void:
-		_pulse_cursor(1.15, 0.24)
+		if cursor_controller != null:
+			cursor_controller.pulse_cursor(1.15, 0.24)
 	)
 	button.pressed.connect(_on_interaction_requested.bind(interaction.get("id", "")))
 
@@ -2354,7 +2218,8 @@ func _animate_hotspot_press(button: Button) -> void:
 
 
 func _rebuild_hotspots() -> void:
-	_set_cursor_style("default")
+	if cursor_controller != null:
+		cursor_controller.set_cursor_style("default")
 	for child: Node in hotspot_layer.get_children():
 		if child == hotspot_editor_overlay:
 			for editor_child: Node in hotspot_editor_overlay.get_children():
@@ -2426,13 +2291,16 @@ func _build_scene_keypad(room: Dictionary) -> void:
 		button.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		button.pressed.connect(_on_scene_keypad_pressed.bind(key_value))
 		button.mouse_entered.connect(func() -> void:
-			_set_cursor_style("hover")
+			if cursor_controller != null:
+				cursor_controller.set_cursor_style("hover")
 		)
 		button.mouse_exited.connect(func() -> void:
-			_set_cursor_style("default")
+			if cursor_controller != null:
+				cursor_controller.set_cursor_style("default")
 		)
 		button.pressed.connect(func() -> void:
-			_pulse_cursor(1.15, 0.24)
+			if cursor_controller != null:
+				cursor_controller.pulse_cursor(1.15, 0.24)
 		)
 		button.add_theme_stylebox_override("normal", _build_panel_style(Color(0.08, 0.12, 0.16, 0.82), Color(0.82, 0.88, 0.95, 0.18), 8))
 		button.add_theme_stylebox_override("hover", _build_panel_style(Color(0.12, 0.16, 0.22, 0.92), Color(0.95, 0.90, 0.76, 0.42), 8))
@@ -2835,124 +2703,6 @@ func _play_blink_transition(callback: Callable = Callable()) -> void:
 	is_transitioning = false
 
 
-func _show_documents_overlay() -> void:
-	_refresh_documents_list()
-	_refresh_documents_button()
-	if documents_overlay_tween != null:
-		documents_overlay_tween.kill()
-	documents_overlay.visible = true
-	documents_overlay.color = Color(0.01, 0.015, 0.02, 0.0)
-	documents_panel.modulate = Color(1, 1, 1, 0.0)
-	documents_panel.scale = Vector2(0.92, 0.98)
-	documents_panel.rotation_degrees = -1.0
-
-	documents_overlay_tween = create_tween()
-	documents_overlay_tween.set_parallel(true)
-	documents_overlay_tween.set_trans(Tween.TRANS_CUBIC)
-	documents_overlay_tween.set_ease(Tween.EASE_OUT)
-	documents_overlay_tween.tween_property(documents_overlay, "color", Color(0.01, 0.015, 0.02, 0.72), 0.18)
-	documents_overlay_tween.tween_property(documents_panel, "modulate", Color(1, 1, 1, 1), 0.14)
-	documents_overlay_tween.tween_property(documents_panel, "scale", Vector2(1.0, 1.0), 0.22)
-	documents_overlay_tween.tween_property(documents_panel, "rotation_degrees", 0.0, 0.20)
-
-
-func _hide_documents_overlay(immediate: bool = false) -> void:
-	if documents_overlay_tween != null:
-		documents_overlay_tween.kill()
-
-	if immediate:
-		documents_overlay.visible = false
-		documents_overlay.color = Color(0.01, 0.015, 0.02, 0.0)
-		documents_panel.modulate = Color(1, 1, 1, 1)
-		documents_panel.scale = Vector2(1.0, 1.0)
-		documents_panel.rotation_degrees = 0.0
-		return
-
-	if not documents_overlay.visible:
-		return
-
-	documents_overlay_tween = create_tween()
-	documents_overlay_tween.set_parallel(true)
-	documents_overlay_tween.set_trans(Tween.TRANS_CUBIC)
-	documents_overlay_tween.set_ease(Tween.EASE_IN)
-	documents_overlay_tween.tween_property(documents_overlay, "color", Color(0.01, 0.015, 0.02, 0.0), 0.14)
-	documents_overlay_tween.tween_property(documents_panel, "modulate", Color(1, 1, 1, 0.0), 0.10)
-	documents_overlay_tween.tween_property(documents_panel, "scale", Vector2(0.98, 0.99), 0.14)
-	documents_overlay_tween.finished.connect(func() -> void:
-		documents_overlay.visible = false
-		documents_panel.modulate = Color(1, 1, 1, 1)
-		documents_panel.scale = Vector2(1.0, 1.0)
-		documents_panel.rotation_degrees = 0.0
-	)
-
-
-func _show_new_document_overlay(document: Dictionary) -> void:
-	if document.is_empty() or new_document_overlay == null or new_document_panel == null:
-		return
-
-	if new_document_tween != null:
-		new_document_tween.kill()
-
-	new_document_title_label.text = _document_text(document, "title", "Untitled")
-	new_document_source_label.text = _document_text(document, "source", "")
-	new_document_body_label.text = _document_text(document, "body", "")
-	new_document_body_label.scroll_to_line(0)
-
-	new_document_overlay.visible = true
-	new_document_overlay.color = Color(0.01, 0.015, 0.02, 0.0)
-	new_document_panel.modulate = Color(1, 1, 1, 0.0)
-	new_document_panel.scale = Vector2(0.08, 1.0)
-	new_document_panel.rotation_degrees = -4.0
-	var page_height := maxf(new_document_panel.size.y, new_document_panel.custom_minimum_size.y)
-	if page_height <= 0.0:
-		page_height = 360.0
-	new_document_panel.pivot_offset = Vector2(0, page_height * 0.5)
-
-	new_document_tween = create_tween()
-	new_document_tween.set_parallel(true)
-	new_document_tween.set_trans(Tween.TRANS_CUBIC)
-	new_document_tween.set_ease(Tween.EASE_OUT)
-	new_document_tween.tween_property(new_document_overlay, "color", Color(0.01, 0.015, 0.02, 0.72), 0.18)
-	new_document_tween.tween_property(new_document_panel, "modulate", Color(1, 1, 1, 1), 0.14)
-	new_document_tween.tween_property(new_document_panel, "scale", Vector2(1.0, 1.0), 0.26)
-	new_document_tween.tween_property(new_document_panel, "rotation_degrees", 0.0, 0.24)
-
-
-func _hide_new_document_overlay(immediate: bool = false) -> void:
-	if new_document_overlay == null or not new_document_overlay.visible:
-		return
-
-	if new_document_tween != null:
-		new_document_tween.kill()
-
-	if immediate:
-		new_document_overlay.visible = false
-		new_document_overlay.color = Color(0.01, 0.015, 0.02, 0.0)
-		new_document_panel.modulate = Color(1, 1, 1, 1)
-		new_document_panel.scale = Vector2(1.0, 1.0)
-		new_document_panel.rotation_degrees = 0.0
-		return
-
-	new_document_tween = create_tween()
-	new_document_tween.set_parallel(true)
-	new_document_tween.set_trans(Tween.TRANS_CUBIC)
-	new_document_tween.set_ease(Tween.EASE_IN)
-	new_document_tween.tween_property(new_document_overlay, "color", Color(0.01, 0.015, 0.02, 0.0), 0.14)
-	new_document_tween.tween_property(new_document_panel, "modulate", Color(1, 1, 1, 0.0), 0.12)
-	new_document_tween.tween_property(new_document_panel, "scale", Vector2(0.98, 1.0), 0.14)
-	new_document_tween.finished.connect(func() -> void:
-		new_document_overlay.visible = false
-		new_document_panel.modulate = Color(1, 1, 1, 1)
-		new_document_panel.scale = Vector2(1.0, 1.0)
-		new_document_panel.rotation_degrees = 0.0
-	)
-
-
-func _open_archive_from_new_document() -> void:
-	_hide_new_document_overlay(true)
-	_show_documents_overlay()
-
-
 func _show_objective_overlay() -> void:
 	objective_value_label.text = GameState.objective_text
 	objective_overlay.visible = true
@@ -2962,154 +2712,17 @@ func _hide_objective_overlay() -> void:
 	objective_overlay.visible = false
 
 
-func _ensure_inventory_slot_texture() -> Texture2D:
-	if inventory_slot_texture != null:
-		return inventory_slot_texture
-
-	var image := Image.create(112, 112, false, Image.FORMAT_RGBA8)
-	image.fill(Color(0.11, 0.12, 0.14, 0.06))
-	image.fill_rect(Rect2i(4, 4, 104, 104), Color(0.03, 0.04, 0.06, 0.58))
-	image.fill_rect(Rect2i(8, 8, 96, 96), Color(0.07, 0.08, 0.10, 0.82))
-	image.fill_rect(Rect2i(14, 14, 84, 84), Color(0.95, 0.95, 0.94, 0.05))
-	image.fill_rect(Rect2i(14, 86, 84, 12), Color(0.95, 0.95, 0.94, 0.08))
-
-	for x: int in range(4, 108):
-		image.set_pixel(x, 4, Color(0.88, 0.80, 0.65, 0.52))
-		image.set_pixel(x, 107, Color(0.0, 0.0, 0.0, 0.36))
-
-	for y: int in range(4, 108):
-		image.set_pixel(4, y, Color(0.88, 0.80, 0.65, 0.52))
-		image.set_pixel(107, y, Color(0.0, 0.0, 0.0, 0.36))
-
-	inventory_slot_texture = ImageTexture.create_from_image(image)
-	return inventory_slot_texture
-
-
-func _inventory_icon_for_item(_item_id: String) -> Texture2D:
-	return _ensure_inventory_slot_texture()
-
-
-func _inventory_item_rect(index: int) -> Rect2:
-	if index < 0 or index >= inventory_list.get_item_count():
-		return Rect2(inventory_list.global_position, Vector2(inventory_list.fixed_column_width, inventory_list.fixed_column_width))
-	var item_rect := inventory_list.get_item_rect(index)
-	return Rect2(inventory_list.global_position + item_rect.position, item_rect.size)
-
-
-func _create_inventory_gain_card(item_id: String) -> PanelContainer:
-	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(124, 124)
-	card.size = card.custom_minimum_size
-	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.modulate = Color(1, 1, 1, 0.0)
-	card.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.06, 0.08, 0.96), Color(0.88, 0.80, 0.65, 0.38), 18))
-
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 10)
-	margin.add_theme_constant_override("margin_top", 10)
-	margin.add_theme_constant_override("margin_right", 10)
-	margin.add_theme_constant_override("margin_bottom", 10)
-	card.add_child(margin)
-
-	var stack := VBoxContainer.new()
-	stack.set_anchors_preset(Control.PRESET_FULL_RECT)
-	stack.add_theme_constant_override("separation", 8)
-	margin.add_child(stack)
-
-	var icon_rect := TextureRect.new()
-	icon_rect.texture = _inventory_icon_for_item(item_id)
-	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon_rect.custom_minimum_size = Vector2(92, 92)
-	icon_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	icon_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	stack.add_child(icon_rect)
-
-	var label := Label.new()
-	label.text = I18n.item_name(item_id)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.clip_text = true
-	label.add_theme_font_size_override("font_size", 12)
-	label.add_theme_color_override("font_color", Color(0.96, 0.95, 0.93, 0.98))
-	stack.add_child(label)
-
-	return card
-
-
-func _pulse_inventory_section() -> void:
-	if inventory_highlight_tween != null:
-		inventory_highlight_tween.kill()
-	inventory_section.self_modulate = Color(1.0, 0.97, 0.90, 1.0)
-	inventory_highlight_tween = create_tween()
-	inventory_highlight_tween.set_trans(Tween.TRANS_SINE)
-	inventory_highlight_tween.set_ease(Tween.EASE_OUT)
-	inventory_highlight_tween.tween_property(inventory_section, "self_modulate", Color(1, 1, 1, 1), 0.45)
-
-
-func _play_inventory_gain_animation(new_items: Array[String]) -> void:
-	if inventory_gain_layer == null or new_items.is_empty():
-		return
-
-	var base_origin := _consume_inventory_gain_origin()
-
-	for item_id: String in new_items:
-		var item_index := GameState.inventory.find(item_id)
-		if item_index < 0:
-			continue
-
-		var target_rect := _inventory_item_rect(item_index)
-		var card := _create_inventory_gain_card(item_id)
-		inventory_gain_layer.add_child(card)
-
-		var start_size := Vector2(132, 132)
-		var end_size := Vector2(maxf(target_rect.size.x + 6.0, 108.0), maxf(target_rect.size.y + 6.0, 108.0))
-		var start_position := base_origin - start_size * 0.5
-		start_position.x = clampf(start_position.x, SCREEN_MARGIN.x + 24.0, get_viewport_rect().size.x - start_size.x - SCREEN_MARGIN.x - 24.0)
-		start_position.y = clampf(start_position.y, SCREEN_MARGIN.y + 24.0, get_viewport_rect().size.y - start_size.y - SCREEN_MARGIN.y - 24.0)
-		var end_position := target_rect.position + (target_rect.size - end_size) * 0.5
-
-		card.position = start_position
-		card.scale = Vector2(1.0, 1.0)
-		card.rotation_degrees = -6.0
-		card.size = start_size
-		card.custom_minimum_size = start_size
-
-		var tween := create_tween()
-		tween.set_parallel(true)
-		tween.set_trans(Tween.TRANS_CUBIC)
-		tween.set_ease(Tween.EASE_OUT)
-		tween.tween_property(card, "modulate", Color(1, 1, 1, 1), 0.10)
-		tween.tween_property(card, "position", end_position, 0.42)
-		tween.tween_property(card, "size", end_size, 0.42)
-		tween.tween_property(card, "custom_minimum_size", end_size, 0.42)
-		tween.tween_property(card, "scale", Vector2(0.88, 0.88), 0.42)
-		tween.tween_property(card, "rotation_degrees", 0.0, 0.36)
-		await tween.finished
-
-		_pulse_inventory_section()
-		var settle_tween := create_tween()
-		settle_tween.set_parallel(true)
-		settle_tween.set_trans(Tween.TRANS_SINE)
-		settle_tween.set_ease(Tween.EASE_IN)
-		settle_tween.tween_property(card, "modulate", Color(1, 1, 1, 0.0), 0.12)
-		settle_tween.tween_property(card, "scale", Vector2(0.78, 0.78), 0.12)
-		await settle_tween.finished
-		card.queue_free()
-		base_origin += Vector2(18.0, -10.0)
-		await get_tree().create_timer(0.04).timeout
-
-
 func _refresh_inventory_list() -> void:
 	inventory_list.clear()
 	for item_id: String in GameState.inventory:
-		inventory_list.add_item(I18n.item_name(item_id), _inventory_icon_for_item(item_id))
+		var item_icon := effects_controller.inventory_icon_for_item(item_id) if effects_controller != null else null
+		inventory_list.add_item(I18n.item_name(item_id), item_icon)
 		var item_index := inventory_list.get_item_count() - 1
 		inventory_list.set_item_tooltip_enabled(item_index, false)
 
 	if GameState.inventory.is_empty():
-		inventory_list.add_item(I18n.t("ui.inventory.empty"), _ensure_inventory_slot_texture())
+		var empty_icon := effects_controller.ensure_inventory_slot_texture() if effects_controller != null else null
+		inventory_list.add_item(I18n.t("ui.inventory.empty"), empty_icon)
 		var empty_index := inventory_list.get_item_count() - 1
 		inventory_list.set_item_disabled(empty_index, true)
 		inventory_list.set_item_tooltip_enabled(empty_index, false)
@@ -3143,61 +2756,6 @@ func _on_inventory_item_clicked(index: int, _at_position: Vector2, mouse_button_
 	_refresh_hud_with_message()
 
 
-func _refresh_documents_list() -> void:
-	documents_list.clear()
-	for document: Dictionary in GameState.unlocked_documents:
-		var title := _document_text(document, "title", "Untitled")
-		documents_list.add_item(title)
-
-	if GameState.unlocked_documents.is_empty():
-		selected_document_index = -1
-		document_title_label.text = I18n.t("ui.documents.empty_title")
-		document_source_label.text = I18n.t("ui.documents.empty_source")
-		document_text_label.text = ""
-		_set_rail_document_empty_state()
-		return
-
-	if selected_document_index < 0 or selected_document_index >= GameState.unlocked_documents.size():
-		selected_document_index = 0
-
-	documents_list.select(selected_document_index)
-	_show_document(selected_document_index)
-
-
-func _on_document_selected(index: int) -> void:
-	selected_document_index = index
-	_show_document(index)
-
-
-func _on_rail_document_selected(index: int) -> void:
-	selected_document_index = index
-	documents_list.select(index)
-	_show_document(index)
-
-
-func _show_document(index: int) -> void:
-	if index < 0 or index >= GameState.unlocked_documents.size():
-		return
-
-	var document: Dictionary = GameState.unlocked_documents[index]
-	document_title_label.text = _document_text(document, "title", "Untitled")
-	document_source_label.text = _document_text(document, "source", "")
-	document_text_label.text = _document_text(document, "body", "")
-	rail_document_title_label.text = _document_text(document, "title", "Untitled")
-	rail_document_source_label.text = _document_text(document, "source", "")
-	rail_document_body_label.text = _document_text(document, "body", "")
-
-
-func _refresh_documents_button() -> void:
-	documents_button.text = "⧉"
-
-
-func _set_rail_document_empty_state() -> void:
-	rail_document_title_label.text = I18n.t("ui.documents.rail.empty_title")
-	rail_document_source_label.text = I18n.t("ui.documents.rail.empty_source")
-	rail_document_body_label.text = I18n.t("ui.documents.rail.empty_body")
-
-
 func _capture_inventory_ids() -> Array[String]:
 	var ids: Array[String] = []
 	for item_id: String in GameState.inventory:
@@ -3226,28 +2784,17 @@ func _announce_rail_updates(new_items: Array[String], new_documents: Array[Strin
 		for item_id in new_items:
 			item_names.append(I18n.item_name(item_id))
 		_show_rail_notice(inventory_section, inventory_notice_label, I18n.t("ui.rail.item_notice", {"items": ", ".join(item_names)}), Color(0.86, 0.76, 0.58, 1.0), true)
-		await _play_inventory_gain_animation(new_items)
+		if effects_controller != null:
+			await effects_controller.play_inventory_gain_animation(new_items)
 
 	if not new_documents.is_empty():
-		selected_document_index = 0
-		_refresh_documents_list()
-		var latest_document := _find_document(String(new_documents[0]))
+		if documents_controller != null:
+			documents_controller.reset_documents_selection()
+			documents_controller.refresh_documents_list()
+		var latest_document := documents_controller.find_document(String(new_documents[0])) if documents_controller != null else {}
 		if not latest_document.is_empty():
-			_show_new_document_overlay(latest_document)
-
-
-func _find_document(document_id: String) -> Dictionary:
-	for document: Dictionary in GameState.unlocked_documents:
-		if String(document.get("id", "")) == document_id:
-			return document
-	return {}
-
-
-func _find_document_title(document_id: String) -> String:
-	for document: Dictionary in GameState.unlocked_documents:
-		if String(document.get("id", "")) == document_id:
-			return _document_text(document, "title", "Untitled")
-	return "Untitled"
+			if documents_controller != null:
+				documents_controller.show_new_document_overlay(latest_document)
 
 
 func _show_rail_notice(section_panel: PanelContainer, notice_label: Label, text: String, accent: Color, is_inventory_section: bool) -> void:
