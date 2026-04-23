@@ -41,6 +41,7 @@ func reset() -> void:
 		"code_discovered": false,
 		"building_entered": false,
 		"entrance_notice_read": false,
+		"entrance_power_notice_read": false,
 		"second_floor_notice_read": false,
 		"gate_unlocked": false,
 		"stairwell_footprints_checked": false,

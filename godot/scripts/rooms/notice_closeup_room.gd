@@ -4,36 +4,64 @@ extends RefCounted
 static func build() -> Dictionary:
 	return {
 		"id": "notice_closeup",
-		"title": "Notice Board",
-		"hint": "The paper has been handled so often that the corners feel greasy.",
-		"background": "res://godot/asserts/images/letterbox.jpg",
+		"title_key": "room.notice_closeup.title",
+		"hint_key": "room.notice_closeup.hint",
+		"background": "res://godot/asserts/images/messageboard.png",
 		"interactions": [
 			{
-				"id": "notice_read_handwriting",
-				"label": "Study the Handwriting",
-				"message": "The ink digs into the paper. Whoever wrote the warning pressed hard enough to nearly tear through it.",
-				"hotspot_rect": Rect2(0.28, 0.34, 0.32, 0.18)
-			},
-			{
-				"id": "notice",
-				"label": "Record the Warning",
+				"id": "arrival_notice",
+				"label_key": "room.notice_closeup.arrival_notice.label",
 				"requires_flag_false": "entrance_notice_read",
 				"sets_flag": "entrance_notice_read",
-				"message": "The notice warns residents not to answer knocks after midnight. A handwritten line has been added underneath: 'If she is humming, do not let her in.'",
-				"hotspot_rect": Rect2(0.22, 0.22, 0.44, 0.38),
+				"message_key": "room.notice_closeup.arrival_notice.message",
+				"hotspot_rect": Rect2(0.14, 0.14, 0.28, 0.52),
 				"document": {
-					"id": "night_notice",
-					"title": "Night Shift Notice",
-					"source": "Entrance notice board",
-					"body": "Residents are advised not to answer unexpected knocking after 12:00 AM. Maintenance will not visit at night. Handwritten below in darker ink: If she is humming, do not let her in."
+					"id": "arrival-notice-1f",
+					"title_key": "doc.arrival_notice_1f.title",
+					"source_key": "doc.arrival_notice_1f.source",
+					"body_key": "doc.arrival_notice_1f.body"
 				}
 			},
 			{
+				"id": "arrival_notice_reread",
+				"label_key": "room.notice_closeup.arrival_notice_reread.label",
+				"requires_flag_true": "entrance_notice_read",
+				"message_key": "room.notice_closeup.arrival_notice_reread.message",
+				"hotspot_rect": Rect2(0.14, 0.14, 0.28, 0.52)
+			},
+			{
+				"id": "power_notice",
+				"label_key": "room.notice_closeup.power_notice.label",
+				"requires_flag_false": "entrance_power_notice_read",
+				"sets_flag": "entrance_power_notice_read",
+				"message_key": "room.notice_closeup.power_notice.message",
+				"hotspot_rect": Rect2(0.67, 0.66, 0.12, 0.16),
+				"document": {
+					"id": "voltage-notice-1f",
+					"title_key": "doc.voltage_notice_1f.title",
+					"source_key": "doc.voltage_notice_1f.source",
+					"body_key": "doc.voltage_notice_1f.body"
+				}
+			},
+			{
+				"id": "power_notice_reread",
+				"label_key": "room.notice_closeup.power_notice_reread.label",
+				"requires_flag_true": "entrance_power_notice_read",
+				"message_key": "room.notice_closeup.power_notice_reread.message",
+				"hotspot_rect": Rect2(0.67, 0.66, 0.12, 0.16)
+			},
+			{
+				"id": "notice_board_glance",
+				"label_key": "room.notice_closeup.glance.label",
+				"message_key": "room.notice_closeup.glance.message",
+				"hotspot_rect": Rect2(0.52, 0.25, 0.34, 0.40)
+			},
+			{
 				"id": "notice_closeup_back",
-				"label": "Back to Entrance",
-				"message": "You step back from the board. The entrance suddenly feels smaller.",
-				"goto_room": "apartment_entrance",
-				"hotspot_rect": Rect2(0.03, 0.84, 0.1, 0.12),
+				"label_key": "room.notice_closeup.back.label",
+				"message_key": "room.notice_closeup.back.message",
+				"goto_room": "hallway",
+				"hotspot_rect": Rect2(0.04, 0.86, 0.12, 0.1),
 				"ui_style": "corner_back"
 			}
 		]

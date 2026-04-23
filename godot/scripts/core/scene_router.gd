@@ -16,6 +16,7 @@ const ROOM_SOURCES := [
 	preload("res://godot/scripts/rooms/picture_room.gd"),
 	preload("res://godot/scripts/rooms/fake_third_room.gd"),
 	preload("res://godot/scripts/rooms/smell_room.gd"),
+	preload("res://godot/scripts/rooms/monster_stare_room.gd"),
 	preload("res://godot/scripts/rooms/third_floor_hall_room.gd"),
 	preload("res://godot/scripts/rooms/third_floor_residential_room.gd"),
 	preload("res://godot/scripts/rooms/third_floor_run_room.gd"),
@@ -29,7 +30,9 @@ const ROOM_SOURCES := [
 	preload("res://godot/scripts/rooms/dinner_table_room.gd"),
 	preload("res://godot/scripts/rooms/good_ending_question_room.gd"),
 	preload("res://godot/scripts/rooms/flee_ending_room.gd"),
+	preload("res://godot/scripts/rooms/bad_ending_intro_room.gd"),
 	preload("res://godot/scripts/rooms/bad_ending_room.gd"),
+	preload("res://godot/scripts/rooms/failed_escape_intro_room.gd"),
 	preload("res://godot/scripts/rooms/failed_escape_ending_room.gd"),
 	preload("res://godot/scripts/rooms/normal_ending_room.gd")
 ]

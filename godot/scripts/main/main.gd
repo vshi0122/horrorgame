@@ -517,15 +517,36 @@ func _refresh_room(room_id: String) -> void:
 	_update_room_effects(room_id)
 	
 	# Handle special room entries
-	if room_id == "monsterCaughtIntro":
+	if room_id == "monster_stare":
+		is_room_sequence_locked = true
+		GameState.set_objective(_text(room, "objective", ""))
+		GameState.set_message(_text(room, "message", ""))
+		_refresh_hud_with_message(1.5)
+		await get_tree().create_timer(0.12).timeout
+		_play_feedback_sound("scream", 0.96)
+		await get_tree().create_timer(1.35).timeout
+		await _play_blink_transition(func():
+			GameState.set_room("third_floor_hall")
+			_refresh_room(GameState.current_room_id)
+		)
+		is_room_sequence_locked = false
+		_refresh_hud_with_message(2.8)
+		return
+	elif room_id == "bad_ending_intro":
+		is_room_sequence_locked = true
 		_play_feedback_sound("roar", 0.82)
 		await get_tree().create_timer(3.0).timeout
-		GameState.set_room("badEnding")
+		GameState.set_room("bad_ending")
+		_refresh_room(GameState.current_room_id)
+		is_room_sequence_locked = false
 		return
-	elif room_id == "failedEscapeIntro":
+	elif room_id == "failed_escape_intro":
+		is_room_sequence_locked = true
 		_play_feedback_sound("ending2", 0.82)
 		await get_tree().create_timer(3.0).timeout
-		GameState.set_room("failedEscapeEnding")
+		GameState.set_room("failed_escape_ending")
+		_refresh_room(GameState.current_room_id)
+		is_room_sequence_locked = false
 		return
 
 	for child: Node in interaction_list.get_children():

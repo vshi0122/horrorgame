@@ -1,15 +1,15 @@
-[gd_scene load_steps=8 format=3 uid="uid://ddbx6mgpk6n8p"]
+[gd_scene format=3 uid="uid://ddbx6mgpk6n8p"]
 
-[ext_resource type="Script" path="res://godot/scripts/main/main.gd" id="1_7euvc"]
-[ext_resource type="AudioStream" path="res://godot/sounds/bgm.wav" id="3_bgm"]
-[ext_resource type="AudioStream" path="res://godot/sounds/eating.mp3" id="4_eating"]
-[ext_resource type="AudioStream" path="res://godot/sounds/footstep.wav" id="5_footstep"]
+[ext_resource type="Script" uid="uid://qnq3ul58ojfe" path="res://godot/scripts/main/main.gd" id="1_7euvc"]
+[ext_resource type="AudioStream" uid="uid://cpjwq034e4ri8" path="res://godot/sounds/bgm.wav" id="3_bgm"]
+[ext_resource type="AudioStream" uid="uid://4co68s8ngmr4" path="res://godot/sounds/eating.mp3" id="4_eating"]
+[ext_resource type="AudioStream" uid="uid://jm0pnvhymjy2" path="res://godot/sounds/footstep.wav" id="5_footstep"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_title"]
 font_size = 34
 font_color = Color(0.941176, 0.92549, 0.870588, 1)
 
-[node name="Main" type="Control"]
+[node name="Main" type="Control" unique_id=80886277]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -19,7 +19,7 @@ grow_vertical = 2
 mouse_filter = 1
 script = ExtResource("1_7euvc")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=2082133649]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -28,7 +28,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.0588235, 0.054902, 0.0666667, 1)
 
-[node name="RootMargin" type="MarginContainer" parent="."]
+[node name="RootMargin" type="MarginContainer" parent="." unique_id=598255574]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -40,136 +40,130 @@ offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Layout" type="VBoxContainer" parent="RootMargin"]
+[node name="Layout" type="VBoxContainer" parent="RootMargin" unique_id=1097537545]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="CenterColumn" type="VBoxContainer" parent="RootMargin/Layout"]
+[node name="CenterColumn" type="VBoxContainer" parent="RootMargin/Layout" unique_id=575527077]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="TopBar" type="PanelContainer" parent="RootMargin/Layout/CenterColumn"]
+[node name="TopBar" type="PanelContainer" parent="RootMargin/Layout/CenterColumn" unique_id=910237159]
 layout_mode = 2
 
-[node name="TopBarMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/TopBar"]
+[node name="TopBarMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/TopBar" unique_id=624214168]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 
-[node name="TopBarLayout" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin"]
+[node name="TopBarLayout" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin" unique_id=1277599971]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="TitleColumn" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout"]
+[node name="TitleColumn" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout" unique_id=218587900]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="Eyebrow" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn"]
+[node name="Eyebrow" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn" unique_id=107817907]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "Point & Click Horror"
 uppercase = true
 
-[node name="Title" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn"]
+[node name="Title" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn" unique_id=2042864210]
 layout_mode = 2
 text = "降临之日"
 label_settings = SubResource("LabelSettings_title")
 
-[node name="RoomName" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn"]
+[node name="RoomName" type="Label" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TitleColumn" unique_id=1668758066]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Parking Lot"
 
-[node name="TopActions" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout"]
+[node name="TopActions" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout" unique_id=885050689]
 layout_mode = 2
-alignment = 2
 theme_override_constants/separation = 10
+alignment = 2
 
-[node name="MenuButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions"]
+[node name="MenuButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions" unique_id=334386789]
 layout_mode = 2
 text = "主界面"
 
-[node name="RestartButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions"]
+[node name="RestartButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions" unique_id=1157641800]
 layout_mode = 2
 text = "重新开始"
 
-[node name="ObjectiveButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions"]
+[node name="ObjectiveButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions" unique_id=726169844]
 layout_mode = 2
 text = "Goal"
 
-[node name="DocumentsButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions"]
+[node name="DocumentsButton" type="Button" parent="RootMargin/Layout/CenterColumn/TopBar/TopBarMargin/TopBarLayout/TopActions" unique_id=37440786]
 layout_mode = 2
 text = "Files"
 
-[node name="RoomViewport" type="PanelContainer" parent="RootMargin/Layout/CenterColumn"]
+[node name="RoomViewport" type="PanelContainer" parent="RootMargin/Layout/CenterColumn" unique_id=1536678808]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="RoomContent" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport"]
+[node name="RoomContent" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport" unique_id=1700312816]
 layout_mode = 2
 theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="RoomStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent"]
+[node name="RoomStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent" unique_id=1856746367]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 4
 
-[node name="RoomVisualRow" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack"]
+[node name="RoomVisualRow" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack" unique_id=1997553806]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 0
 
-[node name="RoomVisual" type="AspectRatioContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow"]
-custom_minimum_size = Vector2(0, 0)
+[node name="RoomVisual" type="AspectRatioContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow" unique_id=2108073898]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 ratio = 1.62
-stretch_mode = 2
 
-[node name="RoomVisualFrame" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual"]
+[node name="RoomVisualFrame" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual" unique_id=1158906814]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="RoomHintBar" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 44.0
-grow_horizontal = 2
+[node name="RoomHintBar" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame" unique_id=1805092248]
+layout_mode = 2
 mouse_filter = 2
 
-[node name="RoomHintMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomHintBar"]
+[node name="RoomHintMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomHintBar" unique_id=627838348]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 8
 
-[node name="RoomHint" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomHintBar/RoomHintMargin"]
+[node name="RoomHint" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomHintBar/RoomHintMargin" unique_id=640965901]
 layout_mode = 2
 bbcode_enabled = true
+text = "The rain has stopped, but the night still feels unfinished."
 fit_content = true
 scroll_active = false
-text = "The rain has stopped, but the night still feels unfinished."
 
-[node name="RoomVisualLayer" type="Control" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame"]
+[node name="RoomVisualLayer" type="Control" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame" unique_id=2061090197]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 mouse_filter = 1
 
-[node name="BackgroundTexture" type="TextureRect" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer"]
+[node name="BackgroundTexture" type="TextureRect" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer" unique_id=941526565]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -179,7 +173,7 @@ grow_vertical = 2
 expand_mode = 1
 stretch_mode = 6
 
-[node name="HotspotLayer" type="Control" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer"]
+[node name="HotspotLayer" type="Control" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RoomVisual/RoomVisualFrame/RoomVisualLayer" unique_id=1073995753]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -188,174 +182,164 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 
-[node name="RightRail" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow"]
+[node name="RightRail" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow" unique_id=436662856]
 custom_minimum_size = Vector2(296, 0)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="HUDMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail"]
+[node name="HUDMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail" unique_id=525779309]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="HUDStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin"]
+[node name="HUDStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin" unique_id=689794675]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="InventorySection" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack"]
+[node name="InventorySection" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack" unique_id=2011343485]
 layout_mode = 2
 
-[node name="InventoryMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection"]
+[node name="InventoryMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection" unique_id=1683412187]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="InventoryStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin"]
+[node name="InventoryStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin" unique_id=1770653137]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="InventoryHeader" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack"]
-layout_mode = 2
+[node name="InventoryHeader" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack" unique_id=542937352]
 custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
 
-[node name="InventoryTitle" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryHeader"]
+[node name="InventoryTitle" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryHeader" unique_id=1046613741]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 18
 text = "Inventory"
 
-[node name="InventoryNotice" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryHeader"]
-layout_mode = 2
+[node name="InventoryNotice" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack/InventoryHeader" unique_id=15870790]
 custom_minimum_size = Vector2(108, 0)
-horizontal_alignment = 2
-text = " "
-
-[node name="InventoryValue" type="ItemList" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 96)
-size_flags_vertical = 1
+text = " "
+horizontal_alignment = 2
 
-[node name="DocumentsSection" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack"]
+[node name="InventoryValue" type="ItemList" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/InventorySection/InventoryMargin/InventoryStack" unique_id=1635008198]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+
+[node name="DocumentsSection" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack" unique_id=1562004507]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="DocumentsMarginRail" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection"]
+[node name="DocumentsMarginRail" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection" unique_id=2049575142]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="DocumentsStackRail" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail"]
+[node name="DocumentsStackRail" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail" unique_id=1459778787]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="DocumentsHeaderRail" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail"]
-layout_mode = 2
+[node name="DocumentsHeaderRail" type="HBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail" unique_id=1318309089]
 custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
 
-[node name="DocumentsTitleRail" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentsHeaderRail"]
+[node name="DocumentsTitleRail" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentsHeaderRail" unique_id=100630145]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 18
 text = "Files"
 
-[node name="DocumentsNotice" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentsHeaderRail"]
-layout_mode = 2
+[node name="DocumentsNotice" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentsHeaderRail" unique_id=2139586705]
 custom_minimum_size = Vector2(132, 0)
-horizontal_alignment = 2
+layout_mode = 2
 text = " "
+horizontal_alignment = 2
 
-[node name="DocumentsValueRail" type="ItemList" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail"]
-layout_mode = 2
+[node name="DocumentsValueRail" type="ItemList" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail" unique_id=245943365]
 custom_minimum_size = Vector2(0, 112)
-size_flags_vertical = 1
-
-[node name="DocumentPreviewPanel" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail"]
 layout_mode = 2
+
+[node name="DocumentPreviewPanel" type="PanelContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail" unique_id=1565485595]
 custom_minimum_size = Vector2(0, 172)
+layout_mode = 2
 size_flags_vertical = 3
 
-[node name="DocumentPreviewMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel"]
+[node name="DocumentPreviewMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel" unique_id=711973964]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="DocumentPreviewStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin"]
+[node name="DocumentPreviewStack" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin" unique_id=1742117415]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 6
 
-[node name="DocumentPreviewTitle" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack"]
+[node name="DocumentPreviewTitle" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack" unique_id=2007108022]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "No file yet"
 
-[node name="DocumentPreviewSource" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack"]
+[node name="DocumentPreviewSource" type="Label" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack" unique_id=1386765695]
 layout_mode = 2
-autowrap_mode = 3
 text = "Explore to uncover notes and notices."
+autowrap_mode = 3
 
-[node name="DocumentPreviewBody" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack"]
+[node name="DocumentPreviewBody" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack/RoomVisualRow/RightRail/HUDMargin/HUDStack/DocumentsSection/DocumentsMarginRail/DocumentsStackRail/DocumentPreviewPanel/DocumentPreviewMargin/DocumentPreviewStack" unique_id=1564907413]
 layout_mode = 2
-bbcode_enabled = true
 size_flags_vertical = 3
-scroll_active = true
+bbcode_enabled = true
 
-[node name="InteractionList" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack"]
+[node name="InteractionList" type="VBoxContainer" parent="RootMargin/Layout/CenterColumn/RoomViewport/RoomContent/RoomStack" unique_id=1158852079]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="MessagePanel" type="PanelContainer" parent="RootMargin/Layout/CenterColumn"]
+[node name="MessagePanel" type="PanelContainer" parent="RootMargin/Layout/CenterColumn" unique_id=1304347134]
 layout_mode = 2
 
-[node name="MessageMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/MessagePanel"]
+[node name="MessageMargin" type="MarginContainer" parent="RootMargin/Layout/CenterColumn/MessagePanel" unique_id=564713384]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 
-[node name="MessageValue" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/MessagePanel/MessageMargin"]
+[node name="MessageValue" type="RichTextLabel" parent="RootMargin/Layout/CenterColumn/MessagePanel/MessageMargin" unique_id=408106464]
 layout_mode = 2
 bbcode_enabled = true
+text = "This scene is the first vertical slice target: a single room, a few interactions, and a clean migration path."
 fit_content = true
 scroll_active = false
-text = "This scene is the first vertical slice target: a single room, a few interactions, and a clean migration path."
 
-
-[node name="BGMPlayer" type="AudioStreamPlayer" parent="."]
+[node name="BGMPlayer" type="AudioStreamPlayer" parent="." unique_id=68576316]
 stream = ExtResource("3_bgm")
 volume_db = -8.0
-autoplay = false
-bus = &"Master"
 
-[node name="EatingAmbientPlayer" type="AudioStreamPlayer" parent="."]
+[node name="EatingAmbientPlayer" type="AudioStreamPlayer" parent="." unique_id=364504450]
 stream = ExtResource("4_eating")
 volume_db = -7.8
-bus = &"Master"
 
-[node name="FootstepAmbientPlayer" type="AudioStreamPlayer" parent="."]
+[node name="FootstepAmbientPlayer" type="AudioStreamPlayer" parent="." unique_id=1286019548]
 stream = ExtResource("5_footstep")
 volume_db = -6.6
-bus = &"Master"
 
-[node name="TransitionPlayer" type="AudioStreamPlayer" parent="."]
-bus = &"Master"
+[node name="TransitionPlayer" type="AudioStreamPlayer" parent="." unique_id=584419998]
 
-[node name="UISoundPlayer" type="AudioStreamPlayer" parent="."]
-bus = &"Master"
+[node name="UISoundPlayer" type="AudioStreamPlayer" parent="." unique_id=157210659]
 
-[node name="InspectOverlay" type="ColorRect" parent="."]
+[node name="InspectOverlay" type="ColorRect" parent="." unique_id=946561575]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -366,7 +350,7 @@ grow_vertical = 2
 mouse_filter = 1
 color = Color(0.02, 0.02, 0.03, 0.84)
 
-[node name="InspectCenter" type="CenterContainer" parent="InspectOverlay"]
+[node name="InspectCenter" type="CenterContainer" parent="InspectOverlay" unique_id=48964028]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -374,77 +358,66 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="InspectPanel" type="PanelContainer" parent="InspectOverlay/InspectCenter"]
+[node name="InspectPanel" type="PanelContainer" parent="InspectOverlay/InspectCenter" unique_id=1738441377]
 custom_minimum_size = Vector2(760, 480)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="InspectMargin" type="MarginContainer" parent="InspectOverlay/InspectCenter/InspectPanel"]
+[node name="InspectMargin" type="MarginContainer" parent="InspectOverlay/InspectCenter/InspectPanel" unique_id=1049932859]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="InspectStack" type="VBoxContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin"]
+[node name="InspectStack" type="VBoxContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin" unique_id=1366227295]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="InspectTitle" type="Label" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack"]
+[node name="InspectTitle" type="Label" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack" unique_id=919128652]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "Inspect"
 
-[node name="InspectImageFrame" type="PanelContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack"]
+[node name="InspectImageFrame" type="PanelContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack" unique_id=1396228336]
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="InspectImage" type="TextureRect" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="InspectImage" type="TextureRect" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame" unique_id=279913739]
+layout_mode = 2
 expand_mode = 1
 stretch_mode = 6
 
-[node name="InspectHotspotLayer" type="Control" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="InspectHotspotLayer" type="Control" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame" unique_id=1864279070]
+layout_mode = 2
 mouse_filter = 1
 
-[node name="InspectBody" type="RichTextLabel" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack"]
+[node name="InspectBody" type="RichTextLabel" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack" unique_id=1060847423]
 layout_mode = 2
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
-text = ""
 
-[node name="InspectSubActions" type="VBoxContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack"]
+[node name="InspectSubActions" type="VBoxContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack" unique_id=116869725]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="InspectActions" type="HBoxContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack"]
+[node name="InspectActions" type="HBoxContainer" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack" unique_id=2076280842]
 layout_mode = 2
-alignment = 2
 theme_override_constants/separation = 12
+alignment = 2
 
-[node name="InspectCloseButton" type="Button" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectActions"]
+[node name="InspectCloseButton" type="Button" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectActions" unique_id=1605743637]
 layout_mode = 2
 text = "Close"
 
-[node name="InspectConfirmButton" type="Button" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectActions"]
+[node name="InspectConfirmButton" type="Button" parent="InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectActions" unique_id=1472103838]
 layout_mode = 2
 text = "Continue"
 
-[node name="DocumentsOverlay" type="ColorRect" parent="."]
+[node name="DocumentsOverlay" type="ColorRect" parent="." unique_id=1193430938]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -455,7 +428,87 @@ grow_vertical = 2
 mouse_filter = 1
 color = Color(0.02, 0.02, 0.03, 0.84)
 
-[node name="CodeOverlay" type="ColorRect" parent="."]
+[node name="DocumentsCenter" type="CenterContainer" parent="DocumentsOverlay" unique_id=1133678957]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DocumentsPanel" type="PanelContainer" parent="DocumentsOverlay/DocumentsCenter" unique_id=2069049957]
+custom_minimum_size = Vector2(820, 500)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="DocumentsMargin" type="MarginContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel" unique_id=2012380374]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="DocumentsStack" type="VBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin" unique_id=1516607424]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="DocumentsHeader" type="HBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack" unique_id=1176331549]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DocumentsTitle" type="Label" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsHeader" unique_id=1746739139]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+text = "Files"
+
+[node name="DocumentsCloseButton" type="Button" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsHeader" unique_id=1027365548]
+layout_mode = 2
+text = "Close"
+
+[node name="DocumentsBody" type="HBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack" unique_id=892295482]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="DocumentsList" type="ItemList" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody" unique_id=1754681819]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DocumentViewer" type="PanelContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody" unique_id=1003767518]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DocumentViewerMargin" type="MarginContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer" unique_id=125270710]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="DocumentViewerStack" type="VBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin" unique_id=1007972850]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DocumentTitle" type="Label" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack" unique_id=801420320]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "No files yet"
+
+[node name="DocumentSource" type="Label" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack" unique_id=1970191290]
+layout_mode = 2
+text = "Find notes and files in the world to read them here."
+autowrap_mode = 3
+
+[node name="DocumentText" type="RichTextLabel" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack" unique_id=93615540]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+
+[node name="CodeOverlay" type="ColorRect" parent="." unique_id=434397042]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -466,7 +519,7 @@ grow_vertical = 2
 mouse_filter = 1
 color = Color(0.02, 0.02, 0.03, 0.84)
 
-[node name="CodeCenter" type="CenterContainer" parent="CodeOverlay"]
+[node name="CodeCenter" type="CenterContainer" parent="CodeOverlay" unique_id=530408322]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -474,59 +527,58 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CodePanel" type="PanelContainer" parent="CodeOverlay/CodeCenter"]
+[node name="CodePanel" type="PanelContainer" parent="CodeOverlay/CodeCenter" unique_id=754159333]
 custom_minimum_size = Vector2(520, 260)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="CodeMargin" type="MarginContainer" parent="CodeOverlay/CodeCenter/CodePanel"]
+[node name="CodeMargin" type="MarginContainer" parent="CodeOverlay/CodeCenter/CodePanel" unique_id=1424054484]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="CodeStack" type="VBoxContainer" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin"]
+[node name="CodeStack" type="VBoxContainer" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin" unique_id=1059167247]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="CodeTitle" type="Label" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack"]
+[node name="CodeTitle" type="Label" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack" unique_id=1958440772]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "Keypad"
 
-[node name="CodePrompt" type="RichTextLabel" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack"]
+[node name="CodePrompt" type="RichTextLabel" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack" unique_id=1945091286]
 layout_mode = 2
 bbcode_enabled = true
+text = "Enter the apartment entrance code"
 fit_content = true
 scroll_active = false
-text = "Enter the apartment entrance code"
 
-[node name="CodeInput" type="LineEdit" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack"]
+[node name="CodeInput" type="LineEdit" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack" unique_id=1732143957]
 layout_mode = 2
 placeholder_text = "0327"
 
-[node name="CodeFeedback" type="Label" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack"]
+[node name="CodeFeedback" type="Label" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack" unique_id=856641405]
 layout_mode = 2
-autowrap_mode = 3
 theme_override_colors/font_color = Color(0.937255, 0.568627, 0.501961, 1)
-text = ""
+autowrap_mode = 3
 
-[node name="CodeActions" type="HBoxContainer" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack"]
+[node name="CodeActions" type="HBoxContainer" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack" unique_id=1859653746]
 layout_mode = 2
-alignment = 2
 theme_override_constants/separation = 12
+alignment = 2
 
-[node name="CodeCancelButton" type="Button" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeActions"]
+[node name="CodeCancelButton" type="Button" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeActions" unique_id=505917935]
 layout_mode = 2
 text = "Cancel"
 
-[node name="CodeConfirmButton" type="Button" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeActions"]
+[node name="CodeConfirmButton" type="Button" parent="CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeActions" unique_id=1595562058]
 layout_mode = 2
 text = "Confirm"
 
-[node name="BlinkOverlay" type="Control" parent="."]
+[node name="BlinkOverlay" type="Control" parent="." unique_id=141792647]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -534,9 +586,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 
-[node name="Flash" type="ColorRect" parent="BlinkOverlay"]
+[node name="Flash" type="ColorRect" parent="BlinkOverlay" unique_id=916764571]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -545,89 +596,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 1)
 
-[node name="DocumentsCenter" type="CenterContainer" parent="DocumentsOverlay"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="DocumentsPanel" type="PanelContainer" parent="DocumentsOverlay/DocumentsCenter"]
-custom_minimum_size = Vector2(820, 500)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-
-[node name="DocumentsMargin" type="MarginContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
-
-[node name="DocumentsStack" type="VBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin"]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="DocumentsHeader" type="HBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="DocumentsTitle" type="Label" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsHeader"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 28
-text = "Files"
-
-[node name="DocumentsCloseButton" type="Button" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsHeader"]
-layout_mode = 2
-text = "Close"
-
-[node name="DocumentsBody" type="HBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 16
-
-[node name="DocumentsList" type="ItemList" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody"]
-custom_minimum_size = Vector2(220, 0)
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="DocumentViewer" type="PanelContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="DocumentViewerMargin" type="MarginContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer"]
-layout_mode = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 18
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 18
-
-[node name="DocumentViewerStack" type="VBoxContainer" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="DocumentTitle" type="Label" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "No files yet"
-
-[node name="DocumentSource" type="Label" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack"]
-layout_mode = 2
-autowrap_mode = 3
-text = "Find notes and files in the world to read them here."
-
-[node name="DocumentText" type="RichTextLabel" parent="DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsBody/DocumentViewer/DocumentViewerMargin/DocumentViewerStack"]
-layout_mode = 2
-size_flags_vertical = 3
-bbcode_enabled = true
-scroll_active = true
-text = ""
-
-[node name="ObjectiveOverlay" type="ColorRect" parent="."]
+[node name="ObjectiveOverlay" type="ColorRect" parent="." unique_id=319718435]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -638,7 +607,7 @@ grow_vertical = 2
 mouse_filter = 1
 color = Color(0.02, 0.02, 0.03, 0.84)
 
-[node name="ObjectiveCenter" type="CenterContainer" parent="ObjectiveOverlay"]
+[node name="ObjectiveCenter" type="CenterContainer" parent="ObjectiveOverlay" unique_id=560699802]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -646,39 +615,39 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ObjectivePanel" type="PanelContainer" parent="ObjectiveOverlay/ObjectiveCenter"]
+[node name="ObjectivePanel" type="PanelContainer" parent="ObjectiveOverlay/ObjectiveCenter" unique_id=1803477484]
 custom_minimum_size = Vector2(560, 220)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="ObjectiveMargin" type="MarginContainer" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel"]
+[node name="ObjectiveMargin" type="MarginContainer" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel" unique_id=1754914525]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="ObjectiveStack" type="VBoxContainer" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin"]
+[node name="ObjectiveStack" type="VBoxContainer" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin" unique_id=1354092083]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="ObjectiveHeader" type="HBoxContainer" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack"]
+[node name="ObjectiveHeader" type="HBoxContainer" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack" unique_id=1326146368]
 layout_mode = 2
 
-[node name="ObjectiveTitle" type="Label" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveHeader"]
+[node name="ObjectiveTitle" type="Label" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveHeader" unique_id=2085293303]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 text = "Goal"
 
-[node name="ObjectiveCloseButton" type="Button" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveHeader"]
+[node name="ObjectiveCloseButton" type="Button" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveHeader" unique_id=1976567113]
 layout_mode = 2
 text = "Close"
 
-[node name="ObjectiveValue" type="RichTextLabel" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack"]
+[node name="ObjectiveValue" type="RichTextLabel" parent="ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack" unique_id=1580855418]
 layout_mode = 2
 bbcode_enabled = true
+text = "Find a migration path from the web prototype into a room-based Godot game."
 fit_content = true
 scroll_active = false
-text = "Find a migration path from the web prototype into a room-based Godot game."
