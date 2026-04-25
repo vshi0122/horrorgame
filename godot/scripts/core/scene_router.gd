@@ -29,6 +29,10 @@ const ROOM_SOURCES := [
 	preload("res://godot/scripts/rooms/third_floor_residential_normal_room.gd"),
 	preload("res://godot/scripts/rooms/dinner_table_room.gd"),
 	preload("res://godot/scripts/rooms/good_ending_question_room.gd"),
+	preload("res://godot/scripts/rooms/ending_wake_question_room.gd"),
+	preload("res://godot/scripts/rooms/ending_wake_second_question_room.gd"),
+	preload("res://godot/scripts/rooms/waking_room.gd"),
+	preload("res://godot/scripts/rooms/waking_room_exit_room.gd"),
 	preload("res://godot/scripts/rooms/flee_ending_room.gd"),
 	preload("res://godot/scripts/rooms/bad_ending_intro_room.gd"),
 	preload("res://godot/scripts/rooms/bad_ending_room.gd"),
@@ -89,9 +93,30 @@ func is_interaction_available(interaction: Dictionary) -> bool:
 	if requires_flag_true != "" and not GameState.flags.get(requires_flag_true, false):
 		return false
 
+	for flag_variant in interaction.get("requires_flags_true", []):
+		var flag_name := String(flag_variant)
+		if flag_name == "" or not GameState.flags.get(flag_name, false):
+			return false
+
 	var requires_flag_false: String = interaction.get("requires_flag_false", "")
 	if requires_flag_false != "" and GameState.flags.get(requires_flag_false, false):
 		return false
+
+	for flag_variant in interaction.get("requires_flags_false", []):
+		var flag_name := String(flag_variant)
+		if flag_name != "" and GameState.flags.get(flag_name, false):
+			return false
+
+	var not_all_flags_true: Array = interaction.get("requires_not_all_flags_true", [])
+	if not not_all_flags_true.is_empty():
+		var all_required_flags_true := true
+		for flag_variant in not_all_flags_true:
+			var flag_name := String(flag_variant)
+			if flag_name == "" or not GameState.flags.get(flag_name, false):
+				all_required_flags_true = false
+				break
+		if all_required_flags_true:
+			return false
 
 	return true
 
@@ -108,6 +133,10 @@ func is_interaction_ready(interaction: Dictionary) -> bool:
 
 
 func get_interaction_block_message(interaction: Dictionary) -> String:
+	var custom_block_message := I18n.text_from(interaction, "block_message", "")
+	if custom_block_message != "":
+		return custom_block_message
+
 	var requires_item: String = interaction.get("requires_item", "")
 	if requires_item != "" and GameState.has_item(requires_item) and not GameState.is_item_selected(requires_item):
 		var custom_message := String(interaction.get("requires_item_message", ""))

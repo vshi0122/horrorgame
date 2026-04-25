@@ -3,6 +3,7 @@ extends Control
 const MainDocumentsController := preload("res://godot/scripts/main/main_documents.gd")
 const MainEffectsController := preload("res://godot/scripts/main/main_effects.gd")
 const MainCursorController := preload("res://godot/scripts/main/main_cursor.gd")
+const EndingWakePuzzleOverlay := preload("res://godot/scripts/main/ending_wake_puzzle_overlay.gd")
 
 const MENU_ENDING_TOTAL := 5
 const MENU_DOCUMENT_TOTAL := 35
@@ -186,6 +187,7 @@ var inventory_gain_layer: Control
 var documents_controller: MainDocumentsController
 var effects_controller: MainEffectsController
 var cursor_controller: MainCursorController
+var ending_wake_puzzle_overlay
 
 
 func _ready() -> void:
@@ -228,6 +230,7 @@ func _ready() -> void:
 	_apply_rust_lake_layout()
 	_setup_cursor_controller()
 	_build_web_ui_overlays()
+	_setup_ending_wake_puzzle_overlay()
 	_setup_documents_controller()
 	_setup_effects_controller()
 	_apply_web_ui_theme()
@@ -290,6 +293,13 @@ func _setup_effects_controller() -> void:
 func _setup_cursor_controller() -> void:
 	cursor_controller = MainCursorController.new()
 	cursor_controller.setup(self)
+
+
+func _setup_ending_wake_puzzle_overlay() -> void:
+	ending_wake_puzzle_overlay = EndingWakePuzzleOverlay.new()
+	ending_wake_puzzle_overlay.puzzle_solved.connect(_on_ending_wake_puzzle_solved)
+	add_child(ending_wake_puzzle_overlay)
+	move_child(ending_wake_puzzle_overlay, get_child_count() - 1)
 
 
 func _apply_rust_lake_layout() -> void:
@@ -548,6 +558,18 @@ func _refresh_room(room_id: String) -> void:
 		_refresh_room(GameState.current_room_id)
 		is_room_sequence_locked = false
 		return
+	elif not room.get("ending_data", {}).is_empty():
+		is_room_sequence_locked = true
+		GameState.set_objective("回答两个问题，或者回到最开始的地方。")
+		GameState.set_message("你在结局之后醒来，耳边有个声音贴得很近：先回答我。")
+		_refresh_hud_with_message(1.0)
+		await get_tree().create_timer(0.45).timeout
+		await _play_blink_transition(func():
+			GameState.set_room("ending_wake_question")
+			_refresh_room(GameState.current_room_id)
+		)
+		is_room_sequence_locked = false
+		return
 
 	for child: Node in interaction_list.get_children():
 		child.queue_free()
@@ -630,6 +652,24 @@ func _on_interaction_requested(interaction_id: String) -> void:
 	_on_interaction_pressed(interaction_id)
 
 
+func _show_ending_wake_puzzle(puzzle_kind: String) -> void:
+	if ending_wake_puzzle_overlay == null:
+		return
+	GameState.set_message("你靠近谜题装置。")
+	_refresh_hud_with_message()
+	ending_wake_puzzle_overlay.open(puzzle_kind)
+	move_child(ending_wake_puzzle_overlay, get_child_count() - 1)
+
+
+func _on_ending_wake_puzzle_solved(flag_name: String, solved_message: String) -> void:
+	if flag_name == "":
+		return
+	GameState.flags[flag_name] = true
+	GameState.set_message(solved_message)
+	_refresh_room(GameState.current_room_id)
+	_refresh_hud_with_message()
+
+
 func _on_interaction_pressed(interaction_id: String) -> void:
 	if is_main_menu_open:
 		return
@@ -651,6 +691,9 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 		return
 	if GameState.current_room_id == "back_stairwell" and interaction_id == "to-3f":
 		await _handle_back_stairwell_to_third_floor(interaction)
+		return
+	if GameState.current_room_id == "waking_room" and interaction.has("ending_puzzle"):
+		_show_ending_wake_puzzle(String(interaction.get("ending_puzzle", "")))
 		return
 
 	var inspect_data: Dictionary = interaction.get("inspect", {})
@@ -1604,6 +1647,8 @@ func _hide_secondary_overlays() -> void:
 	objective_overlay.visible = false
 	inspect_overlay.visible = false
 	code_overlay.visible = false
+	if ending_wake_puzzle_overlay != null:
+		ending_wake_puzzle_overlay.visible = false
 	if documents_controller != null:
 		documents_controller.hide_new_document_overlay(true)
 	_hide_pause_menu()
@@ -2659,7 +2704,11 @@ func _submit_code_value(entered_code: String) -> void:
 		return
 
 	var expected_code := String(active_code_data.get("solution", ""))
-	if entered_code == expected_code and active_code_interaction_id != "":
+	var checked_entered_code := entered_code
+	if not bool(active_code_data.get("case_sensitive", true)):
+		checked_entered_code = checked_entered_code.to_upper()
+		expected_code = expected_code.to_upper()
+	if checked_entered_code == expected_code and active_code_interaction_id != "":
 		await _play_feedback_sound("correct_password", 0.42, true, 4.0)
 		code_overlay.visible = false
 		await _play_blink_transition(func():
@@ -2678,6 +2727,18 @@ func _submit_code_value(entered_code: String) -> void:
 	_refresh_hud_with_message()
 	_play_feedback_sound("wrong_password", 0.42)
 	var failure_room := String(active_code_data.get("failure_room", ""))
+	var failure_resets_game := bool(active_code_data.get("failure_resets_game", false))
+	if failure_resets_game:
+		code_overlay.visible = false
+		await _play_blink_transition(func():
+			active_code_interaction_id = ""
+			active_code_data = {}
+			scene_keypad_input = ""
+			GameState.reset()
+			_refresh_room(GameState.current_room_id)
+		)
+		_refresh_hud_with_message()
+		return
 	if failure_room != "":
 		code_overlay.visible = false
 		await _play_blink_transition(func():

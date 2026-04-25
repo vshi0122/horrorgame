@@ -58,7 +58,10 @@ func reset() -> void:
 		"creature_examined": false,
 		"home_door_examined": false,
 		"creature_alerted": false,
-		"dinner_ketchup_given": false
+		"dinner_ketchup_given": false,
+		"ending_puzzle_solved": false,
+		"ending_switch_solved": false,
+		"ending_clock_solved": false
 	}
 	emit_signal("room_changed", current_room_id)
 	emit_signal("hud_changed")
