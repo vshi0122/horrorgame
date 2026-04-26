@@ -24,6 +24,7 @@ const MENU_CREDITS := [
 ]
 const MENU_BACKDROP := preload("res://godot/asserts/images/parkinglot.jpg")
 const JUMPSCARE_IMAGE := preload("res://godot/asserts/images/js.jpg")
+const PAPER_BACKGROUND := preload("res://godot/asserts/images/paperbg.png")
 const DISPLAY_FONT := preload("res://godot/asserts/font/Colorfiction - Messy.otf")
 const ACCENT_FONT := preload("res://godot/asserts/font/Colorfiction - Messy.otf")
 const ROOM_STAGE_REFERENCE_SIZE := Vector2(1120, 692)
@@ -496,6 +497,7 @@ func _apply_static_translations() -> void:
 	inventory_notice_label.modulate = Color(1, 1, 1, 0)
 	rail_documents_notice_label.modulate = Color(1, 1, 1, 0)
 	$DocumentsOverlay/DocumentsCenter/DocumentsPanel/DocumentsMargin/DocumentsStack/DocumentsHeader/DocumentsTitle.text = I18n.t("ui.documents.title")
+	documents_panel.custom_minimum_size = Vector2(980, 640)
 	documents_close_button.text = I18n.t("ui.menu.close")
 	$ObjectiveOverlay/ObjectiveCenter/ObjectivePanel/ObjectiveMargin/ObjectiveStack/ObjectiveHeader/ObjectiveTitle.text = I18n.t("ui.objective.title")
 	objective_close_button.text = I18n.t("ui.menu.close")
@@ -1157,7 +1159,8 @@ void fragment() {
 	new_document_overlay.add_child(document_center)
 
 	new_document_panel = PanelContainer.new()
-	new_document_panel.custom_minimum_size = Vector2(640, 0)
+	new_document_panel.custom_minimum_size = Vector2(700, 620)
+	new_document_panel.set_meta("paper_scale", 1.35)
 	document_center.add_child(new_document_panel)
 
 	var document_margin := MarginContainer.new()
@@ -1166,6 +1169,7 @@ void fragment() {
 	document_margin.add_theme_constant_override("margin_right", 28)
 	document_margin.add_theme_constant_override("margin_bottom", 24)
 	new_document_panel.add_child(document_margin)
+	_add_paper_background(new_document_panel)
 
 	var document_stack := VBoxContainer.new()
 	document_stack.add_theme_constant_override("separation", 12)
@@ -1196,14 +1200,24 @@ void fragment() {
 	document_divider.color = Color(0.65, 0.56, 0.41, 0.24)
 	document_stack.add_child(document_divider)
 
+	var document_body_top_spacer := Control.new()
+	document_body_top_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	document_stack.add_child(document_body_top_spacer)
+
 	new_document_body_label = RichTextLabel.new()
 	new_document_body_label.bbcode_enabled = true
 	new_document_body_label.scroll_active = true
 	new_document_body_label.fit_content = false
-	new_document_body_label.custom_minimum_size = Vector2(0, 280)
-	new_document_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	new_document_body_label.custom_minimum_size = Vector2(0, 190)
+	new_document_body_label.size_flags_vertical = Control.SIZE_FILL
+	new_document_body_label.add_theme_font_size_override("normal_font_size", 18)
+	new_document_body_label.add_theme_font_size_override("bold_font_size", 18)
 	new_document_body_label.add_theme_color_override("default_color", Color(0.16, 0.13, 0.10, 0.96))
 	document_stack.add_child(new_document_body_label)
+
+	var document_bottom_spacer := Control.new()
+	document_bottom_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	document_stack.add_child(document_bottom_spacer)
 
 	var document_actions := HBoxContainer.new()
 	document_actions.alignment = BoxContainer.ALIGNMENT_END
@@ -1347,7 +1361,7 @@ void fragment() {
 	main_menu_content.add_child(main_menu_stats_label)
 
 	main_menu_shell = PanelContainer.new()
-	main_menu_shell.custom_minimum_size = Vector2(760, 560)
+	main_menu_shell.custom_minimum_size = Vector2(960, 640)
 	main_menu_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	main_menu_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	menu_layout.add_child(main_menu_shell)
@@ -1568,7 +1582,7 @@ func _apply_web_ui_theme() -> void:
 	_style_overlay_panel($ObjectiveOverlay/ObjectiveCenter/ObjectivePanel)
 	document_viewer_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.93, 0.89, 0.79, 0.98), Color(0.58, 0.48, 0.33, 0.22), 12))
 	_style_overlay_panel($InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectImageFrame, 18)
-	new_document_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.93, 0.89, 0.79, 0.98), Color(0.58, 0.48, 0.33, 0.30), 12))
+	new_document_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	_style_overlay_panel(main_menu_shell, 26)
 	_style_overlay_panel(pause_overlay.get_child(0).get_child(0) as PanelContainer, 18)
 	main_menu_home_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
@@ -1596,6 +1610,68 @@ func _apply_web_ui_theme() -> void:
 
 func _style_overlay_panel(panel: PanelContainer, radius: int = 20) -> void:
 	panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.05, 0.07, 0.10, 0.96), Color(0.85, 0.76, 0.60, 0.22), radius))
+
+
+func _add_paper_background(panel: PanelContainer) -> void:
+	if panel == null:
+		return
+	var paper := TextureRect.new()
+	paper.name = "%sPaperBackground" % panel.name
+	paper.texture = _build_paper_page_texture()
+	paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	paper.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var placement := _find_paper_background_parent(panel)
+	var parent := placement.get("parent", null) as Control
+	var anchor_child := placement.get("anchor_child", null) as Node
+	var paper_path := NodePath(String(paper.name))
+	if parent == null:
+		if panel.has_node(paper_path):
+			return
+		panel.add_child(paper)
+		panel.move_child(paper, 0)
+		paper.set_anchors_preset(Control.PRESET_FULL_RECT)
+		return
+	if parent.has_node(paper_path):
+		return
+	parent.add_child(paper)
+	if anchor_child != null:
+		parent.move_child(paper, max(0, anchor_child.get_index()))
+	panel.resized.connect(func() -> void:
+		_position_paper_background(panel, paper)
+	)
+	panel.item_rect_changed.connect(func() -> void:
+		_position_paper_background(panel, paper)
+	)
+	_position_paper_background(panel, paper)
+
+
+func _find_paper_background_parent(panel: PanelContainer) -> Dictionary:
+	var anchor_child: Node = panel
+	var parent := panel.get_parent()
+	while parent != null and parent is Container:
+		anchor_child = parent
+		parent = parent.get_parent()
+	return {
+		"parent": parent as Control,
+		"anchor_child": anchor_child
+	}
+
+
+func _build_paper_page_texture() -> AtlasTexture:
+	var page := AtlasTexture.new()
+	page.atlas = PAPER_BACKGROUND
+	page.region = Rect2(360, 70, 820, 760)
+	return page
+
+
+func _position_paper_background(panel: PanelContainer, paper: TextureRect) -> void:
+	if panel == null or paper == null:
+		return
+	var paper_scale := float(panel.get_meta("paper_scale", 2.0))
+	var paper_size := panel.size * paper_scale
+	paper.size = paper_size
+	paper.global_position = panel.global_position + (panel.size - paper_size) * 0.5
 
 
 func _make_item_list_transparent(list: ItemList) -> void:
@@ -1829,7 +1905,7 @@ func _show_main_menu_documents() -> void:
 		main_menu_body_stack.add_child(documents_split)
 
 		var list_panel := PanelContainer.new()
-		list_panel.custom_minimum_size = Vector2(240, 0)
+		list_panel.custom_minimum_size = Vector2(280, 0)
 		list_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		list_panel.size_flags_horizontal = Control.SIZE_FILL
 		list_panel.add_theme_stylebox_override("panel", _build_panel_style(Color(0.04, 0.05, 0.07, 0.82), Color(0.73, 0.84, 1.0, 0.10), 18))
