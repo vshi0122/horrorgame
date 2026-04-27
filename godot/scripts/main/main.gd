@@ -90,6 +90,7 @@ const FLASHLIGHT_ROOMS := [
 @onready var inspect_close_button: Button = $InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectActions/InspectCloseButton
 @onready var inspect_confirm_button: Button = $InspectOverlay/InspectCenter/InspectPanel/InspectMargin/InspectStack/InspectActions/InspectConfirmButton
 @onready var code_overlay: ColorRect = $CodeOverlay
+@onready var code_title_label: Label = $CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeTitle
 @onready var code_prompt_label: RichTextLabel = $CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodePrompt
 @onready var code_input: LineEdit = $CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeInput
 @onready var code_feedback_label: Label = $CodeOverlay/CodeCenter/CodePanel/CodeMargin/CodeStack/CodeFeedback
@@ -2285,7 +2286,15 @@ func _add_hotspot_button(interaction: Dictionary) -> void:
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-	if ui_style == "corner_back":
+	if ui_style == "scene_arrow":
+		button.text = ""
+		button.flat = false
+		button.autowrap_mode = TextServer.AUTOWRAP_OFF
+		button.add_theme_stylebox_override("normal", _build_arrow_hotspot_style(Color(0.04, 0.04, 0.05, 0.42), Color(0.96, 0.90, 0.76, 0.54)))
+		button.add_theme_stylebox_override("hover", _build_arrow_hotspot_style(Color(0.12, 0.10, 0.08, 0.78), Color(1, 0.96, 0.84, 0.95)))
+		button.add_theme_stylebox_override("pressed", _build_arrow_hotspot_style(Color(0.20, 0.15, 0.10, 0.90), Color(1, 0.96, 0.84, 1.0)))
+		button.add_theme_stylebox_override("focus", _build_arrow_hotspot_style(Color(0.12, 0.10, 0.08, 0.78), Color(1, 0.96, 0.84, 0.95)))
+	elif ui_style == "corner_back":
 		button.flat = true
 		button.modulate = Color(1, 1, 1, 1)
 		button.add_theme_stylebox_override("normal", _build_hotspot_style(Color(0.12, 0.12, 0.14, 0.45), Color(0.96, 0.9, 0.78, 0.45), 16))
@@ -2332,7 +2341,49 @@ func _add_hotspot_button(interaction: Dictionary) -> void:
 	button.position = Vector2(hotspot_rect.position.x * parent_size.x, hotspot_rect.position.y * parent_size.y)
 	button.size = Vector2(hotspot_rect.size.x * parent_size.x, hotspot_rect.size.y * parent_size.y)
 	button.pivot_offset = button.size * 0.5
+	if ui_style == "scene_arrow":
+		_add_scene_arrow_icon(button, String(interaction.get("label", ">")))
 	hotspot_layer.add_child(button)
+
+
+func _add_scene_arrow_icon(button: Button, direction: String) -> void:
+	var arrow := Polygon2D.new()
+	arrow.name = "SceneArrowIcon"
+	arrow.color = Color(1.0, 0.96, 0.84, 0.98)
+	arrow.z_index = 2
+	button.add_child(arrow)
+
+	var update_arrow := func() -> void:
+		var button_size := button.size
+		var center := button_size * 0.5
+		var radius := minf(button_size.x, button_size.y) * 0.24
+		match direction:
+			"<":
+				arrow.polygon = PackedVector2Array([
+					Vector2(center.x + radius, center.y - radius),
+					Vector2(center.x + radius, center.y + radius),
+					Vector2(center.x - radius, center.y)
+				])
+			"^":
+				arrow.polygon = PackedVector2Array([
+					Vector2(center.x - radius, center.y + radius),
+					Vector2(center.x + radius, center.y + radius),
+					Vector2(center.x, center.y - radius)
+				])
+			"v":
+				arrow.polygon = PackedVector2Array([
+					Vector2(center.x - radius, center.y - radius),
+					Vector2(center.x + radius, center.y - radius),
+					Vector2(center.x, center.y + radius)
+				])
+			_:
+				arrow.polygon = PackedVector2Array([
+					Vector2(center.x - radius, center.y - radius),
+					Vector2(center.x - radius, center.y + radius),
+					Vector2(center.x + radius, center.y)
+				])
+	button.resized.connect(update_arrow)
+	update_arrow.call()
 
 
 func _animate_hotspot_hover(button: Button, hovered: bool) -> void:
@@ -2749,9 +2800,12 @@ func _on_inspect_confirm_pressed() -> void:
 
 func _show_code_overlay(code_input_data: Dictionary) -> void:
 	scene_keypad_input = ""
+	code_title_label.text = _text(code_input_data, "title", "Keypad")
 	code_prompt_label.text = _text(code_input_data, "prompt", "Enter the code")
 	code_feedback_label.text = ""
 	code_input.text = ""
+	code_input.placeholder_text = _text(code_input_data, "placeholder", "")
+	code_confirm_button.text = _text(code_input_data, "confirm_label", "Confirm")
 	code_overlay.visible = true
 	code_input.grab_focus()
 
@@ -2785,7 +2839,11 @@ func _submit_code_value(entered_code: String) -> void:
 		checked_entered_code = checked_entered_code.to_upper()
 		expected_code = expected_code.to_upper()
 	if checked_entered_code == expected_code and active_code_interaction_id != "":
-		await _play_feedback_sound("correct_password", 0.42, true, 4.0)
+		var success_sound := String(active_code_data.get("success_sound", "correct_password"))
+		if success_sound != "":
+			var wait_for_success_sound := bool(active_code_data.get("wait_for_success_sound", true))
+			var success_sound_wait_seconds := float(active_code_data.get("success_sound_wait_seconds", 4.0))
+			await _play_feedback_sound(success_sound, 0.42, wait_for_success_sound, success_sound_wait_seconds)
 		code_overlay.visible = false
 		await _play_blink_transition(func():
 			SceneRouter.apply_interaction(active_code_interaction_id)
@@ -3000,3 +3058,12 @@ func _show_rail_notice(section_panel: PanelContainer, notice_label: Label, text:
 
 func _build_hotspot_style(background_color: Color, border_color: Color, corner_radius: int = 8) -> StyleBoxFlat:
 	return _build_panel_style(background_color, border_color, corner_radius)
+
+
+func _build_arrow_hotspot_style(background_color: Color, border_color: Color) -> StyleBoxFlat:
+	var style := _build_hotspot_style(background_color, border_color, 32)
+	style.content_margin_left = 0
+	style.content_margin_top = 0
+	style.content_margin_right = 0
+	style.content_margin_bottom = 2
+	return style

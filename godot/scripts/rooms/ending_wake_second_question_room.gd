@@ -13,12 +13,17 @@ static func build() -> Dictionary:
 				"label": "回答第二个问题",
 				"message": "那个声音继续问：停电后的出口密码是什么？",
 				"code_input": {
+					"title": "问题",
 					"prompt": "第二个问题：停电后的出口密码是什么？",
 					"solution": "0000",
+					"placeholder": "输入答案",
+					"confirm_label": "回答",
+					"success_sound": "",
+					"wait_for_success_sound": false,
 					"failure_message": "回答错了。椅子的影子碎开，你被送回最开始的地方。",
 					"failure_resets_game": true
 				},
-				"goto_room": "waking_room",
+				"goto_room": "room2_sleep",
 				"hotspot_rect": Rect2(0.28, 0.3, 0.44, 0.2)
 			},
 			{
