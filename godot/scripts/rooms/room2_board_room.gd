@@ -12,42 +12,49 @@ static func build() -> Dictionary:
 				"id": "vent",
 				"label": "通风口",
 				"message": "通风口里只有一层冷风，像是从更深的房间吹出来。",
+				"goto_room": "room2_cloth_wind",
 				"hotspot_rect": Rect2(0.25, 0.08, 0.14, 0.14)
 			},
 			{
 				"id": "left-wall-board",
 				"label": "左侧板子",
 				"message": "左边的证明板被端正地挂着，纸面上的字像是被刻意留给你看的。",
+				"goto_room": "room2_cloth_board",
 				"hotspot_rect": Rect2(0.10, 0.24, 0.13, 0.25)
 			},
 			{
 				"id": "middle-wall-board",
 				"label": "中间板子",
 				"message": "中间的板子上钉着几张纸。每一张都像缺了一点上下文。",
+				"goto_room": "room2_cloth_board",
 				"hotspot_rect": Rect2(0.29, 0.26, 0.22, 0.25)
 			},
 			{
 				"id": "right-wall-board",
 				"label": "右侧符号板",
 				"message": "符号和数字被写得很清楚：太阳、月亮、药片和文件。",
+				"goto_room": "room2_cloth_board",
 				"hotspot_rect": Rect2(0.60, 0.24, 0.13, 0.27)
 			},
 			{
 				"id": "box",
 				"label": "箱子",
 				"message": "箱子被锁扣扣住。它看起来不重，但不该被随便打开。",
+				"goto_room": "room2_cloth_boxes",
 				"hotspot_rect": Rect2(0.63, 0.57, 0.11, 0.10)
 			},
 			{
 				"id": "cabinet",
 				"label": "柜子",
 				"message": "箱子下面的柜门合得很紧，门把手上没有灰。",
+				"goto_room": "room2_cloth_boxes",
 				"hotspot_rect": Rect2(0.58, 0.64, 0.20, 0.29)
 			},
 			{
 				"id": "clothes",
 				"label": "右侧衣服",
 				"message": "衣服沉沉地挂在架子上，布料里像藏着一截没有说完的话。",
+				"goto_room": "room2_cloth_clothes",
 				"hotspot_rect": Rect2(0.84, 0.29, 0.08, 0.45)
 			},
 			{
