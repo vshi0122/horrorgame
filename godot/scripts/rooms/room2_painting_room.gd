@@ -12,28 +12,25 @@ static func build() -> Dictionary:
 				"id": "left-frame",
 				"label": "左侧画框",
 				"message": "左侧画框里一片空白，像是有什么东西还没有被放回去。",
-				"goto_room": "room2_paint_3paints",
 				"hotspot_rect": Rect2(0.33, 0.23, 0.13, 0.25)
 			},
 			{
 				"id": "middle-frame",
 				"label": "中间画框",
 				"message": "中间画框正对着你。空白比图案更像答案。",
-				"goto_room": "room2_paint_3paints",
 				"hotspot_rect": Rect2(0.48, 0.23, 0.13, 0.25)
 			},
 			{
 				"id": "right-frame",
 				"label": "右侧画框",
 				"message": "右侧画框挂得很稳，底边却像刚被人碰过。",
-				"goto_room": "room2_paint_3paints",
 				"hotspot_rect": Rect2(0.63, 0.23, 0.13, 0.25)
 			},
 			{
 				"id": "small-device",
 				"label": "下方的小机关",
 				"message": "画框下方的小机关刻着几个符号，旁边有一个加号。",
-				"goto_room": "room2_paint_table",
+				"goto_room": "room2_paint_3paints",
 				"hotspot_rect": Rect2(0.50, 0.50, 0.07, 0.05)
 			},
 			{
@@ -47,7 +44,7 @@ static func build() -> Dictionary:
 				"id": "right-cabinet",
 				"label": "右侧的小柜子",
 				"message": "右侧小柜子上摆着雕像和纸巾盒，柜门后面像是空的，又不像。",
-				"goto_room": "room2_paint_desk_2",
+				"goto_room": "room2_paint_table",
 				"hotspot_rect": Rect2(0.74, 0.62, 0.20, 0.28)
 			},
 			{

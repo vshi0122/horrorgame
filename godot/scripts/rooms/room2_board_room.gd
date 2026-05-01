@@ -19,7 +19,6 @@ static func build() -> Dictionary:
 				"id": "left-wall-board",
 				"label": "左侧板子",
 				"message": "左边的证明板被端正地挂着，纸面上的字像是被刻意留给你看的。",
-				"goto_room": "room2_cloth_board",
 				"hotspot_rect": Rect2(0.10, 0.24, 0.13, 0.25)
 			},
 			{
@@ -33,7 +32,6 @@ static func build() -> Dictionary:
 				"id": "right-wall-board",
 				"label": "右侧符号板",
 				"message": "符号和数字被写得很清楚：太阳、月亮、药片和文件。",
-				"goto_room": "room2_cloth_board",
 				"hotspot_rect": Rect2(0.60, 0.24, 0.13, 0.27)
 			},
 			{

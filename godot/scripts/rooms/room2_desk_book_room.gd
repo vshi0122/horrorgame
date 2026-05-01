@@ -4,7 +4,7 @@ extends RefCounted
 static func build() -> Dictionary:
 	return {
 		"id": "room2_desk_book",
-		"title": "Room 2 - Book",
+		"title": "Room 2 - Patient Record",
 		"hint": "",
 		"background": "res://godot/asserts/images/room2/desk/desk-book.png",
 		"interactions": [

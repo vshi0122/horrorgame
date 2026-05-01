@@ -34,8 +34,9 @@ static func build() -> Dictionary:
 			},
 			{
 				"id": "stay-awake",
-				"label": "保持清醒",
-				"message": "床还带着余温，但你已经不敢再相信睡眠。",
+				"label": "入睡",
+				"message": "你闭上眼，任由这间房间远去。雨声重新落在车窗上。",
+				"goto_room": "car_closeup",
 				"hotspot_rect": Rect2(0.12, 0.60, 0.36, 0.28)
 			}
 		]

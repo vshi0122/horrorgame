@@ -186,6 +186,8 @@ var fixed_game_layer: Control
 var left_documents_rail: PanelContainer
 var message_popup_tween: Tween
 var inventory_gain_layer: Control
+var focus_transition_overlay: ColorRect
+var focus_transition_material: ShaderMaterial
 var documents_controller: MainDocumentsController
 var effects_controller: MainEffectsController
 var cursor_controller: MainCursorController
@@ -524,7 +526,7 @@ func _refresh_room(room_id: String) -> void:
 		GameState.flags["stairwell_photo_footsteps_active"] = false
 	room_name_label.text = _text(room, "title", I18n.t("ui.room.unknown"))
 	room_hint_label.text = _text(room, "hint", "")
-	_apply_background(_resolve_background_path(room_id, room))
+	_apply_background(room_id, _resolve_background_path(room_id, room))
 	_track_ending_unlock(room_id, room)
 	_sync_scene_ambient(room_id)
 	_update_room_effects(room_id)
@@ -720,12 +722,17 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 	var document_ids_before := _capture_document_ids()
 
 	if interaction.get("goto_room", "") != "":
+		var source_room_id := GameState.current_room_id
+		var target_room_id := String(interaction.get("goto_room", ""))
 		var transition_audio: String = String(interaction.get("transition_sound", "footstep"))
-		await _play_blink_transition(func():
+		var transition_callback := func() -> void:
 			SceneRouter.apply_interaction(interaction_id)
 			_refresh_room(GameState.current_room_id)
 			_play_scene_transition_sound(transition_audio)
-		)
+		if _uses_room2_focus_transition(source_room_id, target_room_id):
+			await _play_room2_focus_transition(transition_callback)
+		else:
+			await _play_blink_transition(transition_callback)
 
 	
 	else:
@@ -845,11 +852,17 @@ func _update_room_vignette() -> void:
 		effects_controller.update_room_vignette(GameState.current_room_id)
 
 
-func _apply_background(texture_path: String) -> void:
+func _apply_background(room_id: String, texture_path: String) -> void:
 	if texture_path == "":
 		background_texture.texture = null
+		room_visual.ratio = ROOM_STAGE_REFERENCE_SIZE.x / ROOM_STAGE_REFERENCE_SIZE.y
 		return
-	background_texture.texture = load(texture_path)
+	var texture := load(texture_path) as Texture2D
+	background_texture.texture = texture
+	if room_id.begins_with("room2_") and texture != null and texture.get_width() > 0 and texture.get_height() > 0:
+		room_visual.ratio = float(texture.get_width()) / float(texture.get_height())
+	else:
+		room_visual.ratio = ROOM_STAGE_REFERENCE_SIZE.x / ROOM_STAGE_REFERENCE_SIZE.y
 
 
 func _resolve_background_path(room_id: String, room: Dictionary) -> String:
@@ -871,6 +884,41 @@ func _resolve_background_path(room_id: String, room: Dictionary) -> String:
 
 	return String(room.get("background", ""))
 
+
+func _setup_focus_transition_overlay() -> void:
+	focus_transition_overlay = ColorRect.new()
+	focus_transition_overlay.name = "FocusTransitionOverlay"
+	focus_transition_overlay.visible = false
+	focus_transition_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	focus_transition_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	focus_transition_overlay.color = Color(1, 1, 1, 1)
+
+	var focus_shader := Shader.new()
+	focus_shader.code = """
+shader_type canvas_item;
+
+uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
+uniform float blur_lod = 0.0;
+uniform float eyelid = 0.0;
+uniform float wash = 0.0;
+
+void fragment() {
+	vec4 sampled = textureLod(screen_texture, SCREEN_UV, blur_lod);
+	float lid_size = max(eyelid, 0.001);
+	float top_lid = smoothstep(0.0, lid_size, UV.y);
+	float bottom_lid = smoothstep(0.0, lid_size, 1.0 - UV.y);
+	float eye_open = top_lid * bottom_lid;
+	vec3 washed = mix(sampled.rgb, vec3(0.92, 0.88, 0.78), wash);
+	COLOR = vec4(washed * eye_open, 1.0 - eye_open * 0.04);
+}
+"""
+	focus_transition_material = ShaderMaterial.new()
+	focus_transition_material.shader = focus_shader
+	focus_transition_overlay.material = focus_transition_material
+	blink_overlay.add_child(focus_transition_overlay)
+	blink_overlay.move_child(focus_transition_overlay, 0)
+
+
 func _build_web_ui_overlays() -> void:
 	var grain_overlay := ColorRect.new()
 	grain_overlay.name = "GrainOverlay"
@@ -884,6 +932,8 @@ func _build_web_ui_overlays() -> void:
 	if custom_cursor != null:
 		add_child(custom_cursor)
 		move_child(custom_cursor, get_child_count() - 1)
+
+	_setup_focus_transition_overlay()
 
 	inventory_gain_layer = Control.new()
 	inventory_gain_layer.name = "InventoryGainLayer"
@@ -2845,13 +2895,19 @@ func _submit_code_value(entered_code: String) -> void:
 			var success_sound_wait_seconds := float(active_code_data.get("success_sound_wait_seconds", 4.0))
 			await _play_feedback_sound(success_sound, 0.42, wait_for_success_sound, success_sound_wait_seconds)
 		code_overlay.visible = false
-		await _play_blink_transition(func():
+		var source_room_id := GameState.current_room_id
+		var interaction := SceneRouter.get_interaction(source_room_id, active_code_interaction_id)
+		var target_room_id := String(interaction.get("goto_room", ""))
+		var transition_callback := func() -> void:
 			SceneRouter.apply_interaction(active_code_interaction_id)
 			active_code_interaction_id = ""
 			active_code_data = {}
 			scene_keypad_input = ""
 			_refresh_room(GameState.current_room_id)
-		)
+		if _uses_room2_focus_transition(source_room_id, target_room_id):
+			await _play_room2_focus_transition(transition_callback)
+		else:
+			await _play_blink_transition(transition_callback)
 		_refresh_hud_with_message()
 		return
 
@@ -2917,6 +2973,68 @@ func _play_blink_transition(callback: Callable = Callable()) -> void:
 	blink_overlay.visible = false
 	blink_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	is_transitioning = false
+
+
+func _play_room2_focus_transition(callback: Callable = Callable()) -> void:
+	if is_transitioning:
+		return
+
+	is_transitioning = true
+	blink_overlay.visible = true
+	blink_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	if focus_transition_overlay != null:
+		focus_transition_overlay.visible = true
+	if focus_transition_material != null:
+		focus_transition_material.set_shader_parameter("blur_lod", 0.0)
+		focus_transition_material.set_shader_parameter("eyelid", 0.001)
+		focus_transition_material.set_shader_parameter("wash", 0.0)
+	blink_flash.color = Color(0.02, 0.015, 0.012, 0.0)
+
+	var close_tween := create_tween()
+	close_tween.set_parallel(true)
+	close_tween.set_trans(Tween.TRANS_SINE)
+	close_tween.set_ease(Tween.EASE_IN_OUT)
+	if focus_transition_material != null:
+		close_tween.tween_property(focus_transition_material, "shader_parameter/blur_lod", 4.0, 0.22)
+		close_tween.tween_property(focus_transition_material, "shader_parameter/eyelid", 0.48, 0.22)
+		close_tween.tween_property(focus_transition_material, "shader_parameter/wash", 0.18, 0.22)
+	close_tween.tween_property(blink_flash, "color", Color(0.02, 0.015, 0.012, 0.88), 0.22)
+	await close_tween.finished
+
+	if callback.is_valid():
+		callback.call()
+	await get_tree().create_timer(0.08).timeout
+
+	if focus_transition_material != null:
+		focus_transition_material.set_shader_parameter("blur_lod", 4.6)
+		focus_transition_material.set_shader_parameter("eyelid", 0.46)
+		focus_transition_material.set_shader_parameter("wash", 0.24)
+	blink_flash.color = Color(0.02, 0.015, 0.012, 0.78)
+
+	var open_tween := create_tween()
+	open_tween.set_parallel(true)
+	open_tween.set_trans(Tween.TRANS_CUBIC)
+	open_tween.set_ease(Tween.EASE_OUT)
+	if focus_transition_material != null:
+		open_tween.tween_property(focus_transition_material, "shader_parameter/blur_lod", 0.0, 0.72)
+		open_tween.tween_property(focus_transition_material, "shader_parameter/eyelid", 0.001, 0.72)
+		open_tween.tween_property(focus_transition_material, "shader_parameter/wash", 0.0, 0.54)
+	open_tween.tween_property(blink_flash, "color", Color(0.02, 0.015, 0.012, 0.0), 0.58)
+	await open_tween.finished
+
+	if focus_transition_overlay != null:
+		focus_transition_overlay.visible = false
+	blink_overlay.visible = false
+	blink_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	is_transitioning = false
+
+
+func _uses_room2_focus_transition(source_room_id: String, target_room_id: String) -> bool:
+	return _is_room2_room(source_room_id) != _is_room2_room(target_room_id)
+
+
+func _is_room2_room(room_id: String) -> bool:
+	return room_id.begins_with("room2_")
 
 
 func _show_objective_overlay() -> void:

@@ -6,7 +6,7 @@ static func build() -> Dictionary:
 		"id": "ending_wake_second_question",
 		"title": "陌生房间",
 		"hint": "第一个答案落下后，房间里多出一把椅子的影子。",
-		"background": "res://godot/asserts/images/home.jpg",
+		"background": "",
 		"interactions": [
 			{
 				"id": "second-question",
