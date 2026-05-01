@@ -33,7 +33,7 @@ static func build() -> Dictionary:
 				"ui_style": "scene_arrow"
 			},
 			{
-				"id": "stay-awake",
+				"id": "sleep",
 				"label": "入睡",
 				"message": "你闭上眼，任由这间房间远去。雨声重新落在车窗上。",
 				"goto_room": "car_closeup",

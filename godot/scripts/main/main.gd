@@ -36,6 +36,7 @@ const IN_SCENE_DOCUMENTS_BUTTON_SIZE := Vector2(56, 56)
 const IN_SCENE_BUTTON_GAP := 12.0
 const IN_SCENE_MESSAGE_HEIGHT := 72.0
 const SCREEN_MARGIN := Vector2(28, 18)
+const ROOM2_PREFIX := "room2_"
 const FLASHLIGHT_ROOMS := [
 	"back_stairwell",
 	"fake_third",
@@ -729,10 +730,7 @@ func _on_interaction_pressed(interaction_id: String) -> void:
 			SceneRouter.apply_interaction(interaction_id)
 			_refresh_room(GameState.current_room_id)
 			_play_scene_transition_sound(transition_audio)
-		if _uses_room2_focus_transition(source_room_id, target_room_id):
-			await _play_room2_focus_transition(transition_callback)
-		else:
-			await _play_blink_transition(transition_callback)
+		await _play_room_transition(source_room_id, target_room_id, transition_callback)
 
 	
 	else:
@@ -859,10 +857,13 @@ func _apply_background(room_id: String, texture_path: String) -> void:
 		return
 	var texture := load(texture_path) as Texture2D
 	background_texture.texture = texture
-	if room_id.begins_with("room2_") and texture != null and texture.get_width() > 0 and texture.get_height() > 0:
-		room_visual.ratio = float(texture.get_width()) / float(texture.get_height())
-	else:
-		room_visual.ratio = ROOM_STAGE_REFERENCE_SIZE.x / ROOM_STAGE_REFERENCE_SIZE.y
+	room_visual.ratio = _room_background_ratio(room_id, texture)
+
+
+func _room_background_ratio(room_id: String, texture: Texture2D) -> float:
+	if _is_room2_room(room_id) and texture != null and texture.get_width() > 0 and texture.get_height() > 0:
+		return float(texture.get_width()) / float(texture.get_height())
+	return ROOM_STAGE_REFERENCE_SIZE.x / ROOM_STAGE_REFERENCE_SIZE.y
 
 
 func _resolve_background_path(room_id: String, room: Dictionary) -> String:
@@ -2904,10 +2905,7 @@ func _submit_code_value(entered_code: String) -> void:
 			active_code_data = {}
 			scene_keypad_input = ""
 			_refresh_room(GameState.current_room_id)
-		if _uses_room2_focus_transition(source_room_id, target_room_id):
-			await _play_room2_focus_transition(transition_callback)
-		else:
-			await _play_blink_transition(transition_callback)
+		await _play_room_transition(source_room_id, target_room_id, transition_callback)
 		_refresh_hud_with_message()
 		return
 
@@ -2975,6 +2973,13 @@ func _play_blink_transition(callback: Callable = Callable()) -> void:
 	is_transitioning = false
 
 
+func _play_room_transition(source_room_id: String, target_room_id: String, callback: Callable = Callable()) -> void:
+	if _uses_room2_focus_transition(source_room_id, target_room_id):
+		await _play_room2_focus_transition(callback)
+		return
+	await _play_blink_transition(callback)
+
+
 func _play_room2_focus_transition(callback: Callable = Callable()) -> void:
 	if is_transitioning:
 		return
@@ -3034,7 +3039,7 @@ func _uses_room2_focus_transition(source_room_id: String, target_room_id: String
 
 
 func _is_room2_room(room_id: String) -> bool:
-	return room_id.begins_with("room2_")
+	return room_id.begins_with(ROOM2_PREFIX)
 
 
 func _show_objective_overlay() -> void:
